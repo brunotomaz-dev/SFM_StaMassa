@@ -92,7 +92,7 @@ class MaquinaInfoService:
         df = df.sort_values(by=["linha", "data_registro", "turno_order"])
 
         # Remover a coluna criada
-        df = df.drop(columns=["turno_order"])
+        df = df.drop(columns=["turno_order", "rn"])
 
         # Reiniciar o index
         df = df.reset_index(drop=True)
