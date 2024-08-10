@@ -20,20 +20,19 @@ class MaquinaIHMService:
         data = self.__maquina_ihm.get_data(period)
 
         # Verifica se a consulta retornou dados
-        if data is None:
-            return "Error on get data"
+        if data is not None:
 
-        # Limpa os dados de forma básica
-        data = self.__clean_data.clean_data(data)
+            # Limpa os dados de forma básica
+            data = self.__clean_data.clean_data(data)
 
-        # Se a coluna equipamento estiver entre os valoras 1 a 14(str) cria nova coluna
-        data["s_backup"] = np.where(
-            data.equipamento.astype(str).str.isdigit(), data.equipamento, None
-        )
+            # Se a coluna equipamento estiver entre os valoras 1 a 14(str) cria nova coluna
+            data["s_backup"] = np.where(
+                data.equipamento.astype(str).str.isdigit(), data.equipamento, None
+            )
 
-        # Remove os valores numéricos da coluna equipamento
-        data.equipamento = np.where(
-            data.equipamento.astype(str).str.isdigit(), None, data.equipamento
-        )
+            # Remove os valores numéricos da coluna equipamento
+            data.equipamento = np.where(
+                data.equipamento.astype(str).str.isdigit(), None, data.equipamento
+            )
 
         return data

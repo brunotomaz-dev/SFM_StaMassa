@@ -9,10 +9,12 @@ from fastapi.responses import JSONResponse
 
 # pylint: disable=E0401
 from src.controller.maquina_ihm_controller import MaquinaIHMController
+from src.controller.maquina_info_controller import MaquinaInfoController
 
 app = FastAPI()
 
 maquina_ihm_controller = MaquinaIHMController()
+maquina_info_controller = MaquinaInfoController()
 
 
 # ================================================================================================ #
@@ -26,12 +28,12 @@ def read_root():
 
 # ========================================= Automação DB ========================================= #
 @app.get("/maquina_ihm")
-def get_maquina_ihm(first_day: str, last_day: str):
+def get_maquina_ihm(start: str, end: str):
     """
     Retorna os dados da máquina IHM no intervalo de datas especificado.
     Parâmetros:
-    - first_day (str): Data de início do intervalo no formato 'YYYY-MM-DD'.
-    - last_day (str): Data de término do intervalo no formato 'YYYY-MM-DD'.
+    - start (str): Data de início do intervalo no formato 'YYYY-MM-DD'.
+    - end (str): Data de término do intervalo no formato 'YYYY-MM-DD'.
     Retorna:
     - JSONResponse: Resposta JSON contendo os dados da máquina IHM no formato ISO.
     Exemplo:
@@ -53,7 +55,79 @@ def get_maquina_ihm(first_day: str, last_day: str):
     }
     """
 
-    data = maquina_ihm_controller.get_data((first_day, last_day))
+    data = maquina_ihm_controller.get_data((start, end))
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
+
+@app.get("/maquina_info/")
+def get_maquina_info(start: str, end: str):
+    """
+    Retorna os dados da máquina info no intervalo de datas especificado.
+    Parâmetros:
+    - start (str): Data de início do intervalo no formato 'YYYY-MM-DD'.
+    - end (str): Data de término do intervalo no formato 'YYYY-MM-DD'.
+    Retorna:
+    - JSONResponse: Resposta JSON contendo os dados da máquina IHM no formato ISO.
+    Exemplo:
+    >>> get_maquina_ihm('2022-01-01', '2022-01-31')
+    {
+        "data": [
+            {
+                "timestamp": "2022-01-01T00:00:00",
+                "valor1": 10,
+                "valor2": 20
+            },
+            {
+                "timestamp": "2022-01-02T00:00:00",
+                "valor1": 15,
+                "valor2": 25
+            },
+            ...
+        ]
+    }
+    """
+
+    data = maquina_info_controller.get_data((start, end))
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
+
+@app.get("/maquina_info/production")
+def get_maquina_info_production(start: str, end: str):
+    """
+    Retorna os dados de produção da máquina info no intervalo de datas especificado.
+    Parâmetros:
+    - start (str): Data de início do intervalo no formato 'YYYY-MM-DD'.
+    - end (str): Data de término do intervalo no formato 'YYYY-MM-DD'.
+    Retorna:
+    - JSONResponse: Resposta JSON contendo os dados da máquina IHM no formato ISO.
+    Exemplo:
+    >>> get_maquina_ihm('2022-01-01', '2022-01-31')
+    {
+        "data": [
+            {
+                "timestamp": "2022-01-01T00:00:00",
+                "valor1": 10,
+                "valor2": 20
+            },
+            {
+                "timestamp": "2022-01-02T00:00:00",
+                "valor1": 15,
+                "valor2": 25
+            },
+            ...
+        ]
+    }
+    """
+
+    data = maquina_info_controller.get_production_data((start, end))
     if data is None:
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
