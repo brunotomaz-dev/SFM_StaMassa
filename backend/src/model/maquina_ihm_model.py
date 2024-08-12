@@ -3,7 +3,7 @@
 import pandas as pd
 
 # pylint: disable=import-error
-from src.model.db_automacao_model import DBAutomacaoModel
+from model.db_automacao_model import DBAutomacaoModel
 
 
 class MaquinaIHMModel:

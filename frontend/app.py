@@ -4,9 +4,9 @@ import numpy as np
 import streamlit as st
 
 # pylint: disable=import-error
-from src.api.requests_ import get_api_data
-from src.api.urls import APIUrl
-from src.functions.get_date import get_this_month
+from pages.api.requests_ import get_api_data
+from pages.api.urls import APIUrl
+from pages.functions.get_date import get_this_month
 
 # ================================================================================================ #
 #                                         REQUISIÇÃO DE API                                        #
@@ -100,4 +100,3 @@ st.write("Dados da máquina Qualidade:")
 st.write(maquina_quality)
 st.write("Dados de produção da máquina Info:")
 st.write(maquina_production)
-st.button("Recarregar", type="primary")

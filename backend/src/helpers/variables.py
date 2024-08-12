@@ -2,7 +2,7 @@
 
 from enum import Enum
 
-# cSpell: words eficiencia, manutencao
+# cSpell: words eficiencia, manutencao, producao
 
 
 class LocalTables(Enum):
@@ -11,6 +11,7 @@ class LocalTables(Enum):
     EFFICIENCY = "eficiencia"
     PERFORMANCE = "performance"
     REPAIR = "reparo"
+    PRODUCTION = "producao"
 
 
 class IndicatorType(Enum):

@@ -1,7 +1,7 @@
 """ Módulo que faz o controle dos dados de máquina IHM. """
 
 # pylint: disable=import-error
-from src.service.maquina_ihm_service import MaquinaIHMService
+from service.maquina_ihm_service import MaquinaIHMService
 
 
 class MaquinaIHMController:

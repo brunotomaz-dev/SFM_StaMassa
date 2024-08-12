@@ -1,10 +1,10 @@
 """ Este módulo faz a comunicação principal com o banco de dados """
 
 import pandas as pd
-from sqlalchemy.exc import DatabaseError
 
 # pylint: disable=E0401
-from src.database.connection import Connection
+from database.connection import Connection
+from sqlalchemy.exc import DatabaseError
 
 
 class DBAutomacaoModel(Connection):
