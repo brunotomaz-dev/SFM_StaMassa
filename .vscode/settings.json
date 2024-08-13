@@ -6,5 +6,14 @@
       "addWords": true,
       "scope": "workspace"
     }
-  }
+  },
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "driver": "SQLite",
+      "name": "Local_DB",
+      "group": "Local",
+      "database": "${workspaceFolder:SFM_StaMassa}/backend/src/database/automacao_local.db"
+    }
+  ]
 }

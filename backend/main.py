@@ -6,17 +6,23 @@ CreatedBy: Bruno Tomaz
 
 from datetime import datetime, timedelta
 
+import pandas as pd
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 
 # pylint: disable=E0401
+from src.controller.efficiency_controller import EfficiencyController
 from src.controller.info_ihm_controller import InfoIHMController
 from src.controller.maquina_ihm_controller import MaquinaIHMController
 from src.controller.maquina_info_controller import MaquinaInfoController
 from src.controller.maquina_qualidade_controller import MaquinaQualidadeController
+from src.controller.performance_controller import PerformanceController
 from src.controller.production_controller import ProductionController
+from src.controller.reparo_controller import ReparoController
 from src.functions import date_f
+from src.helpers.variables import IndicatorType
+from src.service.functions.ind_prod import IndProd
 from src.service.functions.info_ihm_join import InfoIHMJoin
 from src.service.functions.prod_qualid_join import ProdQualidJoin
 
@@ -28,6 +34,12 @@ maquina_qualidade_controller = MaquinaQualidadeController()
 production_controller = ProductionController()
 info_ihm_controller = InfoIHMController()
 prod_qualid_join = ProdQualidJoin()
+eff_controller = EfficiencyController()
+perf_controller = PerformanceController()
+reparo_controller = ReparoController()
+ind_production = IndProd()
+
+pd.set_option("future.no_silent_downcast", True)
 
 
 # ================================================================================================ #
@@ -180,6 +192,54 @@ def get_info_ihm():
     return data.to_json(date_format="iso", orient="split")
 
 
+@app.get("/efficiency")
+def get_efficiency():
+    """
+    Retorna os indicadores de eficiência do DB local do mês corrente.
+    Retorna:
+    - JSONResponse: Resposta JSON contendo os indicadores de eficiência no formato ISO.
+    """
+
+    data = eff_controller.get_data()
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
+
+@app.get("/performance")
+def get_performance():
+    """
+    Retorna os indicadores de performance do DB local do mês corrente.
+    Retorna:
+    - JSONResponse: Resposta JSON contendo os indicadores de performance no formato ISO.
+    """
+
+    data = perf_controller.get_data()
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
+
+@app.get("/reparo")
+def get_reparo():
+    """
+    Retorna os indicadores de reparo do DB local do mês corrente.
+    Retorna:
+    - JSONResponse: Resposta JSON contendo os indicadores de reparo no formato ISO.
+    """
+
+    data = reparo_controller.get_data()
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
+
 # ================================================================================================ #
 #                                           LOCAL DB JOBS                                          #
 # ================================================================================================ #
@@ -227,6 +287,27 @@ def create_maq_ihm_info_data():
     info_ihm_controller.replace_data(data)
 
 
+# Função para criar indicadores de produção
+def create_ind_prod():
+    """Cria os indicadores de produção do mês corrente e salva no banco de dados local."""
+
+    # Obter os dados locais de produção
+    df_production = production_controller.get_data()
+
+    # Obter os dados locais de maquina IHM e Info
+    df_info_ihm = info_ihm_controller.get_data()
+
+    # Criar os indicadores de produção
+    df_eff = ind_production.get_indicators(df_info_ihm, df_production, IndicatorType.EFFICIENCY)
+    df_perf = ind_production.get_indicators(df_info_ihm, df_production, IndicatorType.PERFORMANCE)
+    df_repair = ind_production.get_indicators(df_info_ihm, df_production, IndicatorType.REPAIR)
+
+    # Salvar os indicadores no banco de dados local
+    eff_controller.replace_data(df_eff)
+    perf_controller.replace_data(df_perf)
+    reparo_controller.replace_data(df_repair)
+
+
 # ================================================================================================ #
 #                                      AGENDAMENTO DE TAREFAS                                      #
 # ================================================================================================ #
@@ -238,7 +319,7 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(
     create_production_data,
     "interval",
-    minutes=10,
+    minutes=5,
     start_date=datetime.now() + timedelta(seconds=5),
 )
 
@@ -248,6 +329,14 @@ scheduler.add_job(
     "interval",
     minutes=5,
     start_date=datetime.now() + timedelta(seconds=3),
+)
+
+# Cria a tarefa para criar os indicadores de produção
+scheduler.add_job(
+    create_ind_prod,
+    "interval",
+    minutes=2,
+    start_date=datetime.now() + timedelta(seconds=1),
 )
 
 # Inicia o agendador
