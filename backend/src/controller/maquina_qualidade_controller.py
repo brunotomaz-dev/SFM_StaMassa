@@ -1,7 +1,7 @@
 """ Módulo controlador para as informações da máquina qualidade."""
 
 # pylint: disable=import-error
-from service.maquina_qualidade_service import MaquinaQualidadeService
+from src.service.maquina_qualidade_service import MaquinaQualidadeService
 
 
 class MaquinaQualidadeController:

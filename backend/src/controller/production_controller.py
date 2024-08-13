@@ -3,7 +3,7 @@
 import pandas as pd
 
 # pylint: disable=import-error
-from service.production_service import ProductionService
+from src.service.production_service import ProductionService
 
 
 class ProductionController:

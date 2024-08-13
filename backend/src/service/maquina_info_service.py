@@ -4,9 +4,9 @@ from datetime import time
 
 import numpy as np
 import pandas as pd
-from src.model.maquina_info_model import MaquinaInfoModel
 
 # pylint: disable=import-error
+from src.model.maquina_info_model import MaquinaInfoModel
 from src.service.functions.clean_data import CleanData
 
 

@@ -3,7 +3,7 @@
 import pandas as pd
 
 # pylint: disable=E0401
-from database.connection_local import ConnectionLocal
+from src.database.connection_local import ConnectionLocal
 
 
 class DBAutomacaoLocalModel(ConnectionLocal):

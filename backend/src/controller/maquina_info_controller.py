@@ -1,7 +1,7 @@
 """Módulo controlador para as informações da máquina."""
 
 # pylint: disable=import-error
-from service.maquina_info_service import MaquinaInfoService
+from src.service.maquina_info_service import MaquinaInfoService
 
 
 class MaquinaInfoController:

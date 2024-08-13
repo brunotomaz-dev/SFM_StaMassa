@@ -12,6 +12,7 @@ class LocalTables(Enum):
     PERFORMANCE = "performance"
     REPAIR = "reparo"
     PRODUCTION = "producao"
+    INFO_IHM = "info_ihm"
 
 
 class IndicatorType(Enum):

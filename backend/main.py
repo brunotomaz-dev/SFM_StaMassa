@@ -11,11 +11,13 @@ from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 
 # pylint: disable=E0401
+from src.controller.info_ihm_controller import InfoIHMController
 from src.controller.maquina_ihm_controller import MaquinaIHMController
 from src.controller.maquina_info_controller import MaquinaInfoController
 from src.controller.maquina_qualidade_controller import MaquinaQualidadeController
 from src.controller.production_controller import ProductionController
 from src.functions import date_f
+from src.service.functions.info_ihm_join import InfoIHMJoin
 from src.service.functions.prod_qualid_join import ProdQualidJoin
 
 app = FastAPI()
@@ -24,6 +26,7 @@ maquina_ihm_controller = MaquinaIHMController()
 maquina_info_controller = MaquinaInfoController()
 maquina_qualidade_controller = MaquinaQualidadeController()
 production_controller = ProductionController()
+info_ihm_controller = InfoIHMController()
 prod_qualid_join = ProdQualidJoin()
 
 
@@ -145,8 +148,8 @@ def get_maquina_qualidade(start: str, end: str):
     return data.to_json(date_format="iso", orient="split")
 
 
-@app.get("/maquina_info/production")
-def get_maquina_info_production():
+@app.get("/production")
+def get_production():
     """
     Retorna os dados de produção do DB local do mês corrente.
     Retorna:
@@ -161,6 +164,22 @@ def get_maquina_info_production():
     return data.to_json(date_format="iso", orient="split")
 
 
+@app.get("/info_ihm")
+def get_info_ihm():
+    """
+    Retorna os dados de info_ihm do DB local do mês corrente.
+    Retorna:
+    - JSONResponse: Resposta JSON contendo os dados da produção no formato ISO.
+    """
+
+    data = info_ihm_controller.get_data()
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
+
 # ================================================================================================ #
 #                                           LOCAL DB JOBS                                          #
 # ================================================================================================ #
@@ -168,6 +187,7 @@ def get_maquina_info_production():
 
 # Função para criar o dataframe de produção do mês corrente
 def create_production_data():
+    """Cria os dados de produção do mês corrente e salva no banco de dados local."""
 
     # Obter as datas do mês corrente
     start, end = date_f.get_first_and_last_day_of_month()
@@ -175,7 +195,7 @@ def create_production_data():
     end = end.strftime("%Y-%m-%d")
 
     # Obter os dados da máquina Info e Qualidade
-    prod = maquina_info_controller.get_data((start, end))
+    prod = maquina_info_controller.get_production_data((start, end))
     qual = maquina_qualidade_controller.get_data((start, end))
 
     # Juntar os dados de produção com os dados de qualidade e info
@@ -183,6 +203,28 @@ def create_production_data():
 
     # Salva no banco de dados local
     production_controller.replace_data(data)
+
+
+# Função para criar dataframe com os dados de maquina IHM e info, e salvar no banco de dados local
+def create_maq_ihm_info_data():
+    """Cria os dados de maquina IHM e Info e salva no banco de dados local."""
+
+    # Obter as datas do mês corrente
+    start, end = date_f.get_first_and_last_day_of_month()
+    start = start.strftime("%Y-%m-%d")
+    end = end.strftime("%Y-%m-%d")
+
+    # Obter os dados da máquina Info e Qualidade
+    maq_ihm = maquina_ihm_controller.get_data((start, end))
+    maq_info = maquina_info_controller.get_data((start, end))
+
+    info_ihm_join = InfoIHMJoin(maq_ihm, maq_info)
+
+    # Unir os dados de maquina IHM e info
+    data = info_ihm_join.join_data()
+
+    # Salva no banco de dados local
+    info_ihm_controller.replace_data(data)
 
 
 # ================================================================================================ #
@@ -198,6 +240,14 @@ scheduler.add_job(
     "interval",
     minutes=10,
     start_date=datetime.now() + timedelta(seconds=5),
+)
+
+# Cria a tarefa para criar os dados de maquina IHM e Info do mês corrente
+scheduler.add_job(
+    create_maq_ihm_info_data,
+    "interval",
+    minutes=5,
+    start_date=datetime.now() + timedelta(seconds=3),
 )
 
 # Inicia o agendador

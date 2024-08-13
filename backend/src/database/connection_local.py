@@ -3,7 +3,7 @@
 import sqlite3
 
 # pylint: disable=import-error
-from helpers.paths import DB_LOCAL
+from src.helpers.paths import DB_LOCAL
 
 
 class ConnectionLocal:
