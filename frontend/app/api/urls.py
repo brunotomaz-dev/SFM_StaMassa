@@ -25,5 +25,10 @@ class APIUrl(Enum):
 
     URL_MAQ_INFO = "http://localhost:8000/maquina_info"
     URL_MAQ_IHM = "http://localhost:8000/maquina_ihm"
-    URL_MAQ_PROD = "http://localhost:8000/maquina_info/production"
     URL_MAQ_QUALIDADE = "http://localhost:8000/maquina_qualidade"
+    URL_PROD = "http://localhost:8000/production"
+    URL_INFO_IHM = "http://localhost:8000/info_ihm"
+    URL_EFF = "http://localhost:8000/efficiency"
+    URL_PERF = "http://localhost:8000/performance"
+    URL_REP = "http://localhost:8000/reparo"
+    URL_HIST_IND = "http://localhost:8000/historic_ind"

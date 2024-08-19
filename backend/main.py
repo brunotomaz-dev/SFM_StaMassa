@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 # pylint: disable=E0401
 from src.controller.efficiency_controller import EfficiencyController
+from src.controller.historic_ind_controller import HistoricIndController
 from src.controller.info_ihm_controller import InfoIHMController
 from src.controller.maquina_ihm_controller import MaquinaIHMController
 from src.controller.maquina_info_controller import MaquinaInfoController
@@ -21,6 +22,7 @@ from src.controller.performance_controller import PerformanceController
 from src.controller.production_controller import ProductionController
 from src.controller.reparo_controller import ReparoController
 from src.functions import date_f
+from src.functions import history_functions as hist_f
 from src.helpers.variables import IndicatorType
 from src.service.functions.ind_prod import IndProd
 from src.service.functions.info_ihm_join import InfoIHMJoin
@@ -37,6 +39,7 @@ prod_qualid_join = ProdQualidJoin()
 eff_controller = EfficiencyController()
 perf_controller = PerformanceController()
 reparo_controller = ReparoController()
+historic_ind_controller = HistoricIndController()
 ind_production = IndProd()
 
 pd.set_option("future.no_silent_downcast", True)
@@ -240,6 +243,20 @@ def get_reparo():
     return data.to_json(date_format="iso", orient="split")
 
 
+@app.get("/historic_ind")
+def get_historic_ind():
+    """
+    Retorna os dados de histórico de indicadores do DB local.
+    """
+
+    data = historic_ind_controller.get_data()
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
+
 # ================================================================================================ #
 #                                           LOCAL DB JOBS                                          #
 # ================================================================================================ #
@@ -308,6 +325,48 @@ def create_ind_prod():
     reparo_controller.replace_data(df_repair)
 
 
+# Função para manter histórico de indicadores de produção
+def create_ind_history():
+    """Cria o histórico de indicadores de produção e salva no banco de dados local."""
+    # Obter as datas
+    start, end = date_f.get_first_and_last_day_of_last_month()
+    month = start.strftime("%Y-%m")
+    start = start.strftime("%Y-%m-%d")
+    end = end.strftime("%Y-%m-%d")
+
+    # Obter os dados de maquina info/ihm
+    maq_ihm = maquina_ihm_controller.get_data((start, end))
+    maq_info = maquina_info_controller.get_data((start, end))
+
+    info_ihm_join = InfoIHMJoin(maq_ihm, maq_info)
+
+    # Unir os dados de maquina IHM e info
+    df_info_ihm = info_ihm_join.join_data()
+
+    # Obter os dados da máquina Info e Qualidade
+    prod = maquina_info_controller.get_production_data((start, end))
+    qual = maquina_qualidade_controller.get_data((start, end))
+
+    # Juntar os dados de produção com os dados de qualidade e info
+    df_prod = prod_qualid_join.join_data(qual, prod)
+
+    # Criar os indicadores de produção
+    df_eff = ind_production.get_indicators(df_info_ihm, df_prod, IndicatorType.EFFICIENCY)
+    df_perf = ind_production.get_indicators(df_info_ihm, df_prod, IndicatorType.PERFORMANCE)
+    df_repair = ind_production.get_indicators(df_info_ihm, df_prod, IndicatorType.REPAIR)
+
+    # Atualiza ou cria o histórico de indicadores no banco de dados local
+    historic_data = historic_ind_controller.get_data()
+
+    # Verifica se o mês já está no histórico, se não atualiza ou cria os dados
+    if month not in historic_data.data_registro.values:
+        # Cria o histórico de indicadores
+        df_history = hist_f.create_hist_ind(df_info_ihm, df_prod, df_eff, df_perf, df_repair)
+
+        # Salva no banco de dados local
+        historic_ind_controller.insert_data(df_history)
+
+
 # ================================================================================================ #
 #                                      AGENDAMENTO DE TAREFAS                                      #
 # ================================================================================================ #
@@ -337,6 +396,14 @@ scheduler.add_job(
     "interval",
     minutes=2,
     start_date=datetime.now() + timedelta(seconds=1),
+)
+
+# Cria a tarefa para criar o histórico de indicadores
+scheduler.add_job(
+    create_ind_history,
+    "interval",
+    minutes=60,
+    start_date=datetime.now() + timedelta(seconds=10),
 )
 
 # Inicia o agendador

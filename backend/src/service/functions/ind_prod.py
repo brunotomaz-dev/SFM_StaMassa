@@ -148,7 +148,7 @@ class IndProd:
         """
 
         # Nova coluna para o tempo esperado de produção
-        df["producao_esperada"] = (df.tempo_esperado * self.ciclos_ideais) * 2
+        df["producao_esperada"] = round(((df.tempo_esperado * self.ciclos_ideais) * 2), 0)
 
         # Coluna de eficiência
         df[indicator.value] = (df.total_produzido / df.producao_esperada).round(3)
