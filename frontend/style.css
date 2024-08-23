@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+html, body, [class*="css"] {
+  font-family: 'Poppins', sans-serif !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: Poppins, Helvetica, sans-serif;
+}
+
+div * {
+  font-family: Poppins, Helvetica, sans-serif;
+}
