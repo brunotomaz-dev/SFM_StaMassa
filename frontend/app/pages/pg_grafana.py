@@ -7,8 +7,22 @@ import streamlit as st
 from app.api.requests_ import get_api_data
 from app.api.urls import APIUrl
 from app.functions.indicators_playground import IndicatorsPlayground
+from streamlit_option_menu import option_menu
 
 ind_play = IndicatorsPlayground()
+
+# ================================================================================================ #
+#                                               MENU                                               #
+# ================================================================================================ #
+with st.sidebar:
+    selected_page = option_menu(
+        "Menu",
+        ["Página Principal", "Subpágina 1", "Subpágina 2"],
+        icons=["house", "file-earmark", "file-earmark"],
+        menu_icon="cast",
+        default_index=0,
+    )
+
 
 # ================================================================================================ #
 #                                         REQUISIÇÃO DE API                                        #
@@ -58,9 +72,15 @@ performance.data_registro = pd.to_datetime(performance.data_registro).dt.strftim
 reparo.data_registro = pd.to_datetime(reparo.data_registro).dt.strftime("%d/%m")
 
 # Formatar hora para visualização
-eficiencia.hora_registro = pd.to_datetime(eficiencia.hora_registro).dt.strftime("%H:%M")
-performance.hora_registro = pd.to_datetime(performance.hora_registro).dt.strftime("%H:%M")
-reparo.hora_registro = pd.to_datetime(reparo.hora_registro).dt.strftime("%H:%M")
+eficiencia.hora_registro = pd.to_datetime(
+    eficiencia.hora_registro, format="%H:%M:%S.%f"
+).dt.strftime("%H:%M")
+performance.hora_registro = pd.to_datetime(
+    performance.hora_registro, format="%H:%M:%S.%f"
+).dt.strftime("%H:%M")
+reparo.hora_registro = pd.to_datetime(reparo.hora_registro, format="%H:%M:%S.%f").dt.strftime(
+    "%H:%M"
+)
 
 # Formatar indicadores para visualização como str e em %
 eficiencia.eficiencia = (eficiencia.eficiencia * 100).round(1).astype(str) + "%"
@@ -109,6 +129,13 @@ performance = performance.rename(
 )
 
 st.title("Hello World")
+
+if selected_page == "Página Principal":
+    st.write("Você está na página principal")
+elif selected_page == "Subpágina 1":
+    st.write("Você está na subpágina 1")
+else:
+    st.write("Você está na subpágina 2")
 
 st.subheader("Eficiência")
 st.write(eficiencia)
