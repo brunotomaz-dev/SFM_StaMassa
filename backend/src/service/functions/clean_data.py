@@ -36,20 +36,20 @@ class CleanData:
         df = df.dropna(subset=["maquina_id", "data_registro", "hora_registro"])
 
         # Remover os milissegundos da coluna hora_registro
-        df["hora_registro"] = df["hora_registro"].astype(str).str.split(".").str[0]
+        df.hora_registro = df.hora_registro.astype(str).str.split(".").str[0]
 
         # Garantir que as colunas de data e hora sejam do tipo correto
-        df["data_registro"] = pd.to_datetime(df["data_registro"])
-        df["hora_registro"] = pd.to_datetime(df["hora_registro"], format="%H:%M:%S").dt.time
+        df.data_registro = pd.to_datetime(df.data_registro)
+        df.hora_registro = pd.to_datetime(df.hora_registro, format="%H:%M:%S").dt.time
 
         # Substitui os valores NaN por 0 e depois converte para inteiro
-        df["linha"] = df["linha"].fillna(0).astype(int)
+        df.linha = df.linha.fillna(0).astype(int)
 
         # Se existir remove a coluna recno
         if "recno" in df.columns:
             df = df.drop(columns=["recno"])
 
         # Remover onde a linha for 0
-        df = df[df["linha"] != 0]
+        df = df[df.linha != 0]
 
         return df

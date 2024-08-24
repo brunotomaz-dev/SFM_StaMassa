@@ -13,7 +13,7 @@ class DBAutomacaoLocalModel(ConnectionLocal):
     def __init__(self):
         super().__init__()
 
-    def get_data(self, query: str) -> pd.DataFrame:
+    def get_data(self, table: str) -> pd.DataFrame:
         """Obtém os dados do banco de dados local.
 
         Args:
@@ -30,6 +30,7 @@ class DBAutomacaoLocalModel(ConnectionLocal):
         """
         try:
             with self as conn:
+                query = f"SELECT * FROM {table}"
                 connection = conn.get_connection()
                 return pd.read_sql_query(query, connection)
         # pylint: disable=W0718
