@@ -2,7 +2,7 @@
 
 Controle de Processo de Produção baseado em SFM, mas que inclui indicadores de desempenho, gestão de produção e manutenção. Incluirá módulo de PCP e outras funcionalidades.
 
-[![wakatime](https://wakatime.com/badge/user/ac3e6806-2871-4c49-8d7e-bf6a0e83a3a2/project/4dcaf7f5-6b22-48ec-a388-e021bf3642bb.svg)](https://wakatime.com/badge/user/ac3e6806-2871-4c49-8d7e-bf6a0e83a3a2/project/4dcaf7f5-6b22-48ec-a388-e021bf3642bb)
+[![wakatime](https://wakatime.com/badge/github/brunotomaz-dev/SFM_StaMassa.svg)](https://wakatime.com/badge/github/brunotomaz-dev/SFM_StaMassa)
 
 # 🚧 Pendente de atualização no readme! 👷
 
