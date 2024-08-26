@@ -3,7 +3,7 @@
 import pandas as pd
 
 # pylint: disable=import-error
-from app.helpers.variables import IndicatorType
+from app.helpers.variables import ColorsSTM, IndicatorType
 from streamlit_echarts import st_echarts
 
 
@@ -35,8 +35,12 @@ def create_line_chart(df: pd.DataFrame, indicator: IndicatorType) -> None:
                         "data": [
                             {
                                 "yAxis": opt_mark,
-                                "label": {"formatter": f"Meta: {opt_mark}", "position": "end"},
-                                "lineStyle": {"color": "red", "type": "dashed"},
+                                "label": {
+                                    "formatter": f"Meta: {opt_mark}",
+                                    "position": "end",
+                                    "backgroundColor": "transparent",
+                                },
+                                "lineStyle": {"color": ColorsSTM.RED.value, "type": "dashed"},
                             }
                         ]
                     },
