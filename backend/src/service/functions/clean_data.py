@@ -49,6 +49,12 @@ class CleanData:
         if "recno" in df.columns:
             df = df.drop(columns=["recno"])
 
+        # Se existir a coluna operador_id, fazer alguns ajustes
+        if "operador_id" in df.columns:
+            df.operador_id = df.operador_id.fillna(0).astype(int)
+            df.operador_id = df.operador_id.astype(str).str.zfill(6)
+            df.operador_id = df.operador_id.replace("000000", None)
+
         # Remover onde a linha for 0
         df = df[df.linha != 0]
 

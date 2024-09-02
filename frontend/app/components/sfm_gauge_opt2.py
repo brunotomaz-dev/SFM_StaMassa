@@ -5,7 +5,7 @@ from app.helpers.variables import ColorsSTM, IndicatorType
 from streamlit_echarts import st_echarts
 
 
-def create_gauge_chart(indicator: IndicatorType, data: int, key_: str) -> None:
+def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bool = False) -> None:
     """
     Cria o gráfico de gauge.
 
@@ -13,6 +13,7 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str) -> None:
         indicator (IndicatorType): Tipo de indicador.
         data (int): Dados do indicador.
         key_ (str): Chave do gráfico.
+        large (bool, optional): Tamanho do gráfico. Defaults to False.
     """
     opt_color = {
         IndicatorType.PERFORMANCE: [
@@ -62,18 +63,18 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str) -> None:
                     "name": indicator,
                     "title": {
                         "show": True,
-                        "offsetCenter": [0, "110%"],
+                        "offsetCenter": [0, "75%"] if large else [0, "110%"],
                         "color": "auto",
-                        "textStyle": {"fontSize": 14, "fontWeight": "bold"},
+                        "textStyle": {"fontSize": 24 if large else 14, "fontWeight": "bold"},
                     },
                     "type": "gauge",
                     "center": ["50%", "55%"],
                     "detail": {
                         "formatter": "{value}%",
                         "valueAnimation": True,
-                        "fontSize": 18,
+                        "fontSize": 26 if large else 18,
                         "color": "inherit",
-                        "offsetCenter": [0, "78%"],
+                        "offsetCenter": [0, "50%"] if large else [0, "78%"],
                     },
                     "pointer": {"itemStyle": {"color": "auto"}, "width": 4},
                     "data": [

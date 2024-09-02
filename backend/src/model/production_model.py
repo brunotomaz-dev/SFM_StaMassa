@@ -16,7 +16,6 @@ class ProductionModel:
 
     def get_data(self) -> pd.DataFrame:
         """Consulta o banco de dados e retorna os dados da tabela de produção"""
-
         return self.__db_automacao_local.get_data(self.__table)
 
     def insert_data(self, data: pd.DataFrame) -> None:

@@ -1,8 +1,6 @@
 """ Modulo que contem a classe de modelo do banco de dados local """
 
 import pandas as pd
-
-# pylint: disable=E0401
 from src.database.connection_local import ConnectionLocal
 
 
@@ -13,47 +11,47 @@ class DBAutomacaoLocalModel(ConnectionLocal):
     def __init__(self):
         super().__init__()
 
-    def get_data(self, table: str) -> pd.DataFrame:
-        """Obtém os dados do banco de dados local.
-
-        Args:
-            query (str): Query SQL.
-
-        Returns:
-            pd.DataFrame: DataFrame com os dados.
-
-        Usage:
-            >>> from DB_automacao_local_model import DBAutomacaoLocalModel
-            >>> db_automacao_local = DBAutomacaoLocalModel()
-            >>> query = 'SELECT * FROM tabela'
-            >>> df = db_automacao_local.get_data(query)
-        """
+    def get_data(self, table: str) -> pd.DataFrame | None:
+        """Obtém dados do banco de dados local."""
+        conn = None
         try:
-            with self as conn:
-                query = f"SELECT * FROM {table}"
-                connection = conn.get_connection()
-                return pd.read_sql_query(query, connection)
+            conn = self.get_session()
+            return pd.read_sql_query(f"SELECT * FROM {table}", conn)
+
         # pylint: disable=W0718
         except Exception as error:
             print(f"Erro ao obter os dados: {error}")
             return None
+        finally:
+            if conn:
+                conn.dispose()
 
     def insert_data(self, data: pd.DataFrame, table: str) -> None:
         """Insere dados no banco de dados local."""
+        conn = None
         try:
-            with self as conn:
-                connection = conn.get_connection()
-                data.to_sql(table, connection, if_exists="append", index=False)
+            conn = self.get_session()
+            data.to_sql(table, conn, if_exists="append", index=False)
+
         # pylint: disable=W0718
         except Exception as error:
             print(f"Erro ao inserir os dados: {error}")
 
+        finally:
+            if conn:
+                conn.dispose()
+
     def replace_data(self, data: pd.DataFrame, table: str) -> None:
         """Atualiza dados no banco de dados local."""
+        conn = None
         try:
-            with self as conn:
-                connection = conn.get_connection()
-                data.to_sql(table, connection, if_exists="replace", index=False)
+            conn = self.get_session()
+            data.to_sql(table, conn, if_exists="replace", index=False)
+
         # pylint: disable=W0718
         except Exception as error:
             print(f"Erro ao atualizar os dados: {error}")
+
+        finally:
+            if conn:
+                conn.dispose()

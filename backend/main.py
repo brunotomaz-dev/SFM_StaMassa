@@ -386,7 +386,7 @@ scheduler.add_job(
 scheduler.add_job(
     create_maq_ihm_info_data,
     "interval",
-    minutes=5,
+    minutes=1,
     start_date=datetime.now() + timedelta(seconds=3),
 )
 
@@ -394,7 +394,7 @@ scheduler.add_job(
 scheduler.add_job(
     create_ind_prod,
     "interval",
-    minutes=2,
+    minutes=1,
     start_date=datetime.now() + timedelta(seconds=1),
 )
 
