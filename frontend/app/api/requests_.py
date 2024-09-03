@@ -12,7 +12,7 @@ def get_api_data(url: str) -> pd.DataFrame:
     Obtém os dados da API.
     """
 
-    response = requests.get(url, timeout=10)
+    response = requests.get(url, timeout=40)
     if response.status_code == 200:
         data = response.json()
         df = pd.read_json(StringIO(str(data)), orient="split")

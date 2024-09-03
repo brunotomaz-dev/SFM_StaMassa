@@ -58,9 +58,15 @@ performance.data_registro = pd.to_datetime(performance.data_registro).dt.strftim
 reparo.data_registro = pd.to_datetime(reparo.data_registro).dt.strftime("%d/%m")
 
 # Formatar hora para visualização
-eficiencia.hora_registro = pd.to_datetime(eficiencia.hora_registro).dt.strftime("%H:%M")
-performance.hora_registro = pd.to_datetime(performance.hora_registro).dt.strftime("%H:%M")
-reparo.hora_registro = pd.to_datetime(reparo.hora_registro).dt.strftime("%H:%M")
+eficiencia.hora_registro = pd.to_datetime(
+    eficiencia.hora_registro, format="%H:%M:%S.%f"
+).dt.strftime("%H:%M")
+performance.hora_registro = pd.to_datetime(
+    performance.hora_registro, format="%H:%M:%S.%f"
+).dt.strftime("%H:%M")
+reparo.hora_registro = pd.to_datetime(reparo.hora_registro, format="%H:%M:%S.%f").dt.strftime(
+    "%H:%M"
+)
 
 # Formatar indicadores para visualização como str e em %
 eficiencia.eficiencia = (eficiencia.eficiencia * 100).round(1).astype(str) + "%"

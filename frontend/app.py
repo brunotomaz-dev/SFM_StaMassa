@@ -2,7 +2,11 @@
 
 import streamlit as st
 
-st.set_page_config(page_title="Shop Floor Management", layout="wide", page_icon=":material/edit:")
+st.set_page_config(
+    page_title="Shop Floor Management",
+    layout="wide",
+    page_icon=":material/edit:",
+)
 
 # Adicionar CSS personalizado para importar a fonte Poppins
 # pylint: disable=w1514
@@ -14,16 +18,27 @@ with open("style.css") as css:
 # ================================================================================================ #
 
 shop_floor_management_page = st.Page(
-    page="app/pages/pg_sfm.py", title="Shop Floor Management", icon=":material/monitoring:"
+    page="app/pages/pg_sfm.py",
+    title="Shop Floor Management",
+    icon=":material/monitoring:",
 )
 
-grafana_page = st.Page(page="app/pages/pg_grafana.py", title="NEW PAGE", icon=":material/live_tv:")
+grafana_page = st.Page(
+    page="app/pages/pg_grafana.py",
+    title="NEW PAGE",
+    icon=":material/live_tv:",
+)
 
+all_lines_page = st.Page(
+    page="app/pages/pg_all_lines.py",
+    title="All Lines",
+    icon=":material/precision_manufacturing:",
+)
 
 # ================================================================================================ #
 #                                         LAYOUT AN CONFIG                                         #
 # ================================================================================================ #
 
-pg = st.navigation([shop_floor_management_page, grafana_page])
+pg = st.navigation([shop_floor_management_page, all_lines_page, grafana_page])
 
 pg.run()

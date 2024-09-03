@@ -360,4 +360,16 @@ class InfoIHMJoin:
             ]
         )
 
+        # Remove dados de parada caso a máquina esteja rodando
+        columns_to_adj = [
+            "motivo",
+            "equipamento",
+            "problema",
+            "causa",
+            "operador_id",
+            "data_registro_ihm",
+            "hora_registro_ihm",
+        ]
+        df_joined.loc[df_joined.status == "rodando", columns_to_adj] = None
+
         return df_joined

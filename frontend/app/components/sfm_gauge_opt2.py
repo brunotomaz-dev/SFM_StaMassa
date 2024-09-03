@@ -5,22 +5,16 @@ from app.helpers.variables import ColorsSTM, IndicatorType
 from streamlit_echarts import st_echarts
 
 
-def create_gauge_chart(month_opt: int, indicator: IndicatorType, data: int, key_: str) -> None:
+def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bool = False) -> None:
     """
     Cria o gráfico de gauge.
 
     Args:
-        month_opt (int): Mês de referência. 0 para mês anterior e 1 para mês atual.
         indicator (IndicatorType): Tipo de indicador.
         data (int): Dados do indicador.
         key_ (str): Chave do gráfico.
+        large (bool, optional): Tamanho do gráfico. Defaults to False.
     """
-    # Opt de mês
-    month = {
-        0: "Mês Anterior",
-        1: "Mês Atual",
-    }
-
     opt_color = {
         IndicatorType.PERFORMANCE: [
             [0.92, ColorsSTM.RED.value],  # Acima de 4% é vermelho
@@ -57,23 +51,30 @@ def create_gauge_chart(month_opt: int, indicator: IndicatorType, data: int, key_
 
     return st_echarts(
         options={
-            "title": {"text": month[month_opt], "left": "center"},
             "tooltip": {
                 "formatter": "{b} : {c}%",
                 "position": "top",
                 "shadowColor": "rgba(0, 0, 0, 0.5)",
                 "shadowBlur": 10,
             },
+            # "backgroundColor": "#fff",
             "series": [
                 {
                     "name": indicator,
-                    "title": {"show": False},
+                    "title": {
+                        "show": True,
+                        "offsetCenter": [0, "75%"] if large else [0, "110%"],
+                        "color": "auto",
+                        "textStyle": {"fontSize": 24 if large else 14, "fontWeight": "bold"},
+                    },
                     "type": "gauge",
+                    "center": ["50%", "55%"],
                     "detail": {
                         "formatter": "{value}%",
                         "valueAnimation": True,
-                        "fontSize": 18,
+                        "fontSize": 26 if large else 18,
                         "color": "inherit",
+                        "offsetCenter": [0, "50%"] if large else [0, "78%"],
                     },
                     "pointer": {"itemStyle": {"color": "auto"}, "width": 4},
                     "data": [
@@ -108,13 +109,6 @@ def create_gauge_chart(month_opt: int, indicator: IndicatorType, data: int, key_
                         "lineStyle": {"color": "#fff", "width": 2},
                     },
                     "axisLabel": {"distance": -15, "color": "inherit", "fontSize": 8},
-                    # "progress": {
-                    #     "show": True,
-                    #     "overlap": False,
-                    #     "itemStyle": {
-                    #         "color": "auto",
-                    #     },
-                    # },
                 }
             ],
         },

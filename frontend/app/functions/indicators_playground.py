@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 # pylint: disable=import-error
-from app.functions.get_date import get_this_month
+from app.functions.get_date import GetDate
 from app.helpers.variables import TURNOS, IndicatorType
 
 
@@ -12,13 +12,14 @@ class IndicatorsPlayground:
     """Classe responsável por trabalhar com os indicadores."""
 
     def __init__(self) -> None:
-        self.__start, self.__end = get_this_month()
+        self.__get_date = GetDate()
+        self.__start, self.__end = self.__get_date.get_this_month()
 
     @staticmethod
     def __basic_adjust(df_ind: pd.DataFrame, indicator: IndicatorType) -> pd.DataFrame:
         """Ajusta os dados básicos."""
 
-        # Indicador (performance, eficiencia, reparo)
+        # Indicador (performance, eficiência, reparo)
         indicator = indicator.value
 
         # Ajustar o indicador para  X%
@@ -48,11 +49,11 @@ class IndicatorsPlayground:
 
         if turno:
             # Repetir as datas para cada turno
-            turnos = TURNOS * len(all_dates)
-            df = pd.DataFrame({"data_registro": np.tile(all_dates, 3), "turno": turnos})
+            turnos = np.repeat(TURNOS, len(all_dates))
+            df = pd.DataFrame({"data_registro": np.tile(all_dates, len(TURNOS)), "turno": turnos})
         else:
             # Repetir as datas para cada linha
-            linhas = list(r_lines) * len(all_dates)
+            linhas = np.repeat(list(r_lines), len(all_dates))
             df = pd.DataFrame({"data_registro": np.tile(all_dates, tile_line), "linha": linhas})
 
         return df
@@ -76,11 +77,15 @@ class IndicatorsPlayground:
         selected_turn = not is_turn and turn in TURNOS
 
         # Fabrica
-        fabrica = {
-            "Todas as Fábricas": 0,
-            "Fábrica 1": 1,
-            "Fábrica 2": 2,
-        }[fabrica]
+        fabrica = (
+            {
+                "Todas as Fábricas": 0,
+                "Fábrica 1": 1,
+                "Fábrica 2": 2,
+            }[fabrica]
+            if fabrica
+            else 0
+        )
 
         # Criar um dataframe com todas as datas do mês
         df_dates = self.create_all_dates_df(is_turn, fabrica)
@@ -89,7 +94,7 @@ class IndicatorsPlayground:
         df = df[df.turno == turn] if selected_turn else df
 
         # Filtra caso seja selecionado uma fábrica
-        df = df[df.fabrica == fabrica] if fabrica != 0 else df
+        df = df[df.fabrica == fabrica] if fabrica else df
 
         # Garantir o formato da data
         df.data_registro = pd.to_datetime(df.data_registro).dt.strftime("%Y-%m-%d")
@@ -110,7 +115,10 @@ class IndicatorsPlayground:
 
         return df
 
-    def create_heatmap_structure(self, df: pd.DataFrame, indicator: IndicatorType) -> pd.DataFrame:
+    @staticmethod
+    def create_heatmap_structure(
+        df: pd.DataFrame, indicator: IndicatorType
+    ) -> tuple[list, list, list]:
         """Ajusta os dados dos indicadores para uso no Heatmap - Cartesian Chart."""
         # Verificar dados para saber se estão organizados por linha ou turno
 
