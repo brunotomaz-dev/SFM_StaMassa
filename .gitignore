@@ -151,3 +151,5 @@ CMakeLists.txt.user
 # Arquivos de configuração do pycharm
 .idea/
 */.idea/
+frontend/.idea/
+backend/.idea/
