@@ -12,7 +12,7 @@ def create_heatmap_chart(
 ) -> None:
     """Cria o gráfico de heatmap."""
 
-    is_lines = "1" in choice
+    is_lines = "NOT" not in choice
 
     max_piece = 120 if is_lines else 100
 

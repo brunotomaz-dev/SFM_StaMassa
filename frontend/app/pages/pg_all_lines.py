@@ -4,6 +4,7 @@ from datetime import datetime
 
 import pandas as pd
 import streamlit as st
+from streamlit_extras.metric_cards import style_metric_cards
 
 # pylint: disable=E0401
 from app.api.requests_ import get_api_data
@@ -97,18 +98,27 @@ df_maq_info_original = df_maq_info_original[(df_maq_info_original.linha == line)
 )
 df_eff = df_eff[(df_eff.linha == line)].reset_index(drop=True)
 
+# Se a coluna eficiencia estiver vazia, colocar zero
+df_eff.eficiencia = df_eff.eficiencia.fillna(0)
+
+#
 eff_value = round(df_eff.eficiencia.mean() * 100)
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                             Layout
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-st.title(f"Linha: {str(line)}")
 st.subheader(f"Máquina: {df_eff.maquina_id.iloc[0]}")
 
-r1_col1, r1_col2, r1_col3, r1_col4, r1_col5 = st.columns(5)
+r1_col1, r1_col2, r1_col3 = st.columns([1,4,1])
 
+# ═══════════════════════════════════════════════════════════════════════════════════ Coluna 1 ══ #
 with r1_col1:
+    # ── Gauge ────────────────────────────────────────────────────────────────────────────────── #
+    with st.container():
+        create_gauge_chart(IndicatorType.EFFICIENCY, eff_value, "line_gg_eff", True)
+
+    # ── Status ───────────────────────────────────────────────────────────────────────────────── #
     _, turno_atual = get_date.get_this_turn()
     df_maq_info_status = df_maq_info_original[(df_maq_info_original.turno == turno_atual)]
     # Recuperar o status da última entrada de maq_info
@@ -116,49 +126,14 @@ with r1_col1:
         status = df_maq_info_status.status.iloc[-1].capitalize()
         back_color = ColorsSTM.GREEN.value if status == "Rodando" else ColorsSTM.RED.value
         opt_1 = f"background-color: {back_color}; color: {ColorsSTM.LIGHT_GREY.value};"
-        st.markdown(
-            """
-        <style>
-            .card {
-                text-align: center;
-                font-size: 2vw;
-                padding: 10px;
-                border: 1px solid #ddd;
-                border-radius: 10px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                height: 100%;
-                """
-            + opt_1
-            + """
-                }
-        </style>
-        <div class="card">"""
-            + f"""{status}</div>""",
-            unsafe_allow_html=True,
-        )
+        st.markdown(f"""<div class="card">{status}</div>""", unsafe_allow_html=True)
+
     if status != "Rodando":
         with st.container():
             causa = df_maq_info_status.causa.iloc[-1]
             causa = causa if causa else "Não informado"
-            st.markdown(
-                """
-                <style>
-                    .card2 {
-                        text-align: center;
-                        font-size: 1vw;
-                        background-color: #fff;
-                        padding: 10px;
-                        margin-top: 20px;
-                        border: 1px solid #ddd;
-                        border-radius: 10px;
-                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                        height: 100%;
-                        }
-                </style>
-                <div class="card2">"""
-                + f"""{causa}</div>""",
-                unsafe_allow_html=True,
-            )
+            st.markdown(f"""<div class="card2">{causa}</div>""", unsafe_allow_html=True)
+
         with st.container():
             # Hora da Parada
             hora_inicial = df_maq_info_status.data_hora.iloc[-1]
@@ -173,15 +148,96 @@ with r1_col1:
             # Ajustar tempo para uma string formatada no formato mm
             tempo = str(tempo).replace(".", ",")
 
-            st.markdown(
-                """<div class="card2" style="font-size: 1.5vw;">""" + f"""{tempo} min</div>""",
-                unsafe_allow_html=True,
-            )
+            st.markdown(f"""<div class="card2" style="font-size: 1.5vw;">{tempo} min</div>""", unsafe_allow_html=True)
 
-
+# ═══════════════════════════════════════════════════════════════════════════════════ Coluna 2 ══ #
 with r1_col2:
-    create_gauge_chart(IndicatorType.EFFICIENCY, eff_value, "line_gg_eff", True)
+    st.write("Gráficos aqui...")
+
+# ═══════════════════════════════════════════════════════════════════════════════════ Coluna 3 ══ #
+with r1_col3:
+    # ── Rodando ──────────────────────────────────────────────────────────────────────────────── #
+    with st.container():
+        # Pegar a linha atual
+        last_row = df_maq_info.iloc[-1]
+        # Pegar o horário da última linha e manter apenas o horário e calcular a diferença com o horário atual
+        last_row_hour = pd.to_datetime(last_row.data_hora)
+        now = pd.to_datetime(datetime.now())
+        # Calcular o tempo de parada em minutos
+        tempo_last = round((now - last_row_hour).seconds / 60)
+
+        # Calcular o tempo rodando em minutos
+        tempo_rodando = df_maq_info[df_maq_info.status == "rodando"]
+        tempo_rodando = round(tempo_rodando.tempo.sum())
+
+        if last_row.status == "rodando" and (turn == last_row.turno or len(turn) > 3):
+            tempo_rodando = tempo_rodando + tempo_last - 1
+
+        st.metric("Tempo Total Rodando", tempo_rodando)
+
+    # ── Parada ───────────────────────────────────────────────────────────────────────────────── #
+    with st.container():
+        # Calcular o tempo de parada em minutos
+        tempo_parada = df_maq_info[df_maq_info.status == "parada"]
+        tempo_parada = round(tempo_parada.tempo.sum())
+
+        if last_row.status == "parada" and (turn == last_row.turno or len(turn) > 3):
+            tempo_parada = tempo_parada + tempo_last - 1
+
+        st.metric("Tempo Total Parada", tempo_parada)
+
+    # ── Setup ────────────────────────────────────────────────────────────────────────────────── #
+    with st.container():
+        # Selecionar as linhas com motivo setup
+        df_setup = df_maq_info[df_maq_info.motivo == "setup"]
+
+        # Soma o tempo de setup em minutos
+        tempo_setup = df_setup.tempo.sum()
+
+        st.metric("Tempo em Setup", tempo_setup)
 
 
-st.write(df_eff)
-st.write(df_maq_info)
+# st.write(df_eff)
+# st.write(df_maq_info)
+
+st.markdown(
+        """
+    <style>
+    [data-testid="stMetricValue"] {
+        font-size: 4vw;
+        text-align: center;
+    }
+    [data-testid="stMetric"] {
+        background-color: #fff;
+        padding: 10px 25px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .card {
+                text-align: center;
+                font-size: 2vw;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                height: 100%;
+                """
+            + opt_1
+            + """
+                }
+    .card2 {
+                        text-align: center;
+                        font-size: 1vw;
+                        background-color: #fff;
+                        padding: 10px;
+                        margin-top: 20px;
+                        border: 1px solid #ddd;
+                        border-radius: 10px;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                        height: 100%;
+                        }
+    </style>
+    """,
+        unsafe_allow_html=True,
+    )

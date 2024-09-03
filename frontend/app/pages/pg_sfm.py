@@ -156,20 +156,20 @@ if selected_page == SUB_OPT_2:
     ].fillna("Não Apontado")
 
     # Encontra o principal motivo de parada
-    grouped = stops.groupby("motivo").tempo.sum().reset_index()
+    grouped = stops.groupby(motivo_problema.lower()).tempo.sum().reset_index()
 
     # Ordena por tempo decrescente
     grouped = grouped.sort_values(by="tempo", ascending=False).reset_index(drop=True)
 
     # Encontra o principal motivo de parada
-    greater_motive = grouped.motivo.iloc[0]
+    greater_motive = grouped[motivo_problema.lower()].iloc[0]
 
     # Se o principal motivo for "Não Apontado", pega o segundo maior
     if greater_motive == "Não Apontado":
-        greater_motive = grouped.motivo.iloc[1]
+        greater_motive = grouped[motivo_problema.lower()].iloc[1]
 
     # Mantém apenas as paradas com o principal motivo
-    greater_motive = stops[stops.motivo == greater_motive]
+    greater_motive = stops[stops[motivo_problema.lower()] == greater_motive]
 
     # Agrupa por causa e soma o tempo
     greater_motive = greater_motive.groupby("causa").tempo.sum().reset_index()
@@ -416,7 +416,7 @@ if selected_page == SUB_OPT_2:
     # Alterar onde o valor é 000000 para None
     table_stops.operador_id = table_stops.operador_id.replace("000000", None)
 
-    # Ajustar o numero da ordem de serviço para visualização
+    # Ajustar o número da ordem de serviço para visualização
     table_stops.os_numero = table_stops.os_numero.fillna(0).astype(int)
     table_stops.os_numero = table_stops.os_numero.astype(str).str.zfill(6)
 
@@ -445,5 +445,5 @@ if selected_page == SUB_OPT_2:
             "Data Hora Final": "Data e Hora do Fim da Parada",
         }
     )
-
-    st.write(table_stops)
+    with st.expander("Tabela de Ocorrências", expanded=False, icon=":material/table_rows:"):
+        st.write(table_stops)

@@ -2,6 +2,7 @@
 
 import pandas as pd
 import streamlit as st
+from streamlit_extras.prometheus import streamlit_registry
 
 # pylint: disable=import-error
 from app.api.requests_ import get_api_data
@@ -15,7 +16,7 @@ ind_play = IndicatorsPlayground()
 # ================================================================================================ #
 
 
-def get_data(url: str, start: str | None = None, end: str | None = None) -> dict:
+def get_data(url: str, start: str | None = None, end: str | None = None) -> pd.DataFrame:
     """Obtém os dados da API."""
     url = f"{url}?start={start}&end={end}" if start and end else url
     data = get_api_data(url)
@@ -39,9 +40,15 @@ def get_history_data() -> pd.DataFrame:
 
     return get_data(APIUrl.URL_HIST_IND.value)
 
+@st.cache_data(show_spinner="Carregando dados das linhas...", ttl=60)
+def get_maq_info() -> pd.DataFrame:
+    """Obtém os dados de eficiência das linhas."""
+    return get_data(APIUrl.URL_INFO_IHM.value)
+
 
 eficiencia, performance, reparo = get_indicators_data()
 history = get_history_data()
+info_ihm = get_maq_info()
 
 # Sortear os dados por data, linha e hora
 eficiencia = eficiencia.sort_values(by=["data_registro", "linha", "hora_registro"]).reset_index(
@@ -127,3 +134,7 @@ st.write(reparo)
 
 st.subheader("Histórico")
 st.write(history)
+
+st.subheader("Info de Máquina")
+st.write(info_ihm)
+
