@@ -36,6 +36,7 @@ class MaquinaInfoModel:
             " ORDER BY t2.data_registro DESC, t2.hora_registro DESC) as fabrica,"
             " t1.status,"
             " t1.turno,"
+            " t1.ciclo_1_min,"
             " t1.contagem_total_ciclos,"
             " t1.contagem_total_produzido,"
             " t1.data_registro,"
@@ -89,6 +90,9 @@ class MaquinaInfoModel:
             "t1.contagem_total_produzido as total_produzido, "
             "t1.data_registro, "
             "t1.hora_registro, "
+            "(SELECT TOP 1 t2.produto_id FROM AUTOMACAO.dbo.maquina_produto t2 "
+            "WHERE t2.maquina_id = t1.maquina_id AND t2.data_registro <= t1.data_registro "
+            "ORDER BY t2.data_registro DESC, t2.hora_registro DESC) as produto_id, "
             "ROW_NUMBER() OVER ( "
             "PARTITION BY t1.data_registro, t1.turno, t1.maquina_id "
             "ORDER BY t1.data_registro DESC, t1.hora_registro DESC"
@@ -104,7 +108,7 @@ class MaquinaInfoModel:
                 "AND hora_registro > '00:01'"
             )
             if first_day != last_day
-            else (f"WHERE rn = 1 AND data_registro >= '{first_day}' AND hora_registro > '00:01'")
+            else f"WHERE rn = 1 AND data_registro >= '{first_day}' AND hora_registro > '00:01'"
         )
 
         # Order by

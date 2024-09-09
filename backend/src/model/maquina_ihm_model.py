@@ -28,9 +28,9 @@ class MaquinaIHMModel:
 
         # Where
         where_ = (
-            (f"WHERE data_registro between '{first_day}' and '{last_day}'")
+            f"WHERE data_registro between '{first_day}' and '{last_day}'"
             if first_day != last_day
-            else (f"WHERE data_registro >= '{first_day}'")
+            else f"WHERE data_registro >= '{first_day}'"
         )
 
         # Query

@@ -27,6 +27,7 @@ from src.helpers.variables import IndicatorType
 from src.service.functions.ind_prod import IndProd
 from src.service.functions.info_ihm_join import InfoIHMJoin
 from src.service.functions.prod_qualid_join import ProdQualidJoin
+from src.controller.protheus_sb1_produtos_controller import ProtheusSB1ProdutosController
 
 app = FastAPI()
 
@@ -41,6 +42,7 @@ perf_controller = PerformanceController()
 reparo_controller = ReparoController()
 historic_ind_controller = HistoricIndController()
 ind_production = IndProd()
+protheus_sb1_produtos_controller = ProtheusSB1ProdutosController()
 
 pd.set_option("future.no_silent_downcast", True)
 
@@ -256,6 +258,20 @@ def get_historic_ind():
         )
     return data.to_json(date_format="iso", orient="split")
 
+# ═══════════════════════════════════════════════════════════════════════════════════ Protheus ══ #
+@app.get("/protheus_sb1")
+def get_protheus_sb1():
+    """
+    Retorna os dados de SB1 do DB local.
+    """
+
+    data = protheus_sb1_produtos_controller.get_data()
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
 
 # ================================================================================================ #
 #                                           LOCAL DB JOBS                                          #
@@ -275,8 +291,11 @@ def create_production_data():
     prod = maquina_info_controller.get_production_data((start, end))
     qual = maquina_qualidade_controller.get_data((start, end))
 
+    # Receber os produtos do protheus
+    products_data = protheus_sb1_produtos_controller.get_data()
+
     # Juntar os dados de produção com os dados de qualidade e info
-    data = prod_qualid_join.join_data(qual, prod)
+    data = prod_qualid_join.join_data(qual, prod, products_data)
 
     # Salva no banco de dados local
     production_controller.replace_data(data)
@@ -359,6 +378,7 @@ def create_ind_history():
     historic_data = historic_ind_controller.get_data()
 
     # Verifica se o mês já está no histórico, se não atualiza ou cria os dados
+
     if month not in historic_data.data_registro.values:
         # Cria o histórico de indicadores
         df_history = hist_f.create_hist_ind(df_info_ihm, df_prod, df_eff, df_perf, df_repair)

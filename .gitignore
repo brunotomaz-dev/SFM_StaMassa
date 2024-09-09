@@ -147,3 +147,9 @@ CMakeLists.txt.user
 
 # CSpell Dictionary
 .cspell/
+
+# Arquivos de configuração do pycharm
+.idea/
+*/.idea/
+frontend/.idea/
+backend/.idea/

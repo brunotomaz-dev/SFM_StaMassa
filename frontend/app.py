@@ -23,16 +23,16 @@ shop_floor_management_page = st.Page(
     icon=":material/monitoring:",
 )
 
+all_lines_page = st.Page(
+    page="app/pages/pg_all_lines.py",
+    title="Ao Vivo",
+    icon=":material/precision_manufacturing:",
+)
+
 grafana_page = st.Page(
     page="app/pages/pg_grafana.py",
     title="NEW PAGE",
     icon=":material/live_tv:",
-)
-
-all_lines_page = st.Page(
-    page="app/pages/pg_all_lines.py",
-    title="All Lines",
-    icon=":material/precision_manufacturing:",
 )
 
 # ================================================================================================ #

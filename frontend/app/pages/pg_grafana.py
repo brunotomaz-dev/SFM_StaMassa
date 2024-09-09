@@ -2,27 +2,30 @@
 
 import pandas as pd
 import streamlit as st
+from streamlit_extras.prometheus import streamlit_registry
 
 # pylint: disable=import-error
 from app.api.requests_ import get_api_data
 from app.api.urls import APIUrl
 from app.functions.indicators_playground import IndicatorsPlayground
+from app.functions.get_date import GetDate
 
 ind_play = IndicatorsPlayground()
+get_date = GetDate()
 
 # ================================================================================================ #
 #                                         REQUISIÇÃO DE API                                        #
 # ================================================================================================ #
 
 
-def get_data(url: str, start: str | None = None, end: str | None = None) -> dict:
+def get_data(url: str, start: str | None = None, end: str | None = None) -> pd.DataFrame:
     """Obtém os dados da API."""
     url = f"{url}?start={start}&end={end}" if start and end else url
     data = get_api_data(url)
     return data
 
 
-@st.cache_data(show_spinner="Carregando dados do indicadores...", ttl=600)
+@st.cache_data(show_spinner="Carregando dados do indicadores...", ttl=60)
 def get_indicators_data() -> tuple:
     """Obtém os dados dos indicadores."""
 
@@ -33,15 +36,36 @@ def get_indicators_data() -> tuple:
     return eff, perf, rep
 
 
-@st.cache_data(show_spinner="Carregando dados do histórico indicadores...", ttl=6000)
+@st.cache_data(show_spinner="Carregando dados do histórico indicadores...", ttl=60)
 def get_history_data() -> pd.DataFrame:
     """Obtém os dados do histórico dos indicadores."""
 
     return get_data(APIUrl.URL_HIST_IND.value)
 
+@st.cache_data(show_spinner="Carregando dados das linhas...", ttl=60)
+def get_maq_info() -> pd.DataFrame:
+    """Obtém os dados de eficiência das linhas."""
+    return get_data(APIUrl.URL_INFO_IHM.value)
+
+@st.cache_data(show_spinner="Carregando dados de produção...", ttl=60)
+def get_prod_data() -> pd.DataFrame:
+    """Obtém os dados de produção."""
+    return get_data(APIUrl.URL_PROD.value)
+
+@st.cache_data(show_spinner="Carregando dados de qualidade...", ttl=60)
+def get_quality_data() -> pd.DataFrame:
+    """Obtém os dados de qualidade."""
+    today = get_date.get_today()
+    today = today.strftime("%Y-%m-%d")
+
+    return get_data(APIUrl.URL_MAQ_QUALIDADE.value, start=today, end=today)
+
 
 eficiencia, performance, reparo = get_indicators_data()
 history = get_history_data()
+info_ihm = get_maq_info()
+prod = get_prod_data()
+quality = get_quality_data()
 
 # Sortear os dados por data, linha e hora
 eficiencia = eficiencia.sort_values(by=["data_registro", "linha", "hora_registro"]).reset_index(
@@ -127,3 +151,12 @@ st.write(reparo)
 
 st.subheader("Histórico")
 st.write(history)
+
+st.subheader("Info de Máquina")
+st.write(info_ihm)
+
+st.subheader("Produção")
+st.write(prod)
+
+st.subheader("Qualidade")
+st.write(quality)

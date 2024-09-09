@@ -16,13 +16,15 @@ from app.functions.indicators_playground import IndicatorsPlayground
 from app.helpers.variables import TURNOS, ColorsSTM, IndicatorType
 from streamlit_extras.metric_cards import style_metric_cards
 from streamlit_option_menu import option_menu
+import streamlit_antd_components as stc
+
 
 ind_play = IndicatorsPlayground()
 create_bar_chart_eff = BarChartEff().create_bar_chart_eff
 
 # ================================== Visualizações - Sub-páginas ================================= #
 SUB_OPT_1 = "Principal"
-SUB_OPT_2 = "Análise"
+SUB_OPT_2 = "Análise Mensal"
 
 # ================================================================================================ #
 #                                         REQUISIÇÃO DE API                                        #
@@ -47,14 +49,14 @@ def get_indicators_data() -> tuple:
     return eff, perf, rep
 
 
-@st.cache_data(show_spinner="Carregando dados do histórico indicadores...", ttl=6000)
+@st.cache_data(show_spinner="Carregando dados do histórico indicadores...", ttl=600)
 def get_history_data() -> pd.DataFrame:
     """Obtém os dados do histórico dos indicadores."""
 
     return get_data(APIUrl.URL_HIST_IND.value)
 
 
-@st.cache_data(show_spinner="Carregando dados das paradas...", ttl=6000)
+@st.cache_data(show_spinner="Carregando dados das paradas...", ttl=600)
 def get_stops_data() -> pd.DataFrame:
     """Obtém os dados das paradas."""
 
@@ -65,13 +67,21 @@ def get_stops_data() -> pd.DataFrame:
 #                                            MENU WIDGET                                           #
 # ================================================================================================ #
 
+# with st.sidebar:
+#     selected_page = option_menu(
+#         "Visualização",
+#         [SUB_OPT_1, SUB_OPT_2],
+#         icons=["bi bi-graph-down", "bi bi-bar-chart-line-fill"],
+#         menu_icon="cast",
+#         default_index=0,
+#     )
+
 with st.sidebar:
-    selected_page = option_menu(
-        "Visualização",
-        [SUB_OPT_1, SUB_OPT_2],
-        icons=["bi bi-graph-down", "bi bi-bar-chart-line-fill"],
-        menu_icon="cast",
-        default_index=0,
+    selected_page = stc.menu(
+        [
+            stc.MenuItem(SUB_OPT_1, icon="bi bi-graph-down"),
+            stc.MenuItem(SUB_OPT_2, icon="bi bi-bar-chart-line-fill"),
+        ]
     )
 
 
@@ -156,20 +166,20 @@ if selected_page == SUB_OPT_2:
     ].fillna("Não Apontado")
 
     # Encontra o principal motivo de parada
-    grouped = stops.groupby("motivo").tempo.sum().reset_index()
+    grouped = stops.groupby(motivo_problema.lower()).tempo.sum().reset_index()
 
     # Ordena por tempo decrescente
     grouped = grouped.sort_values(by="tempo", ascending=False).reset_index(drop=True)
 
     # Encontra o principal motivo de parada
-    greater_motive = grouped.motivo.iloc[0]
+    greater_motive = grouped[motivo_problema.lower()].iloc[0]
 
     # Se o principal motivo for "Não Apontado", pega o segundo maior
     if greater_motive == "Não Apontado":
-        greater_motive = grouped.motivo.iloc[1]
+        greater_motive = grouped[motivo_problema.lower()].iloc[1]
 
     # Mantém apenas as paradas com o principal motivo
-    greater_motive = stops[stops.motivo == greater_motive]
+    greater_motive = stops[stops[motivo_problema.lower()] == greater_motive]
 
     # Agrupa por causa e soma o tempo
     greater_motive = greater_motive.groupby("causa").tempo.sum().reset_index()
@@ -416,7 +426,7 @@ if selected_page == SUB_OPT_2:
     # Alterar onde o valor é 000000 para None
     table_stops.operador_id = table_stops.operador_id.replace("000000", None)
 
-    # Ajustar o numero da ordem de serviço para visualização
+    # Ajustar o número da ordem de serviço para visualização
     table_stops.os_numero = table_stops.os_numero.fillna(0).astype(int)
     table_stops.os_numero = table_stops.os_numero.astype(str).str.zfill(6)
 
@@ -445,5 +455,5 @@ if selected_page == SUB_OPT_2:
             "Data Hora Final": "Data e Hora do Fim da Parada",
         }
     )
-
-    st.write(table_stops)
+    with st.expander("Tabela de Ocorrências", expanded=False, icon=":material/table_rows:"):
+        st.write(table_stops)
