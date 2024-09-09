@@ -31,7 +31,7 @@ all_lines_page = st.Page(
 
 per_hour_page = st.Page(
     page="app/pages/pg_prod_hour.py",
-    title="Por hora",
+    title="Produção por hora",
     icon=":material/package_2:",
 )
 
