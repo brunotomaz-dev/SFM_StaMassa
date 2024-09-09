@@ -17,7 +17,7 @@ class ProdQualidJoin:
         self.df_quality = None
         self.df_production = None
 
-    def join_data(self, df_quality, df_production) -> pd.DataFrame:
+    def join_data(self, df_quality, df_production, data_products: pd.DataFrame | None = None) -> pd.DataFrame:
         """
         Junta os DataFrames de qualidade e produção.
         """
@@ -39,6 +39,17 @@ class ProdQualidJoin:
             on=["linha", "maquina_id", "data_registro", "turno"],
             how="left",
         )
+
+
+
+        if data_products is not None:
+            # Converter o tipo da coluna para string
+            df.produto_id = df.produto_id.astype(str)
+            data_products.produto_id = data_products.produto_id.astype(str)
+            # Trazer a descrição do produto de data_products para o DataFrame
+            df = df.merge(data_products, on="produto_id", how="left")
+            # Renomear coluna descricao
+            df = df.rename(columns={"descricao": "produto"})
 
         # Renomear coluna total produzido
         df = df.rename(columns={"total_produzido": "total_produzido_sensor"})
@@ -62,6 +73,7 @@ class ProdQualidJoin:
                 "linha",
                 "maquina_id",
                 "turno",
+                "produto" if data_products is not None else "produto_id",
                 "total_ciclos",
                 "total_produzido_sensor",
                 "bdj_vazias",

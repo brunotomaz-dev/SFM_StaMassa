@@ -17,12 +17,12 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bo
     """
     opt_color = {
         IndicatorType.PERFORMANCE: [
-            [0.92, ColorsSTM.RED.value],  # Acima de 4% é vermelho
-            [1, ColorsSTM.GREEN.value],  # 4% e abaixo é verde
+            [0.08, ColorsSTM.GREEN.value],  # 4% e abaixo é verde
+            [1, ColorsSTM.RED.value],  # Acima de 4% é vermelho
         ],
         IndicatorType.REPAIR: [
-            [0.92, ColorsSTM.RED.value],  # Acima de 4% é vermelho
-            [1, ColorsSTM.GREEN.value],  # 4% e abaixo é verde
+            [0.08, ColorsSTM.GREEN.value],  # 4% e abaixo é verde
+            [1, ColorsSTM.RED.value],  # Acima de 4% é vermelho
         ],
         IndicatorType.EFFICIENCY: [
             [0.9, ColorsSTM.RED.value],  # Até 90% é vermelho
@@ -31,14 +31,14 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bo
     }[indicator]
 
     opt_range_min = {
-        IndicatorType.PERFORMANCE: 50,
-        IndicatorType.REPAIR: 50,
+        IndicatorType.PERFORMANCE: 0,
+        IndicatorType.REPAIR: 0,
         IndicatorType.EFFICIENCY: 0,
     }[indicator]
 
     opt_range_max = {
-        IndicatorType.PERFORMANCE: 0,
-        IndicatorType.REPAIR: 0,
+        IndicatorType.PERFORMANCE: 50,
+        IndicatorType.REPAIR: 50,
         IndicatorType.EFFICIENCY: 100,
     }[indicator]
 
@@ -62,13 +62,13 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bo
                 {
                     "name": indicator,
                     "title": {
-                        "show": True,
-                        "offsetCenter": [0, "75%"] if large else [0, "110%"],
+                        "show": False if large else True,
+                        "offsetCenter":[0, "110%"],
                         "color": "auto",
                         "textStyle": {"fontSize": 24 if large else 14, "fontWeight": "bold"},
                     },
                     "type": "gauge",
-                    "center": ["50%", "55%"],
+                    "center": ["50%", "45%"] if large else ["50%", "55%"],
                     "detail": {
                         "formatter": "{value}%",
                         "valueAnimation": True,

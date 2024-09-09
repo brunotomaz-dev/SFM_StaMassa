@@ -16,13 +16,15 @@ from app.functions.indicators_playground import IndicatorsPlayground
 from app.helpers.variables import TURNOS, ColorsSTM, IndicatorType
 from streamlit_extras.metric_cards import style_metric_cards
 from streamlit_option_menu import option_menu
+import streamlit_antd_components as stc
+
 
 ind_play = IndicatorsPlayground()
 create_bar_chart_eff = BarChartEff().create_bar_chart_eff
 
 # ================================== Visualizações - Sub-páginas ================================= #
 SUB_OPT_1 = "Principal"
-SUB_OPT_2 = "Análise"
+SUB_OPT_2 = "Análise Mensal"
 
 # ================================================================================================ #
 #                                         REQUISIÇÃO DE API                                        #
@@ -47,14 +49,14 @@ def get_indicators_data() -> tuple:
     return eff, perf, rep
 
 
-@st.cache_data(show_spinner="Carregando dados do histórico indicadores...", ttl=6000)
+@st.cache_data(show_spinner="Carregando dados do histórico indicadores...", ttl=600)
 def get_history_data() -> pd.DataFrame:
     """Obtém os dados do histórico dos indicadores."""
 
     return get_data(APIUrl.URL_HIST_IND.value)
 
 
-@st.cache_data(show_spinner="Carregando dados das paradas...", ttl=6000)
+@st.cache_data(show_spinner="Carregando dados das paradas...", ttl=600)
 def get_stops_data() -> pd.DataFrame:
     """Obtém os dados das paradas."""
 
@@ -65,13 +67,21 @@ def get_stops_data() -> pd.DataFrame:
 #                                            MENU WIDGET                                           #
 # ================================================================================================ #
 
+# with st.sidebar:
+#     selected_page = option_menu(
+#         "Visualização",
+#         [SUB_OPT_1, SUB_OPT_2],
+#         icons=["bi bi-graph-down", "bi bi-bar-chart-line-fill"],
+#         menu_icon="cast",
+#         default_index=0,
+#     )
+
 with st.sidebar:
-    selected_page = option_menu(
-        "Visualização",
-        [SUB_OPT_1, SUB_OPT_2],
-        icons=["bi bi-graph-down", "bi bi-bar-chart-line-fill"],
-        menu_icon="cast",
-        default_index=0,
+    selected_page = stc.menu(
+        [
+            stc.MenuItem(SUB_OPT_1, icon="bi bi-graph-down"),
+            stc.MenuItem(SUB_OPT_2, icon="bi bi-bar-chart-line-fill"),
+        ]
     )
 
 

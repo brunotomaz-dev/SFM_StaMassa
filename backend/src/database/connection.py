@@ -10,6 +10,8 @@ from os import getenv
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
+from sqlalchemy.engine import Engine
+
 load_dotenv()
 
 
@@ -19,21 +21,6 @@ class Connection:
     """
 
     def __init__(self):
-        """
-        Constructor
-
-        Args:
-            user (str): user
-            password (str): password
-            database (str): database
-            driver (str): driver
-            server (str): server
-
-        Usage:
-            >>> from connection import Connection
-            >>> connection = Connection()
-            >>> connection.get_connection()
-        """
         self.__user = getenv("PYMSSQL_USER")
         self.__password = getenv("PYMSSQL_PASSWORD")
         self.__database = getenv("PYMSSQL_DATABASE_AUTOMACAO")
@@ -41,17 +28,12 @@ class Connection:
         self.__driver = "{ODBC Driver 17 for SQL Server}"
         self.__server = getenv("PYMSSQL_SERVER")
 
-    def get_connection_automacao(self):
+    def get_connection_automacao(self) -> Engine:
         """
         Get connection
 
         Returns:
             object: connection
-
-        Usage:
-            >>> from connection import Connection
-            >>> connection = Connection()
-            >>> connection.get_connection()
         """
         try:
             params = urllib.parse.quote_plus(
@@ -69,17 +51,13 @@ class Connection:
             print(f"Error: {error}")
             return None
 
-    def get_connection_totvsdb(self):
+    def get_connection_totvsdb(self) -> Engine:
         """
         Get connection
 
         Returns:
             object: connection
 
-        Usage:
-            >>> from connection import Connection
-            >>> connection = Connection()
-            >>> connection.get_connection()
         """
         try:
             params = urllib.parse.quote_plus(
