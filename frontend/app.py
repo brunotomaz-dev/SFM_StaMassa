@@ -29,6 +29,12 @@ all_lines_page = st.Page(
     icon=":material/precision_manufacturing:",
 )
 
+per_hour_page = st.Page(
+    page="app/pages/pg_prod_hour.py",
+    title="Por hora",
+    icon=":material/package_2:",
+)
+
 grafana_page = st.Page(
     page="app/pages/pg_grafana.py",
     title="NEW PAGE",
@@ -39,6 +45,6 @@ grafana_page = st.Page(
 #                                         LAYOUT AN CONFIG                                         #
 # ================================================================================================ #
 
-pg = st.navigation([shop_floor_management_page, all_lines_page, grafana_page])
+pg = st.navigation([shop_floor_management_page, all_lines_page, per_hour_page, grafana_page])
 
 pg.run()
