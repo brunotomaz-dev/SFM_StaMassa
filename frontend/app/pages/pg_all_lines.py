@@ -35,7 +35,7 @@ def get_data(url: str, start: str | None = None, end: str | None = None) -> pd.D
     return data
 
 
-@st.cache_data(show_spinner="Carregando eficiência...")
+@st.cache_data(show_spinner=False, ttl=1200)
 def get_eff_ind() -> pd.DataFrame:
     """
     Obtém os dados de eficiência das linhas.
@@ -43,7 +43,7 @@ def get_eff_ind() -> pd.DataFrame:
     return get_data(APIUrl.URL_EFF.value)
 
 
-@st.cache_data(show_spinner="Carregando dados das linhas...")
+@st.cache_data(show_spinner="Carregando dados das linhas...", ttl=1200)
 def get_maq_info() -> pd.DataFrame:
     """
     Obtém os dados de eficiência das linhas.
@@ -51,7 +51,7 @@ def get_maq_info() -> pd.DataFrame:
     return get_data(APIUrl.URL_INFO_IHM.value)
 
 
-@st.cache_data(show_spinner="Carregando dados de Produção...")
+@st.cache_data(show_spinner="Carregando dados de Produção...", ttl=1200)
 def get_prod() -> pd.DataFrame:
     """
     Obtém os dados de eficiência das linhas.
@@ -59,7 +59,7 @@ def get_prod() -> pd.DataFrame:
     return get_data(APIUrl.URL_PROD.value)
 
 
-@st.cache_data(show_spinner="Carregando Info...")
+@st.cache_data(show_spinner="Carregando Info...", ttl=1200)
 def get_info() -> pd.DataFrame:
     """
     Obtém os dados de eficiência das linhas.
@@ -77,8 +77,8 @@ def get_info() -> pd.DataFrame:
 def get_att() -> str:
     return datetime.now().strftime("%d/%m - %H:%M")
 
-
 atualizado = get_att()
+
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                          Nav Widgets

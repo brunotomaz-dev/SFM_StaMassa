@@ -2,13 +2,12 @@
 
 import pandas as pd
 import streamlit as st
-from streamlit_extras.prometheus import streamlit_registry
 
 # pylint: disable=import-error
 from app.api.requests_ import get_api_data
 from app.api.urls import APIUrl
-from app.functions.indicators_playground import IndicatorsPlayground
 from app.functions.get_date import GetDate
+from app.functions.indicators_playground import IndicatorsPlayground
 
 ind_play = IndicatorsPlayground()
 get_date = GetDate()

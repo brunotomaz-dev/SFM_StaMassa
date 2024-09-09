@@ -3,6 +3,9 @@
 import altair as alt
 import pandas as pd
 import streamlit as st
+# from streamlit_option_menu import option_menu
+import streamlit_antd_components as stc
+from streamlit_extras.metric_cards import style_metric_cards
 
 # pylint: disable=import-error
 from app.api.requests_ import get_api_data
@@ -14,10 +17,6 @@ from app.components.sfm_heatmap import create_heatmap_chart
 from app.components.sfm_line import create_line_chart
 from app.functions.indicators_playground import IndicatorsPlayground
 from app.helpers.variables import TURNOS, ColorsSTM, IndicatorType
-from streamlit_extras.metric_cards import style_metric_cards
-from streamlit_option_menu import option_menu
-import streamlit_antd_components as stc
-
 
 ind_play = IndicatorsPlayground()
 create_bar_chart_eff = BarChartEff().create_bar_chart_eff
