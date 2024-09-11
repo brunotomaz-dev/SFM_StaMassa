@@ -35,6 +35,12 @@ per_hour_page = st.Page(
     icon=":material/package_2:",
 )
 
+pcp_page = st.Page(
+    page="app/pages/pg_pcp.py",
+    title="PCP",
+    icon=":material/production_quantity_limits:",
+)
+
 grafana_page = st.Page(
     page="app/pages/pg_grafana.py",
     title="NEW PAGE",
@@ -45,6 +51,6 @@ grafana_page = st.Page(
 #                                         LAYOUT AND CONFIG                                        #
 # ================================================================================================ #
 
-pg = st.navigation([shop_floor_management_page, all_lines_page, per_hour_page, grafana_page])
+pg = st.navigation([shop_floor_management_page, all_lines_page, per_hour_page, pcp_page, grafana_page])
 
 pg.run()
