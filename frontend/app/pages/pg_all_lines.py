@@ -20,6 +20,56 @@ today, turn = get_date.get_this_turn()
 # Receber a hora
 now = get_date.get_today()
 
+#    ┏━                                                                                    ━┓
+#    ┃                                       Estilos                                        ┃
+#    ┗━                                                                                    ━┛
+st.markdown(
+    """
+<style>
+[data-testid="stMetricValue"] {
+    font-size: 4vw;
+    text-align: center;
+}
+[data-testid="stMetric"] {
+    background-color: #fff;
+    padding: 10px 25px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.card2 {
+    text-align: center;
+    font-size: 1vw;
+    background-color: #fff;
+    padding: 10px;
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}
+.card3 {
+    text-align: center;
+    font-size: 1vw;""" + ColorsSTM.LIGHT_GREY.value + """
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}
+.sidebar-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    padding: 10px;
+    text-align: left;
+    font-size: 0.7vw;
+}
+</style>
+""",
+unsafe_allow_html=True,
+)
+
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                       Requisição de Api
@@ -252,13 +302,22 @@ with (r1_col2):
     df_info.hora_registro = pd.to_datetime(df_info.hora_registro, format="%H:%M:%S")
     df_info_stops = df_info[df_info.status == "rodando"]
     media_ciclos = round(df_info_stops.ciclo_1_min.mean()) if len(df_info_stops) > 0 else 0
+    # Figura principal com os ciclos
     alt_fig_2 = alt.Chart(df_info).mark_line(color="darkgray").encode(
         x=alt.X("hora_registro", title="Hora", axis=alt.Axis(format="%H:%M")),
         y=alt.Y("ciclo_1_min", title="Ciclos"),
     )
+    # Figura da linha da média
     alt_fig_2 += alt.Chart(pd.DataFrame({'media_ciclos': [media_ciclos]})).mark_rule(color="cadetblue").encode(
         y=alt.Y("media_ciclos"),
         tooltip=[alt.Tooltip("media_ciclos", title="Média de Ciclos")]
+    )
+    # Figura com marcação dos ciclos médios
+    str_media = f"Média de Ciclos: {media_ciclos}"
+    alt_fig_2 += (
+    alt.Chart(pd.DataFrame({'Média de Ciclos': [media_ciclos]}))
+    .mark_text(color="cadetblue", dy=-25, fontSize=12)
+    .encode(y=alt.Y("Média de Ciclos"), text=alt.Text("Média de Ciclos"))
     )
     alt_fig_2 = alt_fig_2.properties(
         height=200,
@@ -370,58 +429,19 @@ with st.expander("Tabelas para conferência"):
 st.markdown(
     """
 <style>
-[data-testid="stMetricValue"] {
-    font-size: 4vw;
+.card {
     text-align: center;
-}
-[data-testid="stMetric"] {
-    background-color: #fff;
-    padding: 10px 25px;
+    font-size: 1.8vw;
+    padding: 10px;
     border: 1px solid #ddd;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-.card {
-            text-align: center;
-            font-size: 1.8vw;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            height: 100%;
-            """
+    height: 100%;
+    """
     + opt_1
     + """
-                }
-    .card2 {
-            text-align: center;
-            font-size: 1vw;
-            background-color: #fff;
-            padding: 10px;
-            margin-top: 20px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            height: 100%;
-            }
-    .card3 {
-            text-align: center;
-            font-size: 1vw;""" + ColorsSTM.LIGHT_GREY.value + """
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            height: 100%;
-    }
-    .sidebar-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        padding: 10px;
-        text-align: left;
-        font-size: 0.7vw;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
+}
+</style>
+""",
+unsafe_allow_html=True,
 )

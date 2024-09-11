@@ -65,7 +65,8 @@ df_original.data_registro = pd.to_datetime(df_original.data_registro)
 df_original.data_registro = df_original.data_registro.dt.strftime("%Y-%m-%d")
 
 # Cria uma cópia para manipulação
-df = df_original[df_original.data_registro == adjust_selected_date(select_option)]
+df = df_original.copy()
+df = df[df.data_registro == adjust_selected_date(select_option)]
 
 # Ajusta a data
 df.data_registro = pd.to_datetime(df.data_registro).dt.date
