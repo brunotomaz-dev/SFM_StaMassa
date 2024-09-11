@@ -54,13 +54,14 @@ COLOR_DICT = {
     "Ajustes": BSColorsEnum.PRIMARY_COLOR.value,
     "Manutenção": BSColorsEnum.SPACE_CADET_COLOR.value,
     "Qualidade": BSColorsEnum.INFO_COLOR.value,
-    "Fluxo": BSColorsEnum.PINK_COLOR.value,
+    "Fluxo": BSColorsEnum.INDIGO_COLOR.value,
     "Parada Programada": BSColorsEnum.DANGER_COLOR.value,
     "Setup": BSColorsEnum.BLUE_DELFT_COLOR.value,
     "Saída para Backup": BSColorsEnum.TEAL_COLOR.value,
     "Limpeza": BSColorsEnum.ORANGE_COLOR.value,
     "Rodando": BSColorsEnum.SUCCESS_COLOR.value,
     "Liberada": BSColorsEnum.GREY_500_COLOR.value,
+    "Refeição": BSColorsEnum.PINK_COLOR.value,
 }
 
 MANUT_COLORS = {

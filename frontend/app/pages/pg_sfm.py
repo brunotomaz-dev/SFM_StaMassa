@@ -1,5 +1,7 @@
 """Página de indicadores de eficiência, performance e reparo."""
 
+import asyncio
+
 import altair as alt
 import pandas as pd
 import streamlit as st
@@ -30,36 +32,34 @@ SUB_OPT_2 = "Análise Mensal"
 # ================================================================================================ #
 
 
-def get_data(url: str, start: str | None = None, end: str | None = None) -> pd.DataFrame:
+async def get_data(url: str, start: str | None = None, end: str | None = None) -> pd.DataFrame:
     """Obtém os dados da API."""
     url = f"{url}?start={start}&end={end}" if start and end else url
-    data = get_api_data(url)
+    data = await get_api_data(url)
     return data
 
+async def get_all_data() -> tuple:
+    """Obtém os dados da API."""
+    urls = [
+        APIUrl.URL_EFF.value,
+        APIUrl.URL_PERF.value,
+        APIUrl.URL_REP.value,
+        APIUrl.URL_HIST_IND.value,
+        APIUrl.URL_INFO_IHM.value
+    ]
+    tasks = [get_data(url) for url in urls]
+    results = await asyncio.gather(*tasks)
+    eff = results[0]
+    perf = results[1]
+    rep = results[2]
+    ind = results[3]
+    ihm = results[4]
+    return eff, perf, rep, ind, ihm
 
-@st.cache_data(show_spinner="Carregando dados do indicadores...", ttl=600)
-def get_indicators_data() -> tuple:
-    """Obtém os dados dos indicadores."""
-
-    eff = get_data(APIUrl.URL_EFF.value)
-    perf = get_data(APIUrl.URL_PERF.value)
-    rep = get_data(APIUrl.URL_REP.value)
-
-    return eff, perf, rep
-
-
-@st.cache_data(show_spinner="Carregando dados do histórico indicadores...", ttl=600)
-def get_history_data() -> pd.DataFrame:
-    """Obtém os dados do histórico dos indicadores."""
-
-    return get_data(APIUrl.URL_HIST_IND.value)
-
-
-@st.cache_data(show_spinner="Carregando dados das paradas...", ttl=600)
-def get_stops_data() -> pd.DataFrame:
-    """Obtém os dados das paradas."""
-
-    return get_data(APIUrl.URL_INFO_IHM.value)
+@st.cache_data(show_spinner="Obtendo dados", ttl=600)
+def get_df():
+    eff, perf, rep, ind, ihm = asyncio.run(get_all_data())
+    return eff, perf, rep, ind, ihm
 
 
 # ================================================================================================ #
@@ -118,7 +118,7 @@ if selected_page == SUB_OPT_2:
 # ================================================================================================ #
 #                                            DATAFRAMES                                            #
 # ================================================================================================ #
-eficiencia, performance, reparo = get_indicators_data()
+eficiencia, performance, reparo, history_ind, stops = get_df()
 
 # ==================================== Ajustes Dos Indicadores =================================== #
 df_eff = ind_play.get_indicator(eficiencia, IndicatorType.EFFICIENCY, turn, line_turn, fabrica)
@@ -132,7 +132,6 @@ repair_actual = round(df_rep.reparo.dropna().mean())
 
 
 if selected_page == SUB_OPT_1:
-    history_ind = get_history_data()
 
     # Heatmap - Ajuste dos dataframes para a estrutura cartesiana para o heatmap
     df_eff_opt, days_eff, ref_eff = ind_play.create_heatmap_structure(
@@ -151,7 +150,6 @@ if selected_page == SUB_OPT_1:
     repair_last = round(history_ind.iloc[-1][IndicatorType.REPAIR.value] * 100)
 
 if selected_page == SUB_OPT_2:
-    stops = get_stops_data()
 
     # Filtra removendo o status 'rodando'
     stops = stops[stops.status != "rodando"]

@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -16,14 +17,20 @@ get_date = GetDate()
 #                                       Requisição de api
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-
-def get_data(url: str, start: str | None = None, end: str | None = None) -> pd.DataFrame:
+async def get_all_data() -> pd.DataFrame:
     """
     Obtém os dados da API.
     """
-    url = f"{url}?start={start}&end={end}" if start and end else url
-    data = get_api_data(url)
-    return data
+    # Obtém a data de hoje
+    today = get_date.get_today()
+    # Ajusta a data para o formato correto
+    today = today.strftime("%Y-%m-%d")
+    yesterday = (datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    url = f"{APIUrl.URL_MAQ_INFO.value}?start={yesterday}&end={today}"
+    tasks = [get_api_data(url)]
+    results = await asyncio.gather(*tasks)
+    return results[0]
 
 
 @st.cache_data(ttl=60, show_spinner="Carregando dados...")
@@ -31,14 +38,9 @@ def get_prod_data() -> pd.DataFrame:
     """
     Obtém os dados das linhas.
     """
+    data = asyncio.run(get_all_data())
 
-    # Obtém a data de hoje
-    today = get_date.get_today()
-    # Ajusta a data para o formato correto
-    today = today.strftime("%Y-%m-%d")
-    yesterday = (datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")
-
-    return get_data(APIUrl.URL_MAQ_INFO.value, yesterday, today)
+    return data
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                            Sidebar

@@ -1,5 +1,6 @@
 """Página de visão das linhas."""
 
+import asyncio
 from datetime import datetime
 
 import altair as alt
@@ -76,47 +77,30 @@ unsafe_allow_html=True,
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 
-def get_data(url: str, start: str | None = None, end: str | None = None) -> pd.DataFrame:
+async def get_data() -> tuple:
     """
     Obtém os dados da API.
     """
-    url = f"{url}?start={start}&end={end}" if start and end else url
-    data = get_api_data(url)
-    return data
-
-
-@st.cache_data(show_spinner=False, ttl=1200)
-def get_eff_ind() -> pd.DataFrame:
-    """
-    Obtém os dados de eficiência das linhas.
-    """
-    return get_data(APIUrl.URL_EFF.value)
-
-
-@st.cache_data(show_spinner="Carregando dados das linhas...", ttl=1200)
-def get_maq_info() -> pd.DataFrame:
-    """
-    Obtém os dados de eficiência das linhas.
-    """
-    return get_data(APIUrl.URL_INFO_IHM.value)
-
-
-@st.cache_data(show_spinner="Carregando dados de Produção...", ttl=1200)
-def get_prod() -> pd.DataFrame:
-    """
-    Obtém os dados de eficiência das linhas.
-    """
-    return get_data(APIUrl.URL_PROD.value)
-
-
-@st.cache_data(show_spinner="Carregando Info...", ttl=1200)
-def get_info() -> pd.DataFrame:
-    """
-    Obtém os dados de eficiência das linhas.
-    """
     date_now = datetime.now()
     now_ = date_now.strftime("%Y-%m-%d")
-    return get_data(APIUrl.URL_MAQ_INFO.value, start=now_, end=now_)
+    urls = [
+        APIUrl.URL_EFF.value,
+        APIUrl.URL_INFO_IHM.value,
+        APIUrl.URL_PROD.value,
+        f"{APIUrl.URL_MAQ_INFO.value}?start={now_}&end={now_}",
+    ]
+    tasks = [get_api_data(url) for url in urls]
+    results = await asyncio.gather(*tasks)
+    eff = results[0]
+    info_ihm = results[1]
+    prod = results[2]
+    info = results[3]
+    return eff, info_ihm, prod, info
+
+@st.cache_data(show_spinner="Obtendo dados", ttl=1200)
+def get_df():
+    eff, info_ihm, prod, info = asyncio.run(get_data())
+    return eff, info_ihm, prod, info
 
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -160,11 +144,7 @@ if st.sidebar.button("Atualizar Dados"):
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                           Dataframes
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-df_eff = get_eff_ind()
-df_maq_info_original = get_maq_info()
-df_prod = get_prod()
-df_info = get_info()
+df_eff, df_maq_info_original, df_prod, df_info = get_df()
 
 # ════════════════════════════════════════════════════════════════ Ajustar O Dataframe De Info ══ #
 
@@ -278,6 +258,8 @@ with (r1_col2):
         # Onde problema e causa forem nulos, preencher com não apontado
         data_filtered.problema = data_filtered.problema.fillna("Não apontado")
         data_filtered.causa = data_filtered.causa.fillna("")
+        # Se a causa for refeição, preencher o problema com refeição
+        data_filtered.problema = data_filtered.problema.mask(data_filtered.motivo == "Parada Programada", data_filtered.causa)
         # Ordena o dataframe pelo tempo
         data_filtered = data_filtered.sort_values(by="tempo")
 
@@ -316,7 +298,7 @@ with (r1_col2):
     str_media = f"Média de Ciclos: {media_ciclos}"
     alt_fig_2 += (
     alt.Chart(pd.DataFrame({'Média de Ciclos': [media_ciclos]}))
-    .mark_text(color="cadetblue", dy=-25, fontSize=12)
+    .mark_text(color="cadetblue", dy=-15, fontSize=12)
     .encode(y=alt.Y("Média de Ciclos"), text=alt.Text("Média de Ciclos"))
     )
     alt_fig_2 = alt_fig_2.properties(
@@ -346,6 +328,8 @@ with (r1_col2):
     # Preencher motivo nulo com não apontado
     timeline_data.motivo = timeline_data.motivo.fillna("Não apontado")
     timeline_data.causa = timeline_data.causa.fillna("")
+    # Se a causa for refeição, preencher o problema com refeição
+    timeline_data.motivo = timeline_data.motivo.mask(timeline_data.causa == "Refeição", "Refeição")
     motivos_presentes = timeline_data.motivo.unique()
     color_timeline = {motivo: COLOR_DICT[motivo] for motivo in motivos_presentes}
 
