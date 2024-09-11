@@ -156,7 +156,7 @@ eff_value = round(df_eff.eficiencia.mean() * 100) if not df_eff.empty else 0
 #                                             Layout
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-st.subheader(f"Máquina: {df_eff.maquina_id.iloc[0]}" if not df_eff.empty else None)
+st.subheader(f"Linha: {line} / Máquina: {df_eff.maquina_id.iloc[0]}" if not df_eff.empty else None)
 st.divider()
 
 r1_col1, r1_col2, r1_col3 = st.columns([1, 4, 1])
@@ -347,7 +347,7 @@ with r1_col3:
     # ────────────────────────────────────────────────────────────────────────────────── Setup ── #
     with st.container():
         # Selecionar as linhas com motivo setup
-        df_setup = df_maq_info[df_maq_info.motivo == "setup"]
+        df_setup = df_maq_info[df_maq_info.motivo == "Setup"]
 
         # Soma o tempo de setup em minutos
         tempo_setup = df_setup.tempo.sum()

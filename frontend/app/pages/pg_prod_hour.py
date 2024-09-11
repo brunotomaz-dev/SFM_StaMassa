@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -24,7 +26,7 @@ def get_data(url: str, start: str | None = None, end: str | None = None) -> pd.D
     return data
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=60, show_spinner="Carregando dados...")
 def get_prod_data() -> pd.DataFrame:
     """
     Obtém os dados das linhas.
@@ -34,19 +36,36 @@ def get_prod_data() -> pd.DataFrame:
     today = get_date.get_today()
     # Ajusta a data para o formato correto
     today = today.strftime("%Y-%m-%d")
+    yesterday = (datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")
 
-    return get_data(APIUrl.URL_MAQ_INFO.value, today, today)
+    return get_data(APIUrl.URL_MAQ_INFO.value, yesterday, today)
+
+#    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+#                                            Sidebar
+#    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+select_option = st.sidebar.selectbox("Data dos dados:", ["Hoje", "Ontem"])
 
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                           Dataframe
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+def adjust_selected_date(date_: str) -> str:
+
+    if date_ == "Hoje":
+        return get_date.get_today().strftime("%Y-%m-%d")
+
+    return (get_date.get_today() - timedelta(days=1)).strftime("%Y-%m-%d")
 
 # Recebe os dados
 df_original = get_prod_data()
 
-# Cria uma cpia para manipulação
-df = df_original.copy()
+# Ajustar a data para comparação
+df_original.data_registro = pd.to_datetime(df_original.data_registro)
+df_original.data_registro = df_original.data_registro.dt.strftime("%Y-%m-%d")
+
+# Cria uma cópia para manipulação
+df = df_original[df_original.data_registro == adjust_selected_date(select_option)]
 
 # Ajusta a data
 df.data_registro = pd.to_datetime(df.data_registro).dt.date
@@ -72,7 +91,7 @@ df = df.set_index(["data_hora", "linha"])
 # Agrupar os dados
 df = (df
     .groupby("linha")
-    .resample("H", level="data_hora")
+    .resample("h", level="data_hora")
     .agg(
         {
             "contagem_total_produzido": ["first", "last"],

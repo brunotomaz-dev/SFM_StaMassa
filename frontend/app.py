@@ -42,7 +42,7 @@ grafana_page = st.Page(
 )
 
 # ================================================================================================ #
-#                                         LAYOUT AN CONFIG                                         #
+#                                         LAYOUT AND CONFIG                                        #
 # ================================================================================================ #
 
 pg = st.navigation([shop_floor_management_page, all_lines_page, per_hour_page, grafana_page])
