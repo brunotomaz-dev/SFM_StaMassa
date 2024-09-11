@@ -12,6 +12,7 @@ from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 
 # pylint: disable=E0401
+from src.controller.protheus_cyv_controller import ProtheusCYVController
 from src.controller.efficiency_controller import EfficiencyController
 from src.controller.historic_ind_controller import HistoricIndController
 from src.controller.info_ihm_controller import InfoIHMController
@@ -20,6 +21,7 @@ from src.controller.maquina_info_controller import MaquinaInfoController
 from src.controller.maquina_qualidade_controller import MaquinaQualidadeController
 from src.controller.performance_controller import PerformanceController
 from src.controller.production_controller import ProductionController
+from src.controller.protheus_cyv_controller import ProtheusCYVController
 from src.controller.reparo_controller import ReparoController
 from src.functions import date_f
 from src.functions import history_functions as hist_f
@@ -43,6 +45,7 @@ reparo_controller = ReparoController()
 historic_ind_controller = HistoricIndController()
 ind_production = IndProd()
 protheus_sb1_produtos_controller = ProtheusSB1ProdutosController()
+protheus_cyv_controller = ProtheusCYVController()
 
 pd.set_option("future.no_silent_downcast", True)
 
@@ -266,6 +269,59 @@ def get_protheus_sb1():
     """
 
     data = protheus_sb1_produtos_controller.get_data()
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
+
+@app.get("/protheus_cyv/massa")
+def get_protheus_cyv_massa():
+    """
+    Retorna os dados de CYV Massa do DB local.
+    """
+
+    data = protheus_cyv_controller.get_massa_data()
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
+@app.get("/protheus_cyv/massa_week")
+def get_protheus_cyv_massa_week():
+    """
+    Retorna os dados de CYV Massa do DB local.
+    """
+
+    data = protheus_cyv_controller.get_massa_week_data()
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
+@app.get("/protheus_cyv/pasta")
+def get_protheus_cyv_pasta():
+    """
+    Retorna os dados de CYV Pasta do DB local.
+    """
+
+    data = protheus_cyv_controller.get_pasta_data()
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
+@app.get("/protheus_cyv/pasta_week")
+def get_protheus_cyv_pasta_week():
+    """
+    Retorna os dados de CYV Pasta do DB local.
+    """
+
+    data = protheus_cyv_controller.get_pasta_week_data()
     if data is None:
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}

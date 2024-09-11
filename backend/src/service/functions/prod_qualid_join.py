@@ -40,8 +40,7 @@ class ProdQualidJoin:
             how="left",
         )
 
-
-
+        # Se houver dados de produtos
         if data_products is not None:
             # Converter o tipo da coluna para string
             df.produto_id = df.produto_id.astype(str)
