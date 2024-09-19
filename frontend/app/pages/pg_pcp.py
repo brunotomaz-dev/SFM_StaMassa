@@ -1,4 +1,5 @@
 import asyncio
+import time
 from enum import Enum
 
 import numpy as np
@@ -12,13 +13,16 @@ from app.api.requests_ import get_api_data
 from app.api.urls import APIUrl
 from app.functions.get_date import GetDate
 from app.functions.production_adj import adjust_pao
+from app.helpers.variables import RENDIMENTO_PASTA_PAO
 
 get_date = GetDate()
+
 
 class PageSelection(Enum):
     MASSA = "Massa"
     PASTA = "Pasta"
     PRODUCAO_PAES = "Produção de Pães"
+
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                       Requisição de API
@@ -31,6 +35,7 @@ async def get_data(url: str, start: str | None = None, end: str | None = None) -
     url = f"{url}?start={start}&end={end}" if start and end else url
     data = await get_api_data(url)
     return data
+
 
 # Teste de dados
 async def get_all_data() -> tuple:
@@ -50,10 +55,12 @@ async def get_all_data() -> tuple:
     caixas_cf = results[4]
     return massa, pasta, massa_week, pasta_week, caixas_cf
 
+
 @st.cache_data(show_spinner="Obtendo dados", ttl=60000)
 def get_df():
     massa, pasta, massa_week, pasta_week, caixas_cf = asyncio.run(get_all_data())
     return massa, pasta, massa_week, pasta_week, caixas_cf
+
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                            Sidebar
@@ -90,10 +97,8 @@ massa_columns = [
 ]
 
 # Renomear colunas
-df_massa.columns = [
-    "Data",
-    *massa_columns,
-]
+df_massa.columns = ["Data", *massa_columns]
+
 df_massa_week.columns = [
     "Ano",
     "Semana",
@@ -105,6 +110,32 @@ df_massa_week.columns = [
 df_massa["Data"] = pd.to_datetime(df_massa["Data"]).dt.date
 df_massa_week["Data Inicial"] = pd.to_datetime(df_massa_week["Data Inicial"]).dt.date
 
+pasta_columns = [
+    "Turno",
+    "Fábrica",
+    "Tradicional Batidas",
+    "Tradicional Peso",
+    "Picante Batidas",
+    "Picante Peso",
+    "Cebola Batidas",
+    "Cebola Peso",
+    "Doce Batidas",
+    "Doce Peso",
+]
+
+df_pasta.columns = ["Data", *pasta_columns]
+
+df_pasta_week.columns = [
+    "Ano",
+    "Semana",
+    "Data Inicial",
+    *pasta_columns,
+]
+
+# Ajustar o formato da coluna "Data"
+df_pasta["Data"] = pd.to_datetime(df_pasta["Data"]).dt.date
+df_pasta_week["Data Inicial"] = pd.to_datetime(df_pasta_week["Data Inicial"]).dt.date
+
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                             Layout
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -114,28 +145,30 @@ st.header("PCP")
 #    │                                Visualização de Massa                                 │
 #    ╰─                                                                                    ─╯
 
+# Ajustar a produção de pães
+production = adjust_pao(df_caixas_cf)
+
 if pg_selection == PageSelection.MASSA.value:
     st.subheader("Análise de Massa - Produzido x Consumido")
 
     # ─────────────────────────────────────────────────────────────────────── Análise De Massa ── #
-    # Ajustar a produção de pães
-    production = adjust_pao(df_caixas_cf)
+    df_production = production.copy()
 
     # Máscara para selecionar pão bolinha
-    mask = production["Produto"].str.contains("BOL ")
+    mask = df_production["Produto"].str.contains("BOL ")
 
     # Adicionar a produção de Bolinha a uma coluna
-    production["Bolinha"] = mask.astype(int) * production["Pães"]
+    df_production["Bolinha"] = mask.astype(int) * df_production["Pães"]
     # Remover a produção de bolinha da coluna de pão
-    production["Baguete"] = production["Pães"].sub(production["Bolinha"])
+    df_production["Baguete"] = df_production["Pães"].sub(df_production["Bolinha"])
 
     # Agrupar por ano, semana e fábrica
-    production = (production
-                  .groupby(["Ano", "Semana", "Data Inicial", "Fábrica"])
-                  .sum()
-                  .drop(columns="Produto")
-                  .reset_index()
-                  )
+    df_production = (df_production
+                     .groupby(["Ano", "Semana", "Data Inicial", "Fábrica"])
+                     .sum()
+                     .drop(columns="Produto")
+                     .reset_index()
+                     )
 
     massa_week = (df_massa_week
                   .groupby(["Ano", "Semana", "Data Inicial", "Fábrica"])
@@ -145,11 +178,11 @@ if pg_selection == PageSelection.MASSA.value:
                   )
 
     # Garantir que a data seja datetime
-    production["Data Inicial"] = pd.to_datetime(production["Data Inicial"])
+    df_production["Data Inicial"] = pd.to_datetime(df_production["Data Inicial"])
     massa_week["Data Inicial"] = pd.to_datetime(massa_week["Data Inicial"])
 
     # Unir as duas tabelas
-    df_analysis = pd.merge(production, massa_week, on=["Ano", "Semana", "Data Inicial", "Fábrica"], how="outer")
+    df_analysis = pd.merge(df_production, massa_week, on=["Ano", "Semana", "Data Inicial", "Fábrica"], how="outer")
 
     # Criar uma coluna com a diferença entre massa produzida e consumida
     df_analysis["Dif. Baguete"] = df_analysis["Baguete Total(un)"] - df_analysis["Baguete"]
@@ -186,7 +219,7 @@ if pg_selection == PageSelection.MASSA.value:
     ]
 
     # Ordenar pela semana e fábrica
-    df_analysis = df_analysis.sort_values(by=["Ano", "Semana", "Fábrica"], ascending=[False, False,True])
+    df_analysis = df_analysis.sort_values(by=["Ano", "Semana", "Fábrica"], ascending=[False, False, True])
 
     # ───────────────────────────────────────────────────────────────────── Gráfico De Análise ── #
     now = get_date.get_today()
@@ -198,12 +231,18 @@ if pg_selection == PageSelection.MASSA.value:
     df_analysis_chart["Bolinha Diferença(un)"] = df_analysis_chart["Bolinha Diferença(un)"].astype(float)
 
     # Encontrar a % de Perda
-    df_analysis_chart.loc[:, "Baguete Diferença(un)"] = ((df_analysis_chart["Baguete Diferença(un)"] / df_analysis_chart["Baguete Produzida(un)"]) * 100).round(2)
-    df_analysis_chart.loc[:, "Bolinha Diferença(un)"] = ((df_analysis_chart["Bolinha Diferença(un)"] / df_analysis_chart["Bolinha Produzida(un)"]) * 100).round(2)
+    df_analysis_chart.loc[:, "Baguete Diferença(un)"] = (
+                (df_analysis_chart["Baguete Diferença(un)"] / df_analysis_chart["Baguete Produzida(un)"]) * 100).round(
+        2)
+    df_analysis_chart.loc[:, "Bolinha Diferença(un)"] = (
+                (df_analysis_chart["Bolinha Diferença(un)"] / df_analysis_chart["Bolinha Produzida(un)"]) * 100).round(
+        2)
 
     # Adicionar colunas de fábrica
-    df_analysis_chart.loc[:, "Baguete Fábrica 1"] = np.where(df_analysis_chart["Fábrica"] == "Fab. 1", df_analysis_chart["Baguete Diferença(un)"], 0)
-    df_analysis_chart.loc[:, "Baguete Fábrica 2"] = np.where(df_analysis_chart["Fábrica"] == "Fab. 2", df_analysis_chart["Baguete Diferença(un)"], 0)
+    df_analysis_chart.loc[:, "Baguete Fábrica 1"] = np.where(df_analysis_chart["Fábrica"] == "Fab. 1",
+                                                             df_analysis_chart["Baguete Diferença(un)"], 0)
+    df_analysis_chart.loc[:, "Baguete Fábrica 2"] = np.where(df_analysis_chart["Fábrica"] == "Fab. 2",
+                                                             df_analysis_chart["Baguete Diferença(un)"], 0)
 
     # Preencher valores nulos das novas colunas
     df_analysis_chart.loc[:, "Baguete Fábrica 1"] = df_analysis_chart["Baguete Fábrica 1"].fillna(0)
@@ -233,6 +272,7 @@ if pg_selection == PageSelection.MASSA.value:
     # Ajustar a data para dia/mês
     df_analysis["Data Inicial"] = pd.to_datetime(df_analysis["Data Inicial"]).dt.strftime("%d/%m")
 
+
     # Ajuste de cor
     def color_highlight(val):
         color = "red" if val > 0 else "black"
@@ -259,7 +299,7 @@ if pg_selection == PageSelection.MASSA.value:
             .sum()
             .drop(columns="Turno")
             .reset_index()
-            )
+        )
         # Ordenar pela semana e fábrica
         df_massa_week_grouped = df_massa_week_grouped.sort_values(
             by=["Ano", "Semana", "Fábrica"], ascending=[False, False, True]
@@ -287,13 +327,222 @@ if pg_selection == PageSelection.MASSA.value:
         st.dataframe(df_massa_total, hide_index=True, use_container_width=True)
 
 #    ╭─                                                                                    ─╮
+#    │                                Visualização de pasta                                 │
+#    ╰─                                                                                    ─╯
+
+if pg_selection == PageSelection.PASTA.value:
+    st.subheader("Análise de Pasta - Produzido x Consumido")
+
+    # ────────────────────────────────────────────────────────────────────── Análise De Pasta ── #
+    # Ajustar a produção de pães
+    df_prod = production.copy()
+
+    # Calcular a quantidade de pasta usada por produto
+    df_prod["Pasta usada(kg)"] = df_prod["Pães"] * df_prod["Produto"].map(RENDIMENTO_PASTA_PAO)
+
+    # Mapeamento de produto
+    prod_dict = {
+        r".*TRD.*": "Tradicional",
+        r".*CEB.*": "Cebola",
+        r".*PIC.*": "Picante",
+        r".*DOCE.*": "Doce",
+    }
+
+    # Substituir o nome do produto
+    df_prod["Produto"] = df_prod["Produto"].replace(prod_dict, regex=True)
+
+    # Agrupar por ano, semana e fábrica
+    df_prod = (df_prod
+               .groupby(["Ano", "Semana", "Data Inicial", "Fábrica", "Produto"])
+               .sum()
+               .reset_index()
+               )
+
+    # Pivot table
+    df_prod = df_prod.pivot_table(
+        index=["Ano", "Semana", "Data Inicial", "Fábrica"],
+        columns="Produto",
+        values="Pasta usada(kg)",
+        fill_value=0,
+    ).reset_index()
+
+    # Pasta por semana
+    df_pasta_w = df_pasta_week.copy()
+
+    # Agrupar por ano, semana e fábrica
+    df_pasta_w = (df_pasta_w.groupby(["Ano", "Semana", "Data Inicial", "Fábrica"])
+                  .sum()
+                  .drop(columns="Turno")
+                  .reset_index()
+                  )
+
+    # Garantir que as datas das tabelas sejam datetime
+    df_prod["Data Inicial"] = pd.to_datetime(df_prod["Data Inicial"]).dt.date
+    df_pasta_w["Data Inicial"] = pd.to_datetime(df_pasta_w["Data Inicial"]).dt.date
+
+    # Unir as duas tabelas
+    df_pasta_w = pd.merge(df_pasta_w, df_prod, on=["Ano", "Semana", "Data Inicial", "Fábrica"], how="outer")
+
+    # Timer para garantir união das tabelas
+    time.sleep(1)
+
+    # Calcular a diferença entre a pasta produzida e consumida
+    for col in df_pasta_w.columns[12:]:
+        df_pasta_w[f"{col} Diferença(kg)"] = df_pasta_w[f"{col} Peso"] - df_pasta_w[col]
+
+    # Ordenar por data
+    df_pasta_w = df_pasta_w.sort_values(by=["Ano", "Semana", "Fábrica"], ascending=[False, False, True])
+
+    # Ordenar as colunas para melhor visualização
+    df_pasta_w = df_pasta_w[
+        [
+            "Ano",
+            "Semana",
+            "Data Inicial",
+            "Fábrica",
+            "Tradicional Peso",
+            "Tradicional",
+            "Tradicional Diferença(kg)",
+            "Picante Peso",
+            "Picante",
+            "Picante Diferença(kg)",
+            "Cebola Peso",
+            "Cebola",
+            "Cebola Diferença(kg)",
+            "Doce Peso",
+            "Doce",
+            "Doce Diferença(kg)",
+        ]
+    ]
+
+    # Renomear colunas
+    df_pasta_w = df_pasta_w.rename(columns={
+        "Tradicional": "Tradicional Consumido(kg)",
+        "Picante": "Picante Consumido(kg)",
+        "Cebola": "Cebola Consumido(kg)",
+        "Doce": "Doce Consumido(kg)",
+        "Tradicional Peso": "Tradicional Produzido(kg)",
+        "Picante Peso": "Picante Produzido(kg)",
+        "Cebola Peso": "Cebola Produzido(kg)",
+        "Doce Peso": "Doce Produzido(kg)",
+    })
+
+    # ────────────────────────────────────────────────────────────────────────── Análise Chart ── #
+    df_pasta_chart = df_pasta_w.copy()
+
+    # Encontrar a % de Perda
+    df_pasta_chart["Tradicional Diferença(kg)"] = ((df_pasta_chart["Tradicional Diferença(kg)"] / df_pasta_chart[
+        "Tradicional Produzido(kg)"]) * 100).round(2)
+    df_pasta_chart["Picante Diferença(kg)"] = (
+                (df_pasta_chart["Picante Diferença(kg)"] / df_pasta_chart["Picante Produzido(kg)"]) * 100).round(2)
+    df_pasta_chart["Cebola Diferença(kg)"] = (
+                (df_pasta_chart["Cebola Diferença(kg)"] / df_pasta_chart["Cebola Produzido(kg)"]) * 100).round(2)
+    df_pasta_chart["Doce Diferença(kg)"] = (
+                (df_pasta_chart["Doce Diferença(kg)"] / df_pasta_chart["Doce Produzido(kg)"]) * 100).round(2)
+
+    # Ajustar período
+    now = get_date.get_today()
+    # Voltar 3 meses e manter a data
+    mask = (now - pd.DateOffset(months=3)).date()
+    # Filtrar pela data
+    df_pasta_chart = df_pasta_chart[df_pasta_chart["Data Inicial"] >= mask]
+
+    # Chart
+    fig = px.bar(
+        df_pasta_chart,
+        x="Data Inicial",
+        y=["Tradicional Diferença(kg)", "Picante Diferença(kg)", "Cebola Diferença(kg)", "Doce Diferença(kg)"],
+        barmode="group",
+        custom_data=["Fábrica"],
+        labels={
+            "Data Inicial": "Data de Início",
+            "value": "Diferença (%)",
+            "variable": "Tipo de Pasta",
+        },
+        template="plotly_white",
+        range_y=[-100, 100],
+    )
+
+    fig.update_traces(
+        hovertemplate="<br>".join([
+            "Data de Início: %{x}",
+            "Diferença (%): %{y}",
+            "Fábrica: %{customdata[0]}"
+        ])
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    # ────────────────────────────────────────────────────────────────────────── Análise Table ── #
+    # Ajustar a data para dia/mês
+    df_pasta_w["Data Inicial"] = pd.to_datetime(df_pasta_w["Data Inicial"]).dt.strftime("%d/%m")
+
+
+    # Ajuste de cor
+    def color_highlight(val):
+        color = "red" if val > 0 else "black"
+        return f"color: {color};"
+
+
+    # Formatar números para o Brasil
+    df_pasta_w = df_pasta_w.style.format(thousands=".", decimal=",", precision=2)
+
+    # Ajustar a cor para vermelho caso seja positivo(perda)
+    df_pasta_w = df_pasta_w.map(
+        color_highlight, subset=pd.IndexSlice[:, [
+                                                     "Tradicional Diferença(kg)",
+                                                     "Picante Diferença(kg)",
+                                                     "Cebola Diferença(kg)",
+                                                     "Doce Diferença(kg)",
+                                                 ]]
+    )
+    # Exibir o dataframe
+    st.dataframe(df_pasta_w, use_container_width=True, hide_index=True)
+
+    # ─────────────────────────────────────────────────────────────────────── Pasta Por Semana ── #
+    with st.expander("Visualização de Pasta Semanal"):
+        # Pasta por semana e fábrica
+        df_pasta_week_grouped = (
+            df_pasta_week
+            .groupby(["Ano", "Semana", "Data Inicial", "Fábrica"])
+            .sum()
+            .drop(columns="Turno")
+            .reset_index()
+        )
+        # Ordenar pela semana e fábrica
+        df_pasta_week_grouped = df_pasta_week_grouped.sort_values(
+            by=["Ano", "Semana", "Fábrica"], ascending=[False, False, True]
+        )
+        # Ajustar data para dia/mês
+        df_pasta_week_grouped["Data Inicial"] = (
+            pd.to_datetime(df_pasta_week_grouped["Data Inicial"]).dt.strftime("%d/%m")
+        )
+        # Formatação dos números para o Brasil
+        df_pasta_week_grouped = df_pasta_week_grouped.style.format(thousands=".", decimal=",", precision=2)
+        # Exibir o dataframe
+        st.dataframe(df_pasta_week_grouped, use_container_width=True, hide_index=True)
+
+    # ────────────────────────────────────────────────────────────────────────── Pasta Por Dia ── #
+    with st.expander("Visualização de Pasta Data/Fábrica"):
+        # Pasta por data e fábrica
+        df_pasta_total = df_pasta.groupby(["Data", "Fábrica"]).sum().drop(columns="Turno").reset_index()
+        # Ordenar por data e fábrica
+        df_pasta_total = df_pasta_total.sort_values(by=["Data", "Fábrica"], ascending=[False, True])
+        # Ajustar data para dia/mês
+        df_pasta_total["Data"] = pd.to_datetime(df_pasta_total["Data"]).dt.strftime("%d/%m")
+        # Formato dos números para o Brasil
+        df_pasta_total = df_pasta_total.style.format(thousands=".", decimal=",", precision=2)
+        # Exibir o dataframe
+        st.dataframe(df_pasta_total, hide_index=True, use_container_width=True)
+
+#    ╭─                                                                                    ─╮
 #    │                               Visualização da produção                               │
 #    ╰─                                                                                    ─╯
 
 if pg_selection == PageSelection.PRODUCAO_PAES.value:
     st.subheader("Produção de Pães")
     # Ajusta a tabela de pão
-    df_prod_pao = adjust_pao(df_caixas_cf)
+    df_prod_pao = production.copy()
 
     # Ajustar a data
     df_prod_pao["Data Inicial"] = pd.to_datetime(df_prod_pao["Data Inicial"]).dt.strftime("%d/%m")

@@ -87,8 +87,25 @@ PAO_POR_BANDEJA = {
     "PAO CEBOLA BOL 10B/300GR": 12,
 }
 
-USERS_ROLES = {
-    "bruno.tomaz@santamassa.com.br": "main",
-    "admin": "admin",
-
+RENDIMENTO_PASTA_CX = {
+    "PAO ALHO TRD 10B/400GR": 1.7,
+    "PAO ALHO PIC 10B/400GR": 1.7,
+    "PAO CEBOLA 10B/400GR": 1.8,
+    "PAO ALHO TRD 10B/240GR": 1.08,
+    "PAO ALHO PIC 10B/240GR": 1.08,
+    "PAO ALHO SWIFT TRD 10B/400GR": 1.7,
+    "PAO ALHO SWIFT PIC 10B/400GR": 1.7,
+    "PAO DOCE LEITE 10B/300GR SWIFT": 1.62,
+    "PAO ALHO BOL TRD 10B/300GR": 1.44,
+    "PAO DOCE BOLINHA 10B/300GR": 1.44,
+    "PAO CEBOLA BOL 10B/300GR": 1.44,
 }
+
+RENDIMENTO_PASTA_PAO = {}
+
+# Calcular o rendimento de pasta por pão
+for produto, rendimento_cx in RENDIMENTO_PASTA_CX.items():
+    PAO_POR_BDJ = PAO_POR_BANDEJA[produto]
+    RENDIMENTO_POR_BDJ = rendimento_cx / 10  # Cada caixa tem 10 bandejas
+    rendimento_pao = RENDIMENTO_POR_BDJ / PAO_POR_BDJ
+    RENDIMENTO_PASTA_PAO[produto] = rendimento_pao

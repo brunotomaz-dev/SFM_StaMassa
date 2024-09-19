@@ -104,17 +104,6 @@ def get_df():
 
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-#                                           Functions
-#    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-@st.cache_data(show_spinner=False)
-def get_att() -> str:
-    return datetime.now().strftime("%d/%m - %H:%M")
-
-atualizado = get_att()
-
-
-#    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                          Nav Widgets
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
@@ -134,8 +123,6 @@ turn_opt = st.sidebar.selectbox(
 )
 
 line = st.sidebar.selectbox("Selecione a linha:", lines, index=0)
-
-st.sidebar.markdown(f"""<div class="sidebar-footer">Atualizado em: {atualizado}</div>""", unsafe_allow_html=True)
 
 if st.sidebar.button("Atualizar Dados"):
     st.cache_data.clear()

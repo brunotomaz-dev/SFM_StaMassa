@@ -50,6 +50,8 @@ if "add_user" not in st.session_state:
     st.session_state["add_user"] = False
 if "pass_reset" not in st.session_state:
     st.session_state["pass_reset"] = False
+if "page" not in st.session_state:
+    st.session_state["page"] = None
 
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -145,9 +147,8 @@ if st.session_state["authentication_status"] and st.session_state["pass_reset"]:
         st.error(e)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ SALVAR ALTERAÇÕES DE LOGIN ━━ #
 # Salvando o arquivo de configuração
-# with open('config.yaml', 'w') as file:
-#     yaml.dump(config, file, default_flow_style=False)
-# st.write(config)
+with open('config.yaml', 'w') as file:
+    yaml.dump(config, file, default_flow_style=False)
 
 # ================================================================================================ #
 #                                               PAGES                                              #
