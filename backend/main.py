@@ -12,7 +12,6 @@ from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 
 # pylint: disable=E0401
-from src.controller.protheus_cyv_controller import ProtheusCYVController
 from src.controller.efficiency_controller import EfficiencyController
 from src.controller.historic_ind_controller import HistoricIndController
 from src.controller.info_ihm_controller import InfoIHMController
@@ -22,6 +21,7 @@ from src.controller.maquina_qualidade_controller import MaquinaQualidadeControll
 from src.controller.performance_controller import PerformanceController
 from src.controller.production_controller import ProductionController
 from src.controller.protheus_cyv_controller import ProtheusCYVController
+from src.controller.protheus_sd3_production_controller import ProtheusSD3ProductionController
 from src.controller.reparo_controller import ReparoController
 from src.functions import date_f
 from src.functions import history_functions as hist_f
@@ -46,6 +46,7 @@ historic_ind_controller = HistoricIndController()
 ind_production = IndProd()
 protheus_sb1_produtos_controller = ProtheusSB1ProdutosController()
 protheus_cyv_controller = ProtheusCYVController()
+protheus_sd3_production_controller = ProtheusSD3ProductionController()
 
 pd.set_option("future.no_silent_downcast", True)
 
@@ -70,22 +71,16 @@ def get_maquina_ihm(start: str, end: str):
     Retorna:
     - JSONResponse: Resposta JSON contendo os dados da máquina IHM no formato ISO.
     Exemplo:
-    >>> get_maquina_ihm('2022-01-01', '2022-01-31')
+    get_maquina_ihm('2022-01-01', '2022-01-31')
     {
-        "data": [
-            {
-                "timestamp": "2022-01-01T00:00:00",
-                "valor1": 10,
-                "valor2": 20
-            },
-            {
-                "timestamp": "2022-01-02T00:00:00",
-                "valor1": 15,
-                "valor2": 25
-            },
-            ...
-        ]
-    }
+    "columns": [
+    "linha","maquina_id","motivo","equipamento","problema","causa",
+    "os_numero","operador_id","data_registro","hora_registro","s_backup"
+    ],
+    "index": [],
+    "data": []
+    }'
+
     """
 
     data = maquina_ihm_controller.get_data((start, end))
@@ -106,22 +101,16 @@ def get_maquina_info(start: str, end: str):
     Retorna:
     - JSONResponse: Resposta JSON contendo os dados da máquina Infono formato ISO.
     Exemplo:
-    >>> get_maquina_ihm('2022-01-01', '2022-01-31')
-    {
-        "data": [
-            {
-                "timestamp": "2022-01-01T00:00:00",
-                "valor1": 10,
-                "valor2": 20
-            },
-            {
-                "timestamp": "2022-01-02T00:00:00",
-                "valor1": 15,
-                "valor2": 25
-            },
-            ...
-        ]
-    }
+    get_maquina_ihm('2022-01-01', '2022-01-31')
+    '{
+        "columns": [
+            "linha","maquina_id","motivo","equipamento","problema","causa",
+            "os_numero","operador_id","data_registro","hora_registro","s_backup"
+            ],
+        "index": ],
+        "data": []
+    }'
+
     """
 
     data = maquina_info_controller.get_data((start, end))
@@ -141,23 +130,8 @@ def get_maquina_qualidade(start: str, end: str):
     - end (str): Data de término do intervalo no formato 'YYYY-MM-DD'.
     Retorna:
     - JSONResponse: Resposta JSON contendo os dados da máquina IHM no formato ISO.
-    Exemplo:
-    >>> get_maquina_ihm('2022-01-01', '2022-01-31')
-    {
-        "data": [
-            {
-                "timestamp": "2022-01-01T00:00:00",
-                "valor1": 10,
-                "valor2": 20
-            },
-            {
-                "timestamp": "2022-01-02T00:00:00",
-                "valor1": 15,
-                "valor2": 25
-            },
-            ...
-        ]
-    }
+
+
     """
 
     data = maquina_qualidade_controller.get_data((start, end))
@@ -322,6 +296,19 @@ def get_protheus_cyv_pasta_week():
     """
 
     data = protheus_cyv_controller.get_pasta_week_data()
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
+@app.get("/protheus_sd3/production")
+def get_protheus_sd3_production():
+    """
+    Retorna os dados de SD3 Produção do DB local.
+    """
+
+    data = protheus_sd3_production_controller.get_sd3_data()
     if data is None:
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}

@@ -178,6 +178,7 @@ if selected_page == SUB_OPT_2:
     # Mantém apenas as paradas com o principal motivo
     greater_motive = stops[stops[motivo_problema.lower()] == greater_motive]
 
+
     # Agrupa por causa e soma o tempo
     greater_motive = greater_motive.groupby("causa").tempo.sum().reset_index()
 
@@ -193,6 +194,9 @@ if selected_page == SUB_OPT_2:
     # Ordenar por tempo decrescente
     top_stops = top_stops.sort_values(by="tempo", ascending=False).reset_index(drop=True)
 
+    # Ajusta para top 5 caso motivo_problema seja problema
+    if motivo_problema == "Problema":
+        top_stops = top_stops.head(10)
 
 # ================================================================================================ #
 #                                              LAYOUT                                              #

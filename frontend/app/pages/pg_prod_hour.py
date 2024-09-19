@@ -129,6 +129,11 @@ df.loc[:, "total"] = np.floor(df.total / 10).astype(int)
 # Tabela para pivot
 df = df.pivot(index="data_hora", columns="linha", values="total")
 
+# Garantir que as colunas sejam do tipo inteiro e valor mínimo de 0
+df = df.fillna(0)
+df = df.astype(int)
+df = df.where(df > 0, 0)
+
 # Criar uma coluna com o intervalo de tempo
 df["Intervalo"] = (
     df.index.hour.astype(str) + "hs - " + (df.index.hour + 1).astype(str) + "hs"
@@ -141,5 +146,5 @@ df = df.set_index("Intervalo")
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #    ┃                                        Layout                                        ┃
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
+st.subheader("Caixas Produzidas por Hora")
 st.table(df)

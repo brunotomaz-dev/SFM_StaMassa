@@ -110,8 +110,8 @@ class ProtheusCYVModel:
         )
 
         where_ = (
-            "WHERE T1.D_E_L_E_T_ <> '*' AND T1.CYV_FILIAL = '0101' AND T1.CYV_CDMQ LIKE 'RET%' "
-            f"AND T1.CYV_DTRPBG >= '{first_day}'"
+            "WHERE T1.CYV_FILIAL = '0101' AND T1.CYV_CDMQ LIKE 'RET%' "
+            f"AND T1.CYV_DTRPBG >= '{first_day}' AND T1.D_E_L_E_T_ <> '*'"
         )
 
         order_by_ = "ORDER BY T1.CYV_DTRPBG, T1.CYV_CDMQ, T1.CYV_HRRPBG"

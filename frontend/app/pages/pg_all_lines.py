@@ -228,7 +228,9 @@ with r1_col1:
             # Ajustar tempo para uma string formatada no formato mm
             tempo = str(tempo).replace(".", ",")
 
-            st.markdown(f"""<div class="card2" style="font-size: 1.5vw;">{tempo} min</div>""", unsafe_allow_html=True)
+            st.markdown(
+                f"""<div class="card2" style="font-size: 1.5vw;">{tempo} min</div>""", unsafe_allow_html=True
+            )
 
 # ═══════════════════════════════════════════════════════════════════════════════════ Coluna 2 ══ #
 with (r1_col2):
@@ -239,9 +241,11 @@ with (r1_col2):
         producao = df_prod.total_produzido.iloc[-1] if len(turn_opt) == 3 else df_prod.total_produzido.sum()
         producao = producao.clip(min=0)
         st.markdown(f"""<div class="card3">
-            <p style="font-size: 0.7vw; text-align: left; padding-left: 0.5vw; margin-bottom: 0; margin-top: 10px;">Produto</p>
+            <p style="font-size: 0.7vw; text-align: left;
+            padding-left: 0.5vw; margin-bottom: 0; margin-top: 10px;">Produto</p>
             <h1 style="font-size: 1.1vw;">{df_prod.produto.iloc[-1]}</h1>
-            <p style="font-size: 0.7vw; text-align: left ; padding-left: 0.5vw ; margin-bottom: 0;">Produção de Bandejas</p>
+            <p style="font-size: 0.7vw; text-align: left ; 
+            padding-left: 0.5vw ; margin-bottom: 0;">Produção de Bandejas</p>
             <h1 style="font-size: 2vw;">{producao}</h1>
             </div>""", unsafe_allow_html=True)
 
@@ -259,7 +263,9 @@ with (r1_col2):
         data_filtered.problema = data_filtered.problema.fillna("Não apontado")
         data_filtered.causa = data_filtered.causa.fillna("")
         # Se a causa for refeição, preencher o problema com refeição
-        data_filtered.problema = data_filtered.problema.mask(data_filtered.motivo == "Parada Programada", data_filtered.causa)
+        data_filtered.problema = data_filtered.problema.mask(
+            data_filtered.motivo == "Parada Programada", data_filtered.causa
+        )
         # Ordena o dataframe pelo tempo
         data_filtered = data_filtered.sort_values(by="tempo")
 
@@ -283,7 +289,7 @@ with (r1_col2):
     # ─────────────────────────────────────────────────────────────────────────── Ciclos Chart ── #
     df_info.hora_registro = pd.to_datetime(df_info.hora_registro, format="%H:%M:%S")
     df_info_stops = df_info[df_info.status == "rodando"]
-    media_ciclos = round(df_info_stops.ciclo_1_min.mean()) if len(df_info_stops) > 0 else 0
+    media_ciclos = round(df_info_stops.ciclo_1_min.mean(), 2) if len(df_info_stops) > 0 else 0
     # Figura principal com os ciclos
     alt_fig_2 = alt.Chart(df_info).mark_line(color="darkgray").encode(
         x=alt.X("hora_registro", title="Hora", axis=alt.Axis(format="%H:%M")),
@@ -298,7 +304,7 @@ with (r1_col2):
     str_media = f"Média de Ciclos: {media_ciclos}"
     alt_fig_2 += (
     alt.Chart(pd.DataFrame({'Média de Ciclos': [media_ciclos]}))
-    .mark_text(color="cadetblue", dy=-15, fontSize=12)
+    .mark_text(color="cadetblue", dy=-10, fontSize=12)
     .encode(y=alt.Y("Média de Ciclos"), text=alt.Text("Média de Ciclos"))
     )
     alt_fig_2 = alt_fig_2.properties(
