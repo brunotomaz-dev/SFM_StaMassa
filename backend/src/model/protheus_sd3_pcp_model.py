@@ -21,7 +21,7 @@ class ProtheusSD3PCPModel():
                 SD3.D3_EMISSAO as data_emissao,
                 SD3.D3_COD as cod,
                 SB1.B1_DESC as descricao,
-                SD3.D3_CF as codigo_fornecedor,
+                SD3.D3_CF as tipo,
                 SD3.D3_CUSTO1 as custo,
                 SD3.D3_UM as unidade,
                 SD3.D3_QUANT as quantidade,
@@ -41,7 +41,7 @@ class ProtheusSD3PCPModel():
         # Where
         where_ = (
             f"WHERE SD3.D_E_L_E_T_ <> '*' AND SD3.D3_EMISSAO BETWEEN '{start_date}' AND '{end_date}'"
-            "AND SD3.D3_DOC = 'INVENT'"
+            "AND SD3.D3_DOC = 'INVENT' AND SD3.D3_GRUPO != 6"
         )
 
         query = f"{select_} {from_} {join_} {where_}"

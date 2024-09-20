@@ -14,9 +14,9 @@ class ProtheusSD3PCPService:
     def get_data(self, start: str, end: str) -> pd.DataFrame:
         """Retorna os dados da tabela PROTHEUS_SD3_PCP."""
 
-        data = self.__protheus_sd3_pcp.get_data()
+        data = self.__protheus_sd3_pcp.get_data(start, end)
 
         # Remover espaços vazios na string de PRODUTO
-        data["PRODUTO"] = data["PRODUTO"].str.strip()
+        data["descricao"] = data["descricao"].str.strip()
 
         return data

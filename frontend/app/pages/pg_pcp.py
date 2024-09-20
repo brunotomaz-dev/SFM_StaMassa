@@ -22,6 +22,7 @@ class PageSelection(Enum):
     MASSA = "Massa"
     PASTA = "Pasta"
     PRODUCAO_PAES = "Produção de Pães"
+    AJUSTE_ESTOQUE = "Ajuste de Estoque"
 
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -61,6 +62,12 @@ def get_df():
     massa, pasta, massa_week, pasta_week, caixas_cf = asyncio.run(get_all_data())
     return massa, pasta, massa_week, pasta_week, caixas_cf
 
+@st.cache_data(show_spinner="Obtendo dados", ttl=60000)
+def get_estoque(start_date:str, end_date:str):
+
+    return asyncio.run(get_data(APIUrl.URL_PCP_ESTOQUE.value, start_date, end_date))
+
+
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                            Sidebar
@@ -73,14 +80,53 @@ with st.sidebar:
             stc.MenuItem(PageSelection.MASSA.value, icon="bi bi-graph-up"),
             stc.MenuItem(PageSelection.PASTA.value, icon="bi bi-graph-up"),
             stc.MenuItem(PageSelection.PRODUCAO_PAES.value, icon="bi bi-box-seam"),
+            stc.MenuItem(PageSelection.AJUSTE_ESTOQUE.value, icon="bi bi-boxes"),
         ]
     )
+
+if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
+    # Primeiro e último dia do mês
+    start_day, end_day = get_date.get_this_month()
+
+    # Usar start e retroceder 6 meses
+    start_day = start_day - pd.DateOffset(months=6)
+
+    date_choice = st.sidebar.date_input(label="Escolha a data inicial e final", value=(start_day, end_day), format="DD/MM/YYYY")
+
+    first, last = date_choice
+
+    first = str(first).replace("-", "")
+    last = str(last).replace("-", "")
+
+    df_estoque = get_estoque(first, last)
+
+
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                           Dataframes
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 df_massa, df_pasta, df_massa_week, df_pasta_week, df_caixas_cf = get_df()
+
+if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
+    # Ajustar a data para datetime
+    df_estoque["data_emissao"] = pd.to_datetime(df_estoque["data_emissao"], format="%Y%m%d")
+
+    # Ordenar pela data de emissão
+    df_estoque = df_estoque.sort_values(by="data_emissao", ascending=False)
+
+    # Ajustar a data para dia/mês/ano
+    df_estoque["data_emissao"] = df_estoque["data_emissao"].dt.strftime("%d/%m/%Y")
+
+    # Filtra coluna filial para ter apenas as filias 101 e 201
+    df_estoque = df_estoque[df_estoque["filial"].isin([101, 201])]
+
+    # Na coluna codigo_fornecedor, substituir DE0 por Devolução e RE0 por Remessa
+    df_estoque["tipo"] = df_estoque["tipo"].replace(
+        {"DE0": "Devolução", "RE0": "Remessa"}
+    )
+
+
 
 # Colunas de massa que se repetem
 massa_columns = [
@@ -555,3 +601,12 @@ if pg_selection == PageSelection.PRODUCAO_PAES.value:
 
     # Exibir o dataframe
     st.dataframe(df_prod_pao, use_container_width=True, hide_index=True, height=500)
+
+#    ╭─                                                                                    ─╮
+#    │                          Visualização do ajuste de estoque                           │
+#    ╰─                                                                                    ─╯
+
+if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
+    st.subheader("Ajuste de Estoque")
+
+    st.dataframe(df_estoque, use_container_width=True, hide_index=True)

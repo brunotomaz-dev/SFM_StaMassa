@@ -317,7 +317,7 @@ def get_protheus_sd3_production():
         )
     return data.to_json(date_format="iso", orient="split")
 
-@app.get("/protheus_sd3/ajuste_estoque")
+@app.get("/protheus_sd3/pcp_estoque")
 def get_protheus_sd3_ajuste_estoque(start: str, end: str):
     """
     Retorna os dados de SD3 Ajuste de Estoque do DB local.
