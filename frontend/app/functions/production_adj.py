@@ -7,7 +7,7 @@ from app.helpers.variables import PAO_POR_BANDEJA
 
 
 def adjust_pao(dataframe: pd.DataFrame) -> pd.DataFrame:
-    """Funcão para ajustar o pão."""
+    """Função para ajustar o pão."""
     # Copia o dataframe
     df = dataframe.copy()
 
@@ -24,7 +24,11 @@ def adjust_pao(dataframe: pd.DataFrame) -> pd.DataFrame:
     df["Pães"] = df["Bandejas"] * df["PRODUTO"].map(PAO_POR_BANDEJA)
 
     # Agrupar por datas e produtos
-    df = df.groupby(["FABRICA", "PRODUTO", "EMISSAO"])[["Caixas", "Bandejas", "Pães"]].sum().reset_index()
+    df = (
+        df.groupby(["FABRICA", "PRODUTO", "EMISSAO"])[["Caixas", "Bandejas", "Pães"]]
+        .sum()
+        .reset_index()
+    )
 
     # Ajustar o formato da coluna de datas
     df["EMISSAO"] = pd.to_datetime(df["EMISSAO"], format="%Y%m%d")
@@ -36,22 +40,30 @@ def adjust_pao(dataframe: pd.DataFrame) -> pd.DataFrame:
     df["Data_Semana"] = df["EMISSAO"] - pd.to_timedelta(df["Data_Semana"], unit="d")
 
     # Agrupar por datas e produtos
-    df = (df.groupby([
-        df["Data_Semana"].dt.isocalendar().year,
-        df["Data_Semana"].dt.isocalendar().week,
-        "Data_Semana",
-        "PRODUTO",
-        "FABRICA",
-    ])[["Caixas", "Bandejas", "Pães"]].sum().reset_index())
+    df = (
+        df.groupby(
+            [
+                df["Data_Semana"].dt.isocalendar().year,
+                df["Data_Semana"].dt.isocalendar().week,
+                "Data_Semana",
+                "PRODUTO",
+                "FABRICA",
+            ]
+        )[["Caixas", "Bandejas", "Pães"]]
+        .sum()
+        .reset_index()
+    )
 
     # Renomear colunas
-    df = df.rename(columns={
-        "Data_Semana": "Data Inicial",
-        "PRODUTO": "Produto",
-        "FABRICA": "Fábrica",
-        "week": "Semana",
-        "year": "Ano",
-    })
+    df = df.rename(
+        columns={
+            "Data_Semana": "Data Inicial",
+            "PRODUTO": "Produto",
+            "FABRICA": "Fábrica",
+            "week": "Semana",
+            "year": "Ano",
+        }
+    )
 
     # Pães para inteiros
     df["Pães"] = df["Pães"].astype(int)

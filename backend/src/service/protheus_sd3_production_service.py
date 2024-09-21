@@ -1,4 +1,5 @@
 """ Módulo de serviço para tabela sd3 do Protheus."""
+
 import pandas as pd
 
 # pylint: disable=import-error
@@ -10,7 +11,6 @@ class ProtheusSD3ProductionService:
 
     def __init__(self) -> None:
         self.__protheus_sd3_production = ProtheusSD3ProductionModel()
-
 
     def get_data(self) -> pd.DataFrame:
         """Retorna os dados da tabela PROTHEUS_SD3_PRODUCTION."""

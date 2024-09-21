@@ -6,6 +6,8 @@ import pandas as pd
 
 
 class GetDate:
+    """Classe responsável por retornar datas, para evitar ficar travado em uma data."""
+
     def __init__(self) -> None:
         pass
 

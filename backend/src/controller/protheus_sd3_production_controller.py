@@ -5,6 +5,7 @@ import pandas as pd
 # pylint: disable=import-error
 from src.service.protheus_sd3_production_service import ProtheusSD3ProductionService
 
+
 class ProtheusSD3ProductionController:
     """Classe para controlar os dados da tabela SD3."""
 

@@ -21,6 +21,7 @@ from src.controller.maquina_qualidade_controller import MaquinaQualidadeControll
 from src.controller.performance_controller import PerformanceController
 from src.controller.production_controller import ProductionController
 from src.controller.protheus_cyv_controller import ProtheusCYVController
+from src.controller.protheus_sb1_produtos_controller import ProtheusSB1ProdutosController
 from src.controller.protheus_sd3_pcp_controller import ProtheusSD3PCPController
 from src.controller.protheus_sd3_production_controller import ProtheusSD3ProductionController
 from src.controller.reparo_controller import ReparoController
@@ -30,7 +31,6 @@ from src.helpers.variables import IndicatorType
 from src.service.functions.ind_prod import IndProd
 from src.service.functions.info_ihm_join import InfoIHMJoin
 from src.service.functions.prod_qualid_join import ProdQualidJoin
-from src.controller.protheus_sb1_produtos_controller import ProtheusSB1ProdutosController
 
 app = FastAPI()
 
@@ -237,6 +237,7 @@ def get_historic_ind():
         )
     return data.to_json(date_format="iso", orient="split")
 
+
 # ═══════════════════════════════════════════════════════════════════════════════════ Protheus ══ #
 @app.get("/protheus_sb1")
 def get_protheus_sb1():
@@ -265,6 +266,7 @@ def get_protheus_cyv_massa():
         )
     return data.to_json(date_format="iso", orient="split")
 
+
 @app.get("/protheus_cyv/massa_week")
 def get_protheus_cyv_massa_week():
     """
@@ -277,6 +279,7 @@ def get_protheus_cyv_massa_week():
             status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
         )
     return data.to_json(date_format="iso", orient="split")
+
 
 @app.get("/protheus_cyv/pasta")
 def get_protheus_cyv_pasta():
@@ -291,6 +294,7 @@ def get_protheus_cyv_pasta():
         )
     return data.to_json(date_format="iso", orient="split")
 
+
 @app.get("/protheus_cyv/pasta_week")
 def get_protheus_cyv_pasta_week():
     """
@@ -304,6 +308,7 @@ def get_protheus_cyv_pasta_week():
         )
     return data.to_json(date_format="iso", orient="split")
 
+
 @app.get("/protheus_sd3/production")
 def get_protheus_sd3_production():
     """
@@ -316,6 +321,7 @@ def get_protheus_sd3_production():
             status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
         )
     return data.to_json(date_format="iso", orient="split")
+
 
 @app.get("/protheus_sd3/pcp_estoque")
 def get_protheus_sd3_ajuste_estoque(start: str, end: str):

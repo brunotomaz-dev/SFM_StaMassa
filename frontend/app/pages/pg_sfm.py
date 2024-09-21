@@ -5,9 +5,9 @@ import asyncio
 import altair as alt
 import pandas as pd
 import streamlit as st
+
 # from streamlit_option_menu import option_menu
 import streamlit_antd_components as stc
-from streamlit_extras.metric_cards import style_metric_cards
 
 # pylint: disable=import-error
 from app.api.requests_ import get_api_data
@@ -19,6 +19,7 @@ from app.components.sfm_heatmap import create_heatmap_chart
 from app.components.sfm_line import create_line_chart
 from app.functions.indicators_playground import IndicatorsPlayground
 from app.helpers.variables import TURNOS, ColorsSTM, IndicatorType
+from streamlit_extras.metric_cards import style_metric_cards
 
 ind_play = IndicatorsPlayground()
 create_bar_chart_eff = BarChartEff().create_bar_chart_eff
@@ -38,6 +39,7 @@ async def get_data(url: str, start: str | None = None, end: str | None = None) -
     data = await get_api_data(url)
     return data
 
+
 async def get_all_data() -> tuple:
     """Obtém os dados da API."""
     urls = [
@@ -45,7 +47,7 @@ async def get_all_data() -> tuple:
         APIUrl.URL_PERF.value,
         APIUrl.URL_REP.value,
         APIUrl.URL_HIST_IND.value,
-        APIUrl.URL_INFO_IHM.value
+        APIUrl.URL_INFO_IHM.value,
     ]
     tasks = [get_data(url) for url in urls]
     results = await asyncio.gather(*tasks)
@@ -55,6 +57,7 @@ async def get_all_data() -> tuple:
     ind = results[3]
     ihm = results[4]
     return eff, perf, rep, ind, ihm
+
 
 @st.cache_data(show_spinner="Obtendo dados", ttl=600)
 def get_df():
@@ -177,7 +180,6 @@ if selected_page == SUB_OPT_2:
 
     # Mantém apenas as paradas com o principal motivo
     greater_motive = stops[stops[motivo_problema.lower()] == greater_motive]
-
 
     # Agrupa por causa e soma o tempo
     greater_motive = greater_motive.groupby("causa").tempo.sum().reset_index()

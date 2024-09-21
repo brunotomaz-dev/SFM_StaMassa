@@ -1,10 +1,10 @@
 """Módulo de modelo para o DB Protheus CYV."""
-from calendar import month
 
 import pandas as pd
 
 # pylint: disable=import-error
 from src.model.db_totvsdb_model import DBTotvsdbModel
+
 
 class ProtheusCYVModel:
     """Classe que realiza a consulta no banco de dados e retorna os dados da tabela PROTHEUS_CYV."""

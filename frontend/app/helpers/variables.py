@@ -24,6 +24,7 @@ class ColorsSTM(Enum):
 
 TURNOS = ["NOT", "MAT", "VES"]
 
+
 class BSColorsEnum(Enum):
     """Bootstrap colors"""
 

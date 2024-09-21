@@ -5,6 +5,7 @@ import pandas as pd
 # pylint: disable=import-error
 from src.service.protheus_cyv_service import ProtheusCYVService
 
+
 class ProtheusCYVController:
 
     def __init__(self) -> None:

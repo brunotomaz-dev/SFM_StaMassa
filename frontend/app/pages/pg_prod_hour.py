@@ -1,3 +1,7 @@
+"""
+Módulo responsável por renderizar a página de produção por hora.
+"""
+
 import asyncio
 from datetime import datetime, timedelta
 
@@ -16,6 +20,7 @@ get_date = GetDate()
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                       Requisição de api
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
 
 async def get_all_data() -> pd.DataFrame:
     """
@@ -42,6 +47,7 @@ def get_prod_data() -> pd.DataFrame:
 
     return data
 
+
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                            Sidebar
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -53,11 +59,14 @@ select_option = st.sidebar.selectbox("Data dos dados:", ["Hoje", "Ontem"])
 #                                           Dataframe
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 def adjust_selected_date(date_: str) -> str:
-
+    """
+    Ajusta a data para o formato correto.
+    """
     if date_ == "Hoje":
         return get_date.get_today().strftime("%Y-%m-%d")
 
     return (get_date.get_today() - timedelta(days=1)).strftime("%Y-%m-%d")
+
 
 # Recebe os dados
 df_original = get_prod_data()
@@ -77,7 +86,9 @@ df.data_registro = pd.to_datetime(df.data_registro).dt.date
 df = df[df.linha != 0]
 
 # Cria uma coluna com a data e hora
-df["data_hora"] = df.data_registro.astype(str) + " " + df.hora_registro.astype(str).str.split(".").str[0]
+df["data_hora"] = (
+    df.data_registro.astype(str) + " " + df.hora_registro.astype(str).str.split(".").str[0]
+)
 
 # Ajusta a data_hora para o formato correto
 df.data_hora = pd.to_datetime(df.data_hora)
@@ -92,8 +103,8 @@ df.linha = df.linha.apply(lambda x: f"Linha {x}")
 df = df.set_index(["data_hora", "linha"])
 
 # Agrupar os dados
-df = (df
-    .groupby("linha")
+df = (
+    df.groupby("linha")
     .resample("h", level="data_hora")
     .agg(
         {
@@ -104,7 +115,9 @@ df = (df
 )
 
 # Calcular a diferença entre o primeiro e o último - produção
-df["total_produzido"] = df["contagem_total_produzido"]["last"] - df["contagem_total_produzido"]["first"]
+df["total_produzido"] = (
+    df["contagem_total_produzido"]["last"] - df["contagem_total_produzido"]["first"]
+)
 
 # Calcular a diferença entre o primeiro e o último - ciclos
 df["total_ciclos"] = df["contagem_total_ciclos"]["last"] - df["contagem_total_ciclos"]["first"]
@@ -135,9 +148,7 @@ df = df.astype(int)
 df = df.where(df > 0, 0)
 
 # Criar uma coluna com o intervalo de tempo
-df["Intervalo"] = (
-    df.index.hour.astype(str) + "hs - " + (df.index.hour + 1).astype(str) + "hs"
-)
+df["Intervalo"] = df.index.hour.astype(str) + "hs - " + (df.index.hour + 1).astype(str) + "hs"
 
 # Fazer com que intervalo seja o index
 df = df.set_index("Intervalo")

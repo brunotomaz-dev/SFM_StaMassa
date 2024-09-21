@@ -5,6 +5,7 @@ import pandas as pd
 # pylint: disable=import-error
 from src.model.db_totvsdb_model import DBTotvsdbModel
 
+
 class ProtheusSD3ProductionModel:
     """
     Classe que realiza a consulta no banco de dados
@@ -31,7 +32,7 @@ class ProtheusSD3ProductionModel:
 
         # Select
         select_ = """
-        SELECT 
+        SELECT
             T9_NOME AS MAQUINA
             , B1_DESC AS PRODUTO
             , D3_QUANT AS QTD
@@ -54,18 +55,19 @@ class ProtheusSD3ProductionModel:
         LEFT JOIN SB1000 SB1 WITH (NOLOCK)
             ON SB1.B1_FILIAL = '01' AND SB1.B1_COD = SD3.D3_COD AND SB1.D_E_L_E_T_ <> '*'
         LEFT JOIN CYV000 CYV WITH (NOLOCK)
-            ON CYV.CYV_FILIAL = SD3.D3_FILIAL AND CYV.CYV_NRRPET = SD3.D3_IDENT AND CYV.D_E_L_E_T_ <> '*'
+            ON CYV.CYV_FILIAL = SD3.D3_FILIAL AND CYV.CYV_NRRPET = SD3.D3_IDENT
+            AND CYV.D_E_L_E_T_ <> '*'
         LEFT JOIN ST9000 ST9 WITH (NOLOCK)
             ON ST9.T9_CODBEM = CYV.CYV_CDMQ AND ST9.D_E_L_E_T_ <> '*'
         LEFT JOIN SX6000 SX6_1 WITH (NOLOCK)
             ON SX6_1.X6_VAR = 'MV_X_USRF1' AND SX6_1.D_E_L_E_T_ <> '*'
         LEFT JOIN SX6000 SX6_2 WITH (NOLOCK)
-            ON SX6_2.X6_VAR = 'MV_X_USRF2' AND SX6_2.D_E_L_E_T_ <> '*'            
+            ON SX6_2.X6_VAR = 'MV_X_USRF2' AND SX6_2.D_E_L_E_T_ <> '*'
         """
 
         # Where
         where_ = f"""
-        WHERE 
+        WHERE
             SD3.D3_FILIAL = '0101' AND SD3.D3_LOCAL = 'CF'
             AND SB1.B1_TIPO = 'PA' AND SD3.D3_CF = 'PR0' AND SD3.D3_ESTORNO <> 'S'
             AND SD3.D3_EMISSAO >= '{first_day}' AND SD3.D_E_L_E_T_ <> '*'

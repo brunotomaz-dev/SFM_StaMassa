@@ -1,10 +1,17 @@
 """Módulo de serviço para o DB Protheus CYV."""
+
 import pandas as pd
+from src.helpers.variables import (
+    RENDIMENTO_BOLINHA,
+    RENDIMENTO_BOLINHA_ATUALIZADO,
+    RENDIMENTO_CHEIA,
+    RENDIMENTO_REPROCESSO,
+)
 
 # pylint: disable=import-error
 from src.model.protheus_cyv_model import ProtheusCYVModel
-from src.helpers.variables import RENDIMENTO_CHEIA, RENDIMENTO_REPROCESSO, RENDIMENTO_BOLINHA, RENDIMENTO_BOLINHA_ATUALIZADO
 from src.service.functions.clean_pcp_data import CleanPCPData
+
 
 class ProtheusCYVService:
 
@@ -54,7 +61,6 @@ class ProtheusCYVService:
             data = self.__pasta_week_sum(data)
 
         return data
-
 
     @staticmethod
     def __massa_sum(df: pd.DataFrame) -> pd.DataFrame:

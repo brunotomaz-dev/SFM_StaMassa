@@ -5,14 +5,15 @@ import pandas as pd
 # pylint: disable=import-error
 from src.model.db_totvsdb_model import DBTotvsdbModel
 
-class ProtheusSD3PCPModel():
+
+class ProtheusSD3PCPModel:
     """Módulo de modelos da tabela PROTHEUS_SD3_PCP."""
 
     def __init__(self):
         self.__totvsdb = DBTotvsdbModel()
 
-    def get_data(self, start_date: str, end_date: str) -> pd.DataFrame | None:
-        """ Obtém os dados da tabela PROTHEUS_SD3_PCP do banco de dados."""
+    def get_data(self, begin: str, end: str) -> pd.DataFrame | None:
+        """Obtém os dados da tabela PROTHEUS_SD3_PCP do banco de dados."""
 
         # Select
         select_ = """
@@ -40,7 +41,7 @@ class ProtheusSD3PCPModel():
 
         # Where
         where_ = (
-            f"WHERE SD3.D_E_L_E_T_ <> '*' AND SD3.D3_EMISSAO BETWEEN '{start_date}' AND '{end_date}'"
+            f"WHERE SD3.D_E_L_E_T_ <> '*' AND SD3.D3_EMISSAO BETWEEN '{begin}' AND '{end}'"
             "AND SD3.D3_DOC = 'INVENT' AND SD3.D3_GRUPO != 6"
         )
 

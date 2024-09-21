@@ -12,7 +12,7 @@ from app.api.requests_ import get_api_data
 from app.api.urls import APIUrl
 from app.components.sfm_gauge_opt2 import create_gauge_chart
 from app.functions.get_date import GetDate
-from app.helpers.variables import ColorsSTM, IndicatorType, COLOR_DICT
+from app.helpers.variables import COLOR_DICT, ColorsSTM, IndicatorType
 
 get_date = GetDate()
 
@@ -51,7 +51,9 @@ st.markdown(
 }
 .card3 {
     text-align: center;
-    font-size: 1vw;""" + ColorsSTM.LIGHT_GREY.value + """
+    font-size: 1vw;"""
+    + ColorsSTM.LIGHT_GREY.value
+    + """
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 10px;
@@ -68,7 +70,7 @@ st.markdown(
 }
 </style>
 """,
-unsafe_allow_html=True,
+    unsafe_allow_html=True,
 )
 
 
@@ -97,8 +99,12 @@ async def get_data() -> tuple:
     info = results[3]
     return eff, info_ihm, prod, info
 
+
 @st.cache_data(show_spinner="Obtendo dados", ttl=1200)
 def get_df():
+    """
+    Obtém os dados da API.
+    """
     eff, info_ihm, prod, info = asyncio.run(get_data())
     return eff, info_ihm, prod, info
 
@@ -211,30 +217,38 @@ with r1_col1:
             # Converter para pd.Datetime
             hora_final = pd.to_datetime(hora_final)
             # Calcular o tempo de parada em minutos
-            tempo = round((hora_final - hora_inicial).seconds / 60)
+            TEMPO = round((hora_final - hora_inicial).seconds / 60)
             # Ajustar tempo para uma string formatada no formato mm
-            tempo = str(tempo).replace(".", ",")
+            TEMPO = str(TEMPO).replace(".", ",")
 
             st.markdown(
-                f"""<div class="card2" style="font-size: 1.5vw;">{tempo} min</div>""", unsafe_allow_html=True
+                f"""<div class="card2" style="font-size: 1.5vw;">{TEMPO} min</div>""",
+                unsafe_allow_html=True,
             )
 
 # ═══════════════════════════════════════════════════════════════════════════════════ Coluna 2 ══ #
-with (r1_col2):
+with r1_col2:
     c2_col_1, c2_col_2 = st.columns([1, 3])
 
     # ────────────────────────────────────────────────────────────────────────── Card Produção ── #
     with c2_col_1:
-        producao = df_prod.total_produzido.iloc[-1] if len(turn_opt) == 3 else df_prod.total_produzido.sum()
+        producao = (
+            df_prod.total_produzido.iloc[-1]
+            if len(turn_opt) == 3
+            else df_prod.total_produzido.sum()
+        )
         producao = producao.clip(min=0)
-        st.markdown(f"""<div class="card3">
+        st.markdown(
+            f"""<div class="card3">
             <p style="font-size: 0.7vw; text-align: left;
             padding-left: 0.5vw; margin-bottom: 0; margin-top: 10px;">Produto</p>
             <h1 style="font-size: 1.1vw;">{df_prod.produto.iloc[-1]}</h1>
-            <p style="font-size: 0.7vw; text-align: left ; 
+            <p style="font-size: 0.7vw; text-align: left ;
             padding-left: 0.5vw ; margin-bottom: 0;">Produção de Bandejas</p>
             <h1 style="font-size: 2vw;">{producao}</h1>
-            </div>""", unsafe_allow_html=True)
+            </div>""",
+            unsafe_allow_html=True,
+        )
 
     with c2_col_2:
         # ─────────────────────────────────────────────────────────────────────── Pareto Chart ── #
@@ -256,19 +270,18 @@ with (r1_col2):
         # Ordena o dataframe pelo tempo
         data_filtered = data_filtered.sort_values(by="tempo")
 
-        alt_fig = alt.Chart(data_filtered).mark_bar(orient="horizontal", color="darkgray").encode(
-            y=alt.Y(
-                "problema",
-                sort="-x",
-                title="Problema",
-                axis=alt.Axis()
-            ),
-            x=alt.X("tempo", title="Tempo (minutos)"),
-            tooltip=[
-                alt.Tooltip("problema", title="Problema"),
-                alt.Tooltip("causa", title="Causa"),
-                alt.Tooltip("tempo", title="Tempo")
-            ]
+        alt_fig = (
+            alt.Chart(data_filtered)
+            .mark_bar(orient="horizontal", color="darkgray")
+            .encode(
+                y=alt.Y("problema", sort="-x", title="Problema", axis=alt.Axis()),
+                x=alt.X("tempo", title="Tempo (minutos)"),
+                tooltip=[
+                    alt.Tooltip("problema", title="Problema"),
+                    alt.Tooltip("causa", title="Causa"),
+                    alt.Tooltip("tempo", title="Tempo"),
+                ],
+            )
         )
         if len(data_filtered) > 0:
             st.altair_chart(alt_fig, use_container_width=True)
@@ -278,21 +291,28 @@ with (r1_col2):
     df_info_stops = df_info[df_info.status == "rodando"]
     media_ciclos = round(df_info_stops.ciclo_1_min.mean(), 2) if len(df_info_stops) > 0 else 0
     # Figura principal com os ciclos
-    alt_fig_2 = alt.Chart(df_info).mark_line(color="darkgray").encode(
-        x=alt.X("hora_registro", title="Hora", axis=alt.Axis(format="%H:%M")),
-        y=alt.Y("ciclo_1_min", title="Ciclos"),
+    alt_fig_2 = (
+        alt.Chart(df_info)
+        .mark_line(color="darkgray")
+        .encode(
+            x=alt.X("hora_registro", title="Hora", axis=alt.Axis(format="%H:%M")),
+            y=alt.Y("ciclo_1_min", title="Ciclos"),
+        )
     )
     # Figura da linha da média
-    alt_fig_2 += alt.Chart(pd.DataFrame({'media_ciclos': [media_ciclos]})).mark_rule(color="cadetblue").encode(
-        y=alt.Y("media_ciclos"),
-        tooltip=[alt.Tooltip("media_ciclos", title="Média de Ciclos")]
+    alt_fig_2 += (
+        alt.Chart(pd.DataFrame({"media_ciclos": [media_ciclos]}))
+        .mark_rule(color="cadetblue")
+        .encode(
+            y=alt.Y("media_ciclos"), tooltip=[alt.Tooltip("media_ciclos", title="Média de Ciclos")]
+        )
     )
     # Figura com marcação dos ciclos médios
     str_media = f"Média de Ciclos: {media_ciclos}"
     alt_fig_2 += (
-    alt.Chart(pd.DataFrame({'Média de Ciclos': [media_ciclos]}))
-    .mark_text(color="cadetblue", dy=-10, fontSize=12)
-    .encode(y=alt.Y("Média de Ciclos"), text=alt.Text("Média de Ciclos"))
+        alt.Chart(pd.DataFrame({"Média de Ciclos": [media_ciclos]}))
+        .mark_text(color="cadetblue", dy=-10, fontSize=12)
+        .encode(y=alt.Y("Média de Ciclos"), text=alt.Text("Média de Ciclos"))
     )
     alt_fig_2 = alt_fig_2.properties(
         height=200,
@@ -312,9 +332,11 @@ with (r1_col2):
         now if (turn_opt == turn or len(turn_opt) > 3) else timeline_data.iloc[-1].data_hora_final
     )
     # Ajustar o tempo atual
-    timeline_data.loc[timeline_data.index[-1], "tempo"] = round(
-        (now - timeline_data.iloc[-1].data_hora).seconds / 60
-    ) if (turn_opt == turn or len(turn_opt) > 3) else timeline_data.iloc[-1].tempo
+    timeline_data.loc[timeline_data.index[-1], "tempo"] = (
+        round((now - timeline_data.iloc[-1].data_hora).seconds / 60)
+        if (turn_opt == turn or len(turn_opt) > 3)
+        else timeline_data.iloc[-1].tempo
+    )
 
     # Onde o status for rodando mudar o motivo para Rodando
     timeline_data.loc[timeline_data.status == "rodando", "motivo"] = "Rodando"
@@ -327,23 +349,29 @@ with (r1_col2):
     color_timeline = {motivo: COLOR_DICT[motivo] for motivo in motivos_presentes}
 
     # Criando um gráfico de timeline
-    timeline_fig = alt.Chart(timeline_data).mark_bar().encode(
-        x=alt.X('data_hora:T', title='Hora', axis=alt.Axis(format="%H:%M")),
-        x2='data_hora_final:T',
-        y=alt.Y('turno:N', title='Turno'),
-        color=alt.Color(
-            'motivo:N',
-            legend=alt.Legend(orient='bottom'),
-            title='Motivos',
-            scale=alt.Scale(domain=list(color_timeline.keys()), range=list(color_timeline.values()))
-        ),
-        tooltip=[
-            alt.Tooltip('motivo:N', title='Motivo'),
-            alt.Tooltip('causa:N', title='Causa'),
-            alt.Tooltip('data_hora:T', title='Hora Inicial', format='%H:%M'),
-            alt.Tooltip('data_hora_final:T', title='Hora Final', format='%H:%M'),
-            alt.Tooltip("tempo", title="Tempo (minutos)")
-        ],
+    timeline_fig = (
+        alt.Chart(timeline_data)
+        .mark_bar()
+        .encode(
+            x=alt.X("data_hora:T", title="Hora", axis=alt.Axis(format="%H:%M")),
+            x2="data_hora_final:T",
+            y=alt.Y("turno:N", title="Turno"),
+            color=alt.Color(
+                "motivo:N",
+                legend=alt.Legend(orient="bottom"),
+                title="Motivos",
+                scale=alt.Scale(
+                    domain=list(color_timeline.keys()), range=list(color_timeline.values())
+                ),
+            ),
+            tooltip=[
+                alt.Tooltip("motivo:N", title="Motivo"),
+                alt.Tooltip("causa:N", title="Causa"),
+                alt.Tooltip("data_hora:T", title="Hora Inicial", format="%H:%M"),
+                alt.Tooltip("data_hora_final:T", title="Hora Final", format="%H:%M"),
+                alt.Tooltip("tempo", title="Tempo (minutos)"),
+            ],
+        )
     )
 
     st.altair_chart(timeline_fig, use_container_width=True)
@@ -354,7 +382,7 @@ with r1_col3:
     with st.container():
         # Pegar a linha atual
         last_row = df_maq_info.iloc[-1]
-        # Pegar o horário da última linha e manter apenas o horário e calcular a diferença com o horário atual
+        # Pegar o horário da última linha e calcular a diferença com o horário atual
         last_row_hour = pd.to_datetime(last_row.data_hora)
 
         # Calcular o tempo de parada em minutos
@@ -420,5 +448,5 @@ st.markdown(
 }
 </style>
 """,
-unsafe_allow_html=True,
+    unsafe_allow_html=True,
 )
