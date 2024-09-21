@@ -1,11 +1,12 @@
 """Módulo para manipulação de dados do banco de dados Totvs."""
 
 import pandas as pd
-from sqlalchemy.exc import DatabaseError
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import DatabaseError
 
 # pylint: disable=E0401
 from src.database.connection import Connection
+
 
 class DBTotvsdbModel(Connection):
     """Classe para manipulação de dados do banco de dados Totvs."""
@@ -31,8 +32,7 @@ class DBTotvsdbModel(Connection):
             conn = self.get_connection_totvsdb()
             return pd.read_sql(query, conn)
         except DatabaseError as error:
-           print(f"Erro ao obter os dados: {error}")
+            print(f"Erro ao obter os dados: {error}")
         finally:
             if conn:
                 conn.dispose()
-

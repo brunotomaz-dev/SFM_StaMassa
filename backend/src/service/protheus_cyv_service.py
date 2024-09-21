@@ -1,10 +1,17 @@
 """Módulo de serviço para o DB Protheus CYV."""
+
 import pandas as pd
+from src.helpers.variables import (
+    RENDIMENTO_BOLINHA,
+    RENDIMENTO_BOLINHA_ATUALIZADO,
+    RENDIMENTO_CHEIA,
+    RENDIMENTO_REPROCESSO,
+)
 
 # pylint: disable=import-error
 from src.model.protheus_cyv_model import ProtheusCYVModel
-from src.helpers.variables import RENDIMENTO_CHEIA, RENDIMENTO_REPROCESSO, RENDIMENTO_BOLINHA, RENDIMENTO_BOLINHA_ATUALIZADO
 from src.service.functions.clean_pcp_data import CleanPCPData
+
 
 class ProtheusCYVService:
 
@@ -54,7 +61,6 @@ class ProtheusCYVService:
             data = self.__pasta_week_sum(data)
 
         return data
-
 
     @staticmethod
     def __massa_sum(df: pd.DataFrame) -> pd.DataFrame:
@@ -204,6 +210,23 @@ class ProtheusCYVService:
         # Unir as duas tabelas
         df = pd.concat([df_batidas, df_peso], axis=1).reset_index()
 
+        # Reordenar as colunas
+        df = df[
+            [
+                "Data_Registro",
+                "Turno",
+                "Fabrica",
+                "Tradicional_Batidas",
+                "Tradicional_Peso",
+                "Picante_Batidas",
+                "Picante_Peso",
+                "Cebola_Batidas",
+                "Cebola_Peso",
+                "Pasta_Doce_Batidas",
+                "Pasta_Doce_Peso",
+            ]
+        ]
+
         return df
 
     @staticmethod
@@ -231,12 +254,12 @@ class ProtheusCYVService:
                 ]
             )
             .agg(
-                Tradicional_Peso=("Tradicional_Peso", "sum"),
                 Tradicional_Batidas=("Tradicional_Batidas", "sum"),
-                Picante_Peso=("Picante_Peso", "sum"),
+                Tradicional_Peso=("Tradicional_Peso", "sum"),
                 Picante_Batidas=("Picante_Batidas", "sum"),
-                Cebola_Peso=("Cebola_Peso", "sum"),
+                Picante_Peso=("Picante_Peso", "sum"),
                 Cebola_Batidas=("Cebola_Batidas", "sum"),
+                Cebola_Peso=("Cebola_Peso", "sum"),
                 Doce_Batidas=("Pasta_Doce_Batidas", "sum"),
                 Doce_Peso=("Pasta_Doce_Peso", "sum"),
             )

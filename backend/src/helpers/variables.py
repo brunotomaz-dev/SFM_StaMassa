@@ -28,7 +28,8 @@ class IndicatorType(Enum):
     MAINTENANCE = "manutencao"
 
 
-CICLOS_ESPERADOS = 10.6
+CICLOS_ESPERADOS = 11.2
+CICLOS_BOLINHA = 7
 TEMPO_AJUSTE = 10
 PESO_BANDEJAS = 0.028
 PESO_SACO = 0.080
@@ -114,4 +115,3 @@ for produto, rendimento_cx in RENDIMENTO_PASTA_CX.items():
 # Caso queira visualizar o dicionário remova os comentários abaixo
 # for produto, rendimento in RENDIMENTO_PASTA_PAO.items():
 #     print(f"{produto}: {rendimento:.3f} kg/pão")
-

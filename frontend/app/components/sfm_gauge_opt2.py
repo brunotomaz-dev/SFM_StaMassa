@@ -63,7 +63,7 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bo
                     "name": indicator,
                     "title": {
                         "show": False if large else True,
-                        "offsetCenter":[0, "110%"],
+                        "offsetCenter": [0, "110%"],
                         "color": "auto",
                         "textStyle": {"fontSize": 24 if large else 14, "fontWeight": "bold"},
                     },

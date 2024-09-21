@@ -1,5 +1,8 @@
 """ Dados ao Vivo das Máquinas"""
 
+import asyncio
+from datetime import datetime
+
 import pandas as pd
 import streamlit as st
 
@@ -17,54 +20,42 @@ get_date = GetDate()
 # ================================================================================================ #
 
 
-def get_data(url: str, start: str | None = None, end: str | None = None) -> pd.DataFrame:
-    """Obtém os dados da API."""
-    url = f"{url}?start={start}&end={end}" if start and end else url
-    data = get_api_data(url)
-    return data
+async def get_data() -> tuple:
+    """
+    Obtém os dados da API.
+    """
+    date_now = datetime.now()
+    now_ = date_now.strftime("%Y-%m-%d")
+    urls = [
+        APIUrl.URL_INFO_IHM.value,
+        APIUrl.URL_PROD.value,
+        f"{APIUrl.URL_MAQ_INFO.value}?start={now_}&end={now_}",
+        f"{APIUrl.URL_MAQ_QUALIDADE.value}?start={now_}&end={now_}",
+        APIUrl.URL_EFF.value,
+        APIUrl.URL_PERF.value,
+        APIUrl.URL_REP.value,
+        APIUrl.URL_HIST_IND.value,
+    ]
+    tasks = [get_api_data(url) for url in urls]
+    results = await asyncio.gather(*tasks)
+    i_ihm = results[0]
+    production = results[1]
+    maq_info = results[2]
+    qual = results[3]
+    eff = results[4]
+    perf = results[5]
+    rep = results[6]
+    hist = results[7]
+    return i_ihm, production, maq_info, qual, eff, perf, rep, hist
 
-
-@st.cache_data(show_spinner="Carregando dados do indicadores...", ttl=60)
-def get_indicators_data() -> tuple:
-    """Obtém os dados dos indicadores."""
-
-    eff = get_data(APIUrl.URL_EFF.value)
-    perf = get_data(APIUrl.URL_PERF.value)
-    rep = get_data(APIUrl.URL_REP.value)
-
-    return eff, perf, rep
-
-
-@st.cache_data(show_spinner="Carregando dados do histórico indicadores...", ttl=60)
-def get_history_data() -> pd.DataFrame:
-    """Obtém os dados do histórico dos indicadores."""
-
-    return get_data(APIUrl.URL_HIST_IND.value)
-
-@st.cache_data(show_spinner="Carregando dados das linhas...", ttl=60)
-def get_maq_info() -> pd.DataFrame:
-    """Obtém os dados de eficiência das linhas."""
-    return get_data(APIUrl.URL_INFO_IHM.value)
-
-@st.cache_data(show_spinner="Carregando dados de produção...", ttl=60)
-def get_prod_data() -> pd.DataFrame:
-    """Obtém os dados de produção."""
-    return get_data(APIUrl.URL_PROD.value)
 
 @st.cache_data(show_spinner="Carregando dados de qualidade...", ttl=60)
-def get_quality_data() -> pd.DataFrame:
-    """Obtém os dados de qualidade."""
-    today = get_date.get_today()
-    today = today.strftime("%Y-%m-%d")
-
-    return get_data(APIUrl.URL_MAQ_QUALIDADE.value, start=today, end=today)
+def get_df() -> tuple:
+    ihm, production_, info_, qual, eff, perf, rep, hist = asyncio.run(get_data())
+    return ihm, production_, info_, qual, eff, perf, rep, hist
 
 
-eficiencia, performance, reparo = get_indicators_data()
-history = get_history_data()
-info_ihm = get_maq_info()
-prod = get_prod_data()
-quality = get_quality_data()
+info_ihm, prod, info, quality, eficiencia, performance, reparo, history = get_df()
 
 # Sortear os dados por data, linha e hora
 eficiencia = eficiencia.sort_values(by=["data_registro", "linha", "hora_registro"]).reset_index(
@@ -159,3 +150,6 @@ st.write(prod)
 
 st.subheader("Qualidade")
 st.write(quality)
+
+st.subheader("Info")
+st.write(info)

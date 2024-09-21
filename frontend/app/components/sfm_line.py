@@ -19,6 +19,9 @@ def create_line_chart(df: pd.DataFrame, indicator: IndicatorType) -> None:
     # Ajustar valores nulos na coluna do indicador para 0
     df[indicator.value] = df[indicator.value].fillna(0)
 
+    # Agrupar os dados por data de registro
+    df = df.groupby("data_registro")[indicator.value].mean().round(2).reset_index()
+
     return st_echarts(
         options={
             "xAxis": {
@@ -44,8 +47,13 @@ def create_line_chart(df: pd.DataFrame, indicator: IndicatorType) -> None:
                             }
                         ]
                     },
-                }
+                },
             ],
+            "tooltip": {
+                "trigger": "axis",
+                "formatter": "{b}: {c}%",
+                "axisPointer": {"type": "shadow"},
+            },
             "grid": {
                 "top": "15%",  # Ajuste a margem superior
                 "bottom": "10%",  # Ajuste a margem inferior
@@ -53,5 +61,5 @@ def create_line_chart(df: pd.DataFrame, indicator: IndicatorType) -> None:
                 "right": "10%",  # Ajuste a margem direita
             },
         },
-        height="50px",
+        height="100px",
     )

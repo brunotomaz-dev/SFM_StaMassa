@@ -5,6 +5,7 @@ import pandas as pd
 # pylint: disable=import-error
 from src.model.db_totvsdb_model import DBTotvsdbModel
 
+
 class ProtheusSB1ProdutosModel:
     """
     Classe que realiza a consulta no banco de dados
