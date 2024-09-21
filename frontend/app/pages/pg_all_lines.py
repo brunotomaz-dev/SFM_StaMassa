@@ -194,37 +194,38 @@ with r1_col1:
     _, turno_atual = get_date.get_this_turn()
     df_maq_info_status = df_maq_info_original[(df_maq_info_original.turno == turno_atual)]
     # Recuperar o status da última entrada de maq_info
-    with st.container():
-        status = df_maq_info_status.status.iloc[-1].capitalize()
-        back_color = ColorsSTM.GREEN.value if status == "Rodando" else ColorsSTM.RED.value
-        opt_1 = f"background-color: {back_color}; color: {ColorsSTM.LIGHT_GREY.value};"
-        st.markdown(f"""<div class="card">{status}</div>""", unsafe_allow_html=True)
-
-    if status != "Rodando":
+    if turn == turn_opt:
         with st.container():
-            df_maq_info_status.loc[df_maq_info_status.motivo == "Limpeza", "causa"] = "Limpeza"
-            causa = df_maq_info_status.causa.iloc[-1]
-            causa = causa if causa else "Não informado"
-            st.markdown(f"""<div class="card2">{causa}</div>""", unsafe_allow_html=True)
+            status = df_maq_info_status.status.iloc[-1].capitalize()
+            back_color = ColorsSTM.GREEN.value if status == "Rodando" else ColorsSTM.RED.value
+            opt_1 = f"background-color: {back_color}; color: {ColorsSTM.LIGHT_GREY.value};"
+            st.markdown(f"""<div class="card">{status}</div>""", unsafe_allow_html=True)
 
-        with st.container():
-            # Hora da Parada
-            hora_inicial = df_maq_info_status.data_hora.iloc[-1]
-            # Hora atual
-            hora_final = datetime.now()
-            # Ajustar para pd.Datetime
-            hora_inicial = pd.to_datetime(hora_inicial)
-            # Converter para pd.Datetime
-            hora_final = pd.to_datetime(hora_final)
-            # Calcular o tempo de parada em minutos
-            TEMPO = round((hora_final - hora_inicial).seconds / 60)
-            # Ajustar tempo para uma string formatada no formato mm
-            TEMPO = str(TEMPO).replace(".", ",")
+        if status != "Rodando":
+            with st.container():
+                df_maq_info_status.loc[df_maq_info_status.motivo == "Limpeza", "causa"] = "Limpeza"
+                causa = df_maq_info_status.causa.iloc[-1]
+                causa = causa if causa else "Não informado"
+                st.markdown(f"""<div class="card2">{causa}</div>""", unsafe_allow_html=True)
 
-            st.markdown(
-                f"""<div class="card2" style="font-size: 1.5vw;">{TEMPO} min</div>""",
-                unsafe_allow_html=True,
-            )
+            with st.container():
+                # Hora da Parada
+                hora_inicial = df_maq_info_status.data_hora.iloc[-1]
+                # Hora atual
+                hora_final = datetime.now()
+                # Ajustar para pd.Datetime
+                hora_inicial = pd.to_datetime(hora_inicial)
+                # Converter para pd.Datetime
+                hora_final = pd.to_datetime(hora_final)
+                # Calcular o tempo de parada em minutos
+                TEMPO = round((hora_final - hora_inicial).seconds / 60)
+                # Ajustar tempo para uma string formatada no formato mm
+                TEMPO = str(TEMPO).replace(".", ",")
+
+                st.markdown(
+                    f"""<div class="card2" style="font-size: 1.5vw;">{TEMPO} min</div>""",
+                    unsafe_allow_html=True,
+                )
 
 # ═══════════════════════════════════════════════════════════════════════════════════ Coluna 2 ══ #
 with r1_col2:

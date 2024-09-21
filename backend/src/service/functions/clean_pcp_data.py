@@ -1,13 +1,16 @@
 """Módulo que limpa e organiza os dados do protheus para uso do pcp."""
 
-from datetime import datetime, time
+from datetime import time
 
 import pandas as pd
 
 # pylint: disable=import-error
-from src.helpers.variables import MASSADA_CHEIA, MASSADA_REPROCESSO, MASSADA_BOLINHA, MASSADA_BOLINHA_ATUALIZADA
-
-
+from src.helpers.variables import (
+    MASSADA_BOLINHA,
+    MASSADA_BOLINHA_ATUALIZADA,
+    MASSADA_CHEIA,
+    MASSADA_REPROCESSO,
+)
 
 
 class CleanPCPData:
@@ -49,7 +52,8 @@ class CleanPCPData:
     @staticmethod
     def __mass_adjustment(data: pd.DataFrame, position: int = None) -> pd.DataFrame:
         """
-        Ajusta as colunas de batidas e peso de massa cheia para as colunas de batidas e peso de massa reprocesso/bolinha.
+        Ajusta as colunas de batidas e peso de massa cheia
+        para as colunas de batidas e peso de massa reprocesso/bolinha.
 
         Parameters
         ----------
@@ -64,13 +68,17 @@ class CleanPCPData:
         pd.DataFrame
             DataFrame com as colunas de batidas e peso de massa.
         """
-        df_massadas = data.groupby(
-            ["Codigo_Maquina", "Descricao_Maquina", "Data_Registro", "Turno", "Fabrica"]
-        ).agg(
-            Usuario_Registro=("Usuario_Registro", "first"),
-            Batidas_Cheia=("Quantidade_Atropelamento", "count"),
-            Peso_Massa_BC=("Quantidade_Atropelamento", "sum"),
-        ).reset_index()
+        df_massadas = (
+            data.groupby(
+                ["Codigo_Maquina", "Descricao_Maquina", "Data_Registro", "Turno", "Fabrica"]
+            )
+            .agg(
+                Usuario_Registro=("Usuario_Registro", "first"),
+                Batidas_Cheia=("Quantidade_Atropelamento", "count"),
+                Peso_Massa_BC=("Quantidade_Atropelamento", "sum"),
+            )
+            .reset_index()
+        )
 
         # Dicionario para escolher o nome da coluna de forma dinâmica
         columns_opt = {
@@ -81,7 +89,7 @@ class CleanPCPData:
             2: {
                 "Batidas_Cheia": "Batidas_Bolinha",
                 "Peso_Massa_BC": "Peso_Massa_BB",
-            }
+            },
         }
 
         # Renomear colunas conforme posição escolhida
@@ -158,13 +166,24 @@ class CleanPCPData:
         df["Turno"] = df["Hora_Registro"].apply(self.__get_shift)
 
         # Agrega somando valores
-        df = df.groupby(
-            ["Codigo_Maquina", "Descricao_Maquina", "Data_Registro", "Turno", "Fabrica", "Produto"]
-        ).agg(
-            Usuario_Registro=("Usuario_Registro", "first"),
-            Batidas_Pasta=("Quantidade_Atropelamento", "count"),
-            Peso_Pasta=("Quantidade_Atropelamento", "sum"),
-        ).reset_index()
+        df = (
+            df.groupby(
+                [
+                    "Codigo_Maquina",
+                    "Descricao_Maquina",
+                    "Data_Registro",
+                    "Turno",
+                    "Fabrica",
+                    "Produto",
+                ]
+            )
+            .agg(
+                Usuario_Registro=("Usuario_Registro", "first"),
+                Batidas_Pasta=("Quantidade_Atropelamento", "count"),
+                Peso_Pasta=("Quantidade_Atropelamento", "sum"),
+            )
+            .reset_index()
+        )
 
         # Ajustar a data de registro
         df["Data_Registro"] = pd.to_datetime(df["Data_Registro"], format="%Y%m%d")
