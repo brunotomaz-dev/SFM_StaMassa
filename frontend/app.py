@@ -54,7 +54,6 @@ if "pass_reset" not in st.session_state:
 if "page" not in st.session_state:
     st.session_state["page"] = None
 
-
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                         Authenticator
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -94,16 +93,18 @@ if autenticado:
     st.sidebar.markdown(
         f'<div class="sidebar-top">Logado como: {nome}</div>', unsafe_allow_html=True
     )
+    # Recuperar o role do usuário
+    role = config["credentials"]["usernames"][username]["role"]
+    # Colocar o role no cookie
+    st.session_state["role"] = role
 elif autenticado is False:
     st.sidebar.error("Email/password incorreto")
 elif autenticado is None:
     st.sidebar.warning("Por favor, preencha o email e a senha para logar")
 
-# Recuperar o role do usuário
-role = config["credentials"]["usernames"][username]["role"]
+if st.session_state["username"] is None:
+    st.session_state["role"] = None
 
-# Colocar o role no cookie
-st.session_state["role"] = role
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ REGISTRAR USUÁRIO ━━ #
 if st.session_state["add_user"]:

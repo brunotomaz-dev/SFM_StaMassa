@@ -17,11 +17,11 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bo
     """
     opt_color = {
         IndicatorType.PERFORMANCE: [
-            [0.08, ColorsSTM.GREEN.value],  # 4% e abaixo é verde
+            [0.1, ColorsSTM.GREEN.value],  # 4% e abaixo é verde
             [1, ColorsSTM.RED.value],  # Acima de 4% é vermelho
         ],
         IndicatorType.REPAIR: [
-            [0.08, ColorsSTM.GREEN.value],  # 4% e abaixo é verde
+            [0.1, ColorsSTM.GREEN.value],  # 4% e abaixo é verde
             [1, ColorsSTM.RED.value],  # Acima de 4% é vermelho
         ],
         IndicatorType.EFFICIENCY: [
@@ -37,8 +37,8 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bo
     }[indicator]
 
     opt_range_max = {
-        IndicatorType.PERFORMANCE: 50,
-        IndicatorType.REPAIR: 50,
+        IndicatorType.PERFORMANCE: 40,
+        IndicatorType.REPAIR: 40,
         IndicatorType.EFFICIENCY: 100,
     }[indicator]
 
