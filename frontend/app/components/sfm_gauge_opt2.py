@@ -5,7 +5,9 @@ from app.helpers.variables import ColorsSTM, IndicatorType
 from streamlit_echarts import st_echarts
 
 
-def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bool = False) -> None:
+def create_gauge_chart(
+    indicator: IndicatorType, data: int, key_: str, large: bool = False, pos: str = "up_center"
+) -> None:
     """
     Cria o gráfico de gauge.
 
@@ -49,6 +51,14 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bo
         IndicatorType.EFFICIENCY: "Eficiência",
     }[indicator]
 
+    # Ajuste de posição do gauge
+    position_y: str = {
+        "center": "50%",
+        "top": "35%",
+        "up_center": "55%",
+        "down_center": "45%",
+    }[pos]
+
     return st_echarts(
         options={
             "tooltip": {
@@ -68,7 +78,7 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bo
                         "textStyle": {"fontSize": 24 if large else 14, "fontWeight": "bold"},
                     },
                     "type": "gauge",
-                    "center": ["50%", "45%"] if large else ["50%", "55%"],
+                    "center": ["50%", "45%"] if large else ["50%", position_y],
                     "detail": {
                         "formatter": "{value}%",
                         "valueAnimation": True,

@@ -10,7 +10,7 @@ import pandas as pd
 import streamlit as st
 
 # pylint: disable=E0401
-from app.api.requests_ import get_api_data
+from app.api.requests_ import fetch_api_data
 from app.api.urls import APIUrl
 from app.functions.get_date import GetDate
 
@@ -33,7 +33,7 @@ async def get_all_data() -> pd.DataFrame:
     yesterday = (datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")
 
     url = f"{APIUrl.URL_MAQ_INFO.value}?start={yesterday}&end={today}"
-    tasks = [get_api_data(url)]
+    tasks = [fetch_api_data(url)]
     results = await asyncio.gather(*tasks)
     return results[0]
 
@@ -78,6 +78,11 @@ df_original.data_registro = df_original.data_registro.dt.strftime("%Y-%m-%d")
 # Cria uma cópia para manipulação
 df = df_original.copy()
 df = df[df.data_registro == adjust_selected_date(select_option)]
+
+if df.empty:
+    st.subheader("Sem dados")
+    st.stop()
+
 
 # Ajusta a data
 df.data_registro = pd.to_datetime(df.data_registro).dt.date
@@ -153,9 +158,17 @@ df["Intervalo"] = df.index.hour.astype(str) + "hs - " + (df.index.hour + 1).asty
 # Fazer com que intervalo seja o index
 df = df.set_index("Intervalo")
 
+# Calcular o total de cada coluna (linha de produção)
+totals = df.sum(axis=0).to_frame().T
+
+# Adicionar uma nova linha com os totais ao DataFrame
+totals.index = ["Total"]
+df = pd.concat([df, totals])
+
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #    ┃                                        Layout                                        ┃
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-st.subheader("Caixas Produzidas por Hora")
-st.table(df)
+if not df.empty:
+    st.subheader("Caixas Produzidas por Hora")
+    st.table(df)

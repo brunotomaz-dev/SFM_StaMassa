@@ -8,7 +8,7 @@ import pandas as pd
 import streamlit as st
 
 # pylint: disable=E0401
-from app.api.requests_ import get_api_data
+from app.api.requests_ import fetch_api_data
 from app.api.urls import APIUrl
 from app.components.sfm_gauge_opt2 import create_gauge_chart
 from app.functions.get_date import GetDate
@@ -91,7 +91,7 @@ async def get_data() -> tuple:
         APIUrl.URL_PROD.value,
         f"{APIUrl.URL_MAQ_INFO.value}?start={now_}&end={now_}",
     ]
-    tasks = [get_api_data(url) for url in urls]
+    tasks = [fetch_api_data(url) for url in urls]
     results = await asyncio.gather(*tasks)
     eff = results[0]
     info_ihm = results[1]

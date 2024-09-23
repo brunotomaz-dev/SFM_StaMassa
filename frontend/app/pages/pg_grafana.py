@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 # pylint: disable=import-error
-from app.api.requests_ import get_api_data
+from app.api.requests_ import fetch_api_data
 from app.api.urls import APIUrl
 from app.functions.get_date import GetDate
 from app.functions.indicators_playground import IndicatorsPlayground
@@ -36,7 +36,7 @@ async def get_data() -> tuple:
         APIUrl.URL_REP.value,
         APIUrl.URL_HIST_IND.value,
     ]
-    tasks = [get_api_data(url) for url in urls]
+    tasks = [fetch_api_data(url) for url in urls]
     results = await asyncio.gather(*tasks)
     i_ihm = results[0]
     production = results[1]

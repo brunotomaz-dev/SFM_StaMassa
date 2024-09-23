@@ -430,8 +430,11 @@ def create_ind_history():
     prod = maquina_info_controller.get_production_data((start, end))
     qual = maquina_qualidade_controller.get_data((start, end))
 
+    # Receber os produtos do protheus
+    products_data = protheus_sb1_produtos_controller.get_data()
+
     # Juntar os dados de produção com os dados de qualidade e info
-    df_prod = prod_qualid_join.join_data(qual, prod)
+    df_prod = prod_qualid_join.join_data(qual, prod, products_data)
 
     # Criar os indicadores de produção
     df_eff = ind_production.get_indicators(df_info_ihm, df_prod, IndicatorType.EFFICIENCY)

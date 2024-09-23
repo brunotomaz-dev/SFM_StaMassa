@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 
-async def get_api_data(url: str) -> pd.DataFrame:
+async def fetch_api_data(url: str) -> pd.DataFrame:
     """
     Obtém os dados da API.
     """
