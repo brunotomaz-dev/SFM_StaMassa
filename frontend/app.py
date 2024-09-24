@@ -17,7 +17,7 @@ from yaml.loader import SafeLoader
 st.set_page_config(
     page_title="Shop Floor Management",
     layout="wide",
-    page_icon=":material/edit:",
+    page_icon="assets/favicon.ico",
 )
 
 # Adicionar CSS personalizado para importar a fonte Poppins
@@ -73,6 +73,14 @@ authenticator = stauth.Authenticate(
     config["pre-authorized"],
 )
 
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ SALVAR ALTERAÇÕES DE LOGIN ━━ #
+# Salvando o arquivo de configuração
+def save_config(config: dict) -> None:
+    with open("config.yaml", "w") as file:
+        yaml.dump(config, file, default_flow_style=False)
+
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ LOGIN ━━ #
 # Criando o widget de login e recuperando os dados
 nome: str | None = None
@@ -122,6 +130,7 @@ if st.session_state["add_user"]:
             )
         )
         if email_of_registered_user:
+            save_config(config)
             st.toast("Usuário registrado com sucesso")
             st.success("Usuário registrado com sucesso")
             time.sleep(3)
@@ -146,6 +155,7 @@ def handle_password_reset():
     """
     try:
         if authenticator.reset_password(st.session_state["username"], fields=pass_fields):
+            save_config(config)
             st.success("Senha alterada com sucesso")
             time.sleep(3)
             st.session_state["pass_reset"] = False
@@ -158,10 +168,6 @@ def handle_password_reset():
 
 if st.session_state["authentication_status"] and st.session_state["pass_reset"]:
     handle_password_reset()
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ SALVAR ALTERAÇÕES DE LOGIN ━━ #
-# Salvando o arquivo de configuração
-with open("config.yaml", "w") as file:
-    yaml.dump(config, file, default_flow_style=False)
 
 # ================================================================================================ #
 #                                               PAGES                                              #
@@ -216,10 +222,14 @@ def get_navigation(user_role):
 
     # Conjuntos de páginas para reutilização
     paginas_basicas = [login_page]
-    paginas_lider_supervisor = [shop_floor_management_page, all_lines_page, per_hour_page]
+    paginas_lider_supervisor = paginas_basicas + [
+        shop_floor_management_page,
+        all_lines_page,
+        per_hour_page,
+    ]
     paginas_coordenacao = paginas_lider_supervisor + [pcp_page]
-    paginas_pcp = [pcp_page] + paginas_lider_supervisor
-    paginas_dev = paginas_basicas + paginas_coordenacao + [grafana_page]
+    paginas_pcp = paginas_basicas + [pcp_page]
+    paginas_dev = paginas_coordenacao + [grafana_page]
 
     # Mapeamento de roles para listas de páginas
     role_pages = {

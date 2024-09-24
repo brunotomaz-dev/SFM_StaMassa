@@ -41,7 +41,17 @@ async def get_data(url: str, start: str | None = None, end: str | None = None) -
 
 
 async def get_all_data() -> tuple:
-    """Obtém os dados da API."""
+    """
+    Obtém os dados da API.
+
+    Retorna:
+    - eff (pd.DataFrame): Dados de eficiência.
+    - perf (pd.DataFrame): Dados de performance.
+    - rep (pd.DataFrame): Dados de reparo.
+    - ind (pd.DataFrame): Dados históricos dos indicadores.
+    - info_ihm (pd.DataFrame): Dados da IHM e da máquina.
+
+    """
     urls = [
         APIUrl.URL_EFF.value,
         APIUrl.URL_PERF.value,

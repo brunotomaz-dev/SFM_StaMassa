@@ -32,6 +32,12 @@ credentials:
       name: Cid Franciscon
       password: $2b$12$0AzUoV4TlZBfZdJQtOg2QejaoTDRjEMgM1PU0Cw04EtY2XspQ/O8q
       role: coordenador
+    claudia.antunes@santamassa.com.br:
+      email: claudia.antunes@santamassa.com.br
+      logged_in: false
+      name: Claudia Antunes
+      password: $2b$12$Tl8Yk57.Y7ezoq4EBxxjruAfPhtULT.DQqFUuwj7sDgx7XokLRD7S
+      role: supervisor
     guilherme.bandeira@santamassa.com.br:
       email: guilherme.bandeira@santamassa.com.br
       failed_login_attempts: 0
@@ -39,6 +45,12 @@ credentials:
       name: Guilherme Bandeira
       password: $2b$12$9oqwEkpUT3amYorI/NdJI.//SkAI5tcPd4WpgqZDPfaTjphOqgK56
       role: gerente
+    rogerio.inacio@santamassa.com.br:
+      email: rogerio.inacio@santamassa.com.br
+      logged_in: false
+      name: Rogerio Inacio
+      password: $2b$12$aak.CarMlHyuvfLaUMzCXOBD4.98xbnWp.fVNht9HKoKR4ZPnbTnm
+      role: supervisor
 pre-authorized:
   emails:
   - bruno.tomaz@santamassa.com.br

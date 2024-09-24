@@ -22,6 +22,7 @@ from src.controller.performance_controller import PerformanceController
 from src.controller.production_controller import ProductionController
 from src.controller.protheus_cyv_controller import ProtheusCYVController
 from src.controller.protheus_sb1_produtos_controller import ProtheusSB1ProdutosController
+from src.controller.protheus_sb2_estoque_controller import ProtheusSB2EstoqueController
 from src.controller.protheus_sd3_pcp_controller import ProtheusSD3PCPController
 from src.controller.protheus_sd3_production_controller import ProtheusSD3ProductionController
 from src.controller.reparo_controller import ReparoController
@@ -49,6 +50,7 @@ protheus_sb1_produtos_controller = ProtheusSB1ProdutosController()
 protheus_cyv_controller = ProtheusCYVController()
 protheus_sd3_production_controller = ProtheusSD3ProductionController()
 protheus_sd3_pcp_controller = ProtheusSD3PCPController()
+protheus_sb2_caixas_estoque_controller = ProtheusSB2EstoqueController()
 
 pd.set_option("future.no_silent_downcast", True)
 
@@ -330,6 +332,20 @@ def get_protheus_sd3_ajuste_estoque(start: str, end: str):
     """
 
     data = protheus_sd3_pcp_controller.get_sd3_data(start, end)
+    if data is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+        )
+    return data.to_json(date_format="iso", orient="split")
+
+
+@app.get("/protheus_sb2/caixas_estoque")
+def get_protheus_sb2_caixas_estoque():
+    """
+    Retorna os dados de SB2 Caixas Estoque do DB local.
+    """
+
+    data = protheus_sb2_caixas_estoque_controller.get_data()
     if data is None:
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
