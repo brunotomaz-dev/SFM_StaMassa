@@ -19,27 +19,11 @@ st.set_page_config(
     layout="wide",
     page_icon="assets/favicon.ico",
 )
-
 # Adicionar CSS personalizado para importar a fonte Poppins
 # pylint: disable=w1514
 with open("style.css") as css:
     st.markdown(f"<style>{css.read()}</style>", unsafe_allow_html=True)
 
-st.markdown(
-    """
-    <style>
-    .sidebar-top {
-    position: fixed;
-    top: 0;
-    left: 0;
-    padding: 10px;
-    text-align: left;
-    font-size: 0.7vw;
-}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                       inicializar state
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -76,9 +60,10 @@ authenticator = stauth.Authenticate(
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ SALVAR ALTERAÇÕES DE LOGIN ━━ #
 # Salvando o arquivo de configuração
-def save_config(config: dict) -> None:
-    with open("config.yaml", "w") as file:
-        yaml.dump(config, file, default_flow_style=False)
+def save_config(c: dict) -> None:
+    """Salva as alterações feitas no arquivo de configuração."""
+    with open("config.yaml", "w") as f:
+        yaml.dump(c, f, default_flow_style=False)
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ LOGIN ━━ #
@@ -98,9 +83,6 @@ if autenticado:
     # Para ter botão de logout só na página Inicial
     if st.session_state["page"] == "Home":
         authenticator.logout(location="sidebar")
-    st.sidebar.markdown(
-        f'<div class="sidebar-top">Logado como: {nome}</div>', unsafe_allow_html=True
-    )
     # Recuperar o role do usuário
     role = config["credentials"]["usernames"][username]["role"]
     # Colocar o role no cookie

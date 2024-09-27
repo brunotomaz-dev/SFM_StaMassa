@@ -153,3 +153,6 @@ CMakeLists.txt.user
 */.idea/
 frontend/.idea/
 backend/.idea/
+
+# Arquivos de configuração do streamlit
+.streamlit/

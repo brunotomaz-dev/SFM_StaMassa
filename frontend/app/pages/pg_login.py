@@ -9,6 +9,7 @@ import streamlit as st
 from app.api.requests_ import fetch_api_data
 from app.api.urls import APIUrl
 from app.components.sfm_gauge_opt2 import create_gauge_chart
+from app.functions.asbsent import RegistroAbsenteismo
 from app.functions.get_date import GetDate
 from app.functions.indicators_playground import IndicatorsPlayground
 from app.helpers.variables import IndicatorType
@@ -16,6 +17,7 @@ from app.pages.pg_sfm import get_df as get_ind
 
 get_date = GetDate()
 ind_play = IndicatorsPlayground()
+reg_abs = RegistroAbsenteismo()
 
 ROLE = st.session_state["role"]
 
@@ -31,6 +33,17 @@ st.markdown(
     border: 1px solid #ddd;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    [data-testid="stMetricValue"] {
+    font-size: 3vw;
+    text-align: center;
+    }
+    [data-testid="stMetric"] {
+        background-color: #fff;
+        padding: 5px 15px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
     </style>
     """,
@@ -64,8 +77,9 @@ def get_data() -> tuple:
 #                                             AUTH DATA                                            #
 # ================================================================================================ #
 if st.session_state["authentication_status"]:
+    role = st.session_state["role"].replace("-", " ").title()
     st.header(f"Olá {st.session_state['name']}")
-    st.write(f'##### Login de _{st.session_state["role"].capitalize()}_')
+    st.write(f"##### Login de _{role}_")
 
     pass_reset = st.sidebar.button("Alterar Senha")
 
@@ -82,8 +96,20 @@ if ROLE == "dev":
         st.rerun()
 
 
+# ================================================================================================ #
+#                                              SIDEBAR                                             #
+# ================================================================================================ #
+if "absenteeism" not in st.session_state:
+    st.session_state["absenteeism"] = False
 if ROLE == "supervisor":
     st.sidebar.divider()
+    absent = st.sidebar.button("Registrar Absenteísmo")
+    if absent:
+        st.session_state["absenteeism"] = (
+            True if st.session_state["absenteeism"] is False else False
+        )
+        st.rerun()
+
 
 # ================================================================================================ #
 #                                            DATAFRAMES                                            #
@@ -104,6 +130,11 @@ gg_rep = ind_play.get_indicator(reparo, IndicatorType.REPAIR, line_turn="Turno")
 gg_eff = gg_eff[pd.to_datetime(gg_eff.data_registro).dt.date == today]
 gg_perf = gg_perf[pd.to_datetime(gg_perf.data_registro).dt.date == today]
 gg_rep = gg_rep[pd.to_datetime(gg_rep.data_registro).dt.date == today]
+
+if gg_eff["eficiencia"].isnull().all():
+    gg_eff["eficiencia"] = gg_eff["eficiencia"].fillna(0)
+    gg_perf["performance"] = gg_perf["performance"].fillna(0)
+    gg_rep["reparo"] = gg_rep["reparo"].fillna(0)
 
 # Média dos indicadores
 gg_eff = gg_eff.eficiencia.mean().round(1)
@@ -187,6 +218,42 @@ estoque_cam_fria = estoque_cam_fria.style.format(thousands=".", decimal=",", pre
 # ================================================================================================ #
 #                                              LAYOUT                                              #
 # ================================================================================================ #
+
+# =============================================================================== Form Absenteísmo #
+if ROLE == "supervisor" and st.session_state["absenteeism"]:
+    f_col, d_col = st.columns([1, 2])
+    with f_col:
+        with st.form(key="abs", clear_on_submit=True):
+            st.write("###### Dados de Absenteísmo:")
+            turno = st.radio("Turno", ["Matutino", "Vespertino", "Noturno"], horizontal=True)
+            s_col, t_col = st.columns([1, 1])
+            setor = s_col.selectbox("Setor", ["Panificação", "Recheio", "Embalagem", "Pasta"])
+            tipo = t_col.selectbox("Tipo", ["Falta", "Atraso", "Afastamento", "Saída Antecipada"])
+            nome = st.text_input("Nome")
+            motivo = st.text_area("Motivo")
+            col_sub, col_save = st.columns([4, 1])
+            submit = col_sub.form_submit_button("Adicionar")
+            if submit:
+                # Atualize o estado ou faça qualquer processamento necessário
+                abs_df = reg_abs.adicionar_registro(setor, turno, nome, tipo, motivo)
+                st.session_state["abs_df"] = abs_df
+                st.toast("Dados adicionados com sucesso!")
+    with d_col:
+        with st.container(border=True):
+            st.write("###### Registros de Absenteísmo pendentes de envio:")
+            if "abs_df" in st.session_state and not st.session_state["abs_df"].empty:
+                st.table(st.session_state["abs_df"])
+                enviar = st.button("Enviar")
+                if enviar:
+                    reg_abs.salvar_csv()
+                    st.toast("Dados enviados com sucesso!")
+                    st.session_state["absenteeism"] = False
+                    st.session_state["abs_df"] = pd.DataFrame()
+                    st.rerun()
+            else:
+                st.write("Nenhum registro pendente.")
+
+
 st.title("Dados do dia")
 
 col_1, col_2 = st.columns([1, 2])
@@ -204,9 +271,26 @@ with col_1:
             create_gauge_chart(IndicatorType.REPAIR, gg_rep, "login_rep_gauge", pos="top")
 
     # ================================================================================ Absenteísmo #
+    absent_df = reg_abs.ler_csv()
+    if absent_df.empty:
+        faltas, atrasos, afastamentos, s_antecipada = 0, 0, 0, 0
+    else:
+        absent_df["Data"] = pd.to_datetime(absent_df["Data"]).dt.date
+        absent_df = absent_df[absent_df["Data"] == today]
+        faltas = absent_df[absent_df["Tipo"] == "Falta"].shape[0]
+        atrasos = absent_df[absent_df["Tipo"] == "Atraso"].shape[0]
+        afastamentos = absent_df[absent_df["Tipo"] == "Afastamento"].shape[0]
+        s_antecipada = absent_df[absent_df["Tipo"] == "Saída Antecipada"].shape[0]
+
     with st.container(border=True):
         st.subheader("Absenteísmo")
-        st.write("Em desenvolvimento")
+        f_col, a_col = st.columns(2)
+        f_col.metric("Faltas", faltas)
+        a_col.metric("Atrasos", atrasos)
+        af_col, sa_col = st.columns(2)
+        af_col.metric("Afastamentos", afastamentos)
+        sa_col.metric("Saídas Antecipadas", s_antecipada)
+
 
 with col_2:
     col_2_1, col_2_2 = st.columns(2)
