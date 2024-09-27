@@ -19,7 +19,7 @@ class APIUrl(Enum):
     http://localhost:8000/maquina_ihm?start=2022-01-01&end=2022-01-31
 
     Exemplo de Uso:
-    >>> f"{APIUrl.URL_MAQ_IHM.value}?start=2022-01-01&end=2022-01-31"
+    "f"{APIUrl.URL_MAQ_IHM.value}?start=2022-01-01&end=2022-01-31"
     "http://localhost:8000/maquina_ihm?start=2022-01-01&end=2022-01-31"
     """
 
@@ -32,3 +32,10 @@ class APIUrl(Enum):
     URL_PERF = "http://localhost:8000/performance"
     URL_REP = "http://localhost:8000/reparo"
     URL_HIST_IND = "http://localhost:8000/historic_ind"
+    URL_MASSA = "http://localhost:8000/protheus_cyv/massa"
+    URL_MASSA_WEEK = "http://localhost:8000/protheus_cyv/massa_week"
+    URL_PASTA = "http://localhost:8000/protheus_cyv/pasta"
+    URL_PASTA_WEEK = "http://localhost:8000/protheus_cyv/pasta_week"
+    URL_CAIXAS_CF = "http://localhost:8000/protheus_sd3/production"
+    URL_PCP_ESTOQUE = "http://localhost:8000/protheus_sd3/pcp_estoque"
+    URL_CAIXAS_ESTOQUE = "http://localhost:8000/protheus_sb2/caixas_estoque"

@@ -6,6 +6,7 @@ import pandas as pd
 # pylint: disable=import-error
 from src.helpers.variables import (
     AF_REP,
+    CICLOS_BOLINHA,
     CICLOS_ESPERADOS,
     DESC_EFF,
     DESC_PERF,
@@ -29,6 +30,7 @@ class IndProd:
         self.not_perf = NOT_PERF
         self.af_rep = AF_REP
         self.ciclos_ideais = CICLOS_ESPERADOS
+        self.ciclos_bolinha = CICLOS_BOLINHA
 
     def get_indicators(
         self, df_info: pd.DataFrame, df_prod: pd.DataFrame, indicator: IndicatorType
@@ -147,8 +149,20 @@ class IndProd:
         Ajusta o indicador de eficiência.
         """
 
+        # Variável para identificar quando o produto possui a palavra " BOL "
+        mask_bolinha = df["produto"].str.contains("BOL ")
+
+        # NOTE: Código que não levava em conta o bolinha
         # Nova coluna para o tempo esperado de produção
-        df["producao_esperada"] = round(((df.tempo_esperado * self.ciclos_ideais) * 2), 0)
+        # df["producao_esperada"] = round(((df.tempo_esperado * self.ciclos_ideais) * 2), 0)
+
+        # NOTE: Código ajustado para o bolinha - acompanhar
+        # Nova coluna para o tempo esperado de produção
+        df["producao_esperada"] = round(
+            df["tempo_esperado"] * (self.ciclos_bolinha * 2) * mask_bolinha
+            + df["tempo_esperado"] * (self.ciclos_ideais * 2) * ~mask_bolinha,
+            0,
+        )
 
         # Coluna de eficiência
         df[indicator.value] = (df.total_produzido / df.producao_esperada).round(3)

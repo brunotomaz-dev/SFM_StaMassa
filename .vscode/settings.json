@@ -15,5 +15,8 @@
       "group": "Local",
       "database": "${workspaceFolder:SFM_StaMassa}/backend/src/database/automacao_local.db"
     }
+  ],
+  "cSpell.ignoreWords": [
+    "USUARIO"
   ]
 }

@@ -2,21 +2,22 @@
 
 from io import StringIO
 
+import aiohttp
 import pandas as pd
-import requests
 import streamlit as st
 
 
-def get_api_data(url: str) -> pd.DataFrame:
+async def fetch_api_data(url: str) -> pd.DataFrame:
     """
     Obtém os dados da API.
     """
 
-    response = requests.get(url, timeout=40)
-    if response.status_code == 200:
-        data = response.json()
-        df = pd.read_json(StringIO(str(data)), orient="split")
-        return df
-    else:
-        st.error("Erro ao obter os dados da API.")
-        return pd.DataFrame()
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                data = await response.json()
+                df = pd.read_json(StringIO(str(data)), orient="split")
+                return df
+            else:
+                st.error("Erro ao obter os dados da API.")
+                return pd.DataFrame()

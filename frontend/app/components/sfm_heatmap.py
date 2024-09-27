@@ -27,7 +27,7 @@ def create_heatmap_chart(
             {"min": 4, "max": max_piece, "color": ColorsSTM.RED.value},
         ],
         IndicatorType.EFFICIENCY: [
-            {"min": 0, "max": 90, "color": ColorsSTM.RED.value},
+            {"min": 0, "max": 89.99, "color": ColorsSTM.RED.value},
             {"min": 90, "max": max_piece, "color": ColorsSTM.GREEN.value},
         ],
     }[indicator]

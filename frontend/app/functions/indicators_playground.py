@@ -62,9 +62,9 @@ class IndicatorsPlayground:
         self,
         df: pd.DataFrame,
         indicator: IndicatorType,
-        turn: str | None,
-        line_turn: str,
-        fabrica: str,
+        turn: str | None = None,
+        line_turn: str | None = None,
+        fabrica: str | None = None,
     ) -> pd.DataFrame:
         """Obtém o indicador."""
         # Ajustar os dados básicos

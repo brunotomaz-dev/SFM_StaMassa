@@ -17,7 +17,9 @@ class ProdQualidJoin:
         self.df_quality = None
         self.df_production = None
 
-    def join_data(self, df_quality, df_production, data_products: pd.DataFrame | None = None) -> pd.DataFrame:
+    def join_data(
+        self, df_quality, df_production, data_products: pd.DataFrame | None = None
+    ) -> pd.DataFrame:
         """
         Junta os DataFrames de qualidade e produção.
         """
@@ -40,8 +42,7 @@ class ProdQualidJoin:
             how="left",
         )
 
-
-
+        # Se houver dados de produtos
         if data_products is not None:
             # Converter o tipo da coluna para string
             df.produto_id = df.produto_id.astype(str)
