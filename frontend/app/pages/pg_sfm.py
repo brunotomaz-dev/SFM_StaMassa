@@ -10,7 +10,7 @@ import streamlit as st
 import streamlit_antd_components as stc
 
 # pylint: disable=import-error
-from app.api.requests_ import get_api_data
+from app.api.requests_ import fetch_api_data
 from app.api.urls import APIUrl
 from app.components import sfm_gauge as sfm_gg
 from app.components import sfm_gauge_opt2 as sfm_gg2
@@ -36,12 +36,22 @@ SUB_OPT_2 = "Análise Mensal"
 async def get_data(url: str, start: str | None = None, end: str | None = None) -> pd.DataFrame:
     """Obtém os dados da API."""
     url = f"{url}?start={start}&end={end}" if start and end else url
-    data = await get_api_data(url)
+    data = await fetch_api_data(url)
     return data
 
 
 async def get_all_data() -> tuple:
-    """Obtém os dados da API."""
+    """
+    Obtém os dados da API.
+
+    Retorna:
+    - eff (pd.DataFrame): Dados de eficiência.
+    - perf (pd.DataFrame): Dados de performance.
+    - rep (pd.DataFrame): Dados de reparo.
+    - ind (pd.DataFrame): Dados históricos dos indicadores.
+    - info_ihm (pd.DataFrame): Dados da IHM e da máquina.
+
+    """
     urls = [
         APIUrl.URL_EFF.value,
         APIUrl.URL_PERF.value,
@@ -61,6 +71,7 @@ async def get_all_data() -> tuple:
 
 @st.cache_data(show_spinner="Obtendo dados", ttl=600)
 def get_df():
+    """Obtém os dados da API."""
     eff, perf, rep, ind, ihm = asyncio.run(get_all_data())
     return eff, perf, rep, ind, ihm
 

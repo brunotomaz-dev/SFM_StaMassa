@@ -38,3 +38,4 @@ class APIUrl(Enum):
     URL_PASTA_WEEK = "http://localhost:8000/protheus_cyv/pasta_week"
     URL_CAIXAS_CF = "http://localhost:8000/protheus_sd3/production"
     URL_PCP_ESTOQUE = "http://localhost:8000/protheus_sd3/pcp_estoque"
+    URL_CAIXAS_ESTOQUE = "http://localhost:8000/protheus_sb2/caixas_estoque"

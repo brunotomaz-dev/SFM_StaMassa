@@ -5,7 +5,9 @@ from app.helpers.variables import ColorsSTM, IndicatorType
 from streamlit_echarts import st_echarts
 
 
-def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bool = False) -> None:
+def create_gauge_chart(
+    indicator: IndicatorType, data: int, key_: str, large: bool = False, pos: str = "up_center"
+) -> None:
     """
     Cria o gráfico de gauge.
 
@@ -17,11 +19,11 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bo
     """
     opt_color = {
         IndicatorType.PERFORMANCE: [
-            [0.08, ColorsSTM.GREEN.value],  # 4% e abaixo é verde
+            [0.1, ColorsSTM.GREEN.value],  # 4% e abaixo é verde
             [1, ColorsSTM.RED.value],  # Acima de 4% é vermelho
         ],
         IndicatorType.REPAIR: [
-            [0.08, ColorsSTM.GREEN.value],  # 4% e abaixo é verde
+            [0.1, ColorsSTM.GREEN.value],  # 4% e abaixo é verde
             [1, ColorsSTM.RED.value],  # Acima de 4% é vermelho
         ],
         IndicatorType.EFFICIENCY: [
@@ -37,8 +39,8 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bo
     }[indicator]
 
     opt_range_max = {
-        IndicatorType.PERFORMANCE: 50,
-        IndicatorType.REPAIR: 50,
+        IndicatorType.PERFORMANCE: 40,
+        IndicatorType.REPAIR: 40,
         IndicatorType.EFFICIENCY: 100,
     }[indicator]
 
@@ -48,6 +50,14 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bo
         IndicatorType.REPAIR: indicator.value.capitalize(),
         IndicatorType.EFFICIENCY: "Eficiência",
     }[indicator]
+
+    # Ajuste de posição do gauge
+    position_y: str = {
+        "center": "50%",
+        "top": "35%",
+        "up_center": "55%",
+        "down_center": "45%",
+    }[pos]
 
     return st_echarts(
         options={
@@ -68,7 +78,7 @@ def create_gauge_chart(indicator: IndicatorType, data: int, key_: str, large: bo
                         "textStyle": {"fontSize": 24 if large else 14, "fontWeight": "bold"},
                     },
                     "type": "gauge",
-                    "center": ["50%", "45%"] if large else ["50%", "55%"],
+                    "center": ["50%", "45%"] if large else ["50%", position_y],
                     "detail": {
                         "formatter": "{value}%",
                         "valueAnimation": True,

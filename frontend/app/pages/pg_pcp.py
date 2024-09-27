@@ -14,7 +14,7 @@ import streamlit as st
 import streamlit_antd_components as stc
 
 # pylint: disable=E0401
-from app.api.requests_ import get_api_data
+from app.api.requests_ import fetch_api_data
 from app.api.urls import APIUrl
 from app.functions.get_date import GetDate
 from app.functions.production_adj import adjust_pao
@@ -44,7 +44,7 @@ async def get_data(url: str, start: str | None = None, end: str | None = None) -
     Obtém os dados da API.
     """
     url = f"{url}?start={start}&end={end}" if start and end else url
-    data = await get_api_data(url)
+    data = await fetch_api_data(url)
     return data
 
 

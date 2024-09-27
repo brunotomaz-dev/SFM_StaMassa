@@ -17,29 +17,13 @@ from yaml.loader import SafeLoader
 st.set_page_config(
     page_title="Shop Floor Management",
     layout="wide",
-    page_icon=":material/edit:",
+    page_icon="assets/favicon.ico",
 )
-
 # Adicionar CSS personalizado para importar a fonte Poppins
 # pylint: disable=w1514
 with open("style.css") as css:
     st.markdown(f"<style>{css.read()}</style>", unsafe_allow_html=True)
 
-st.markdown(
-    """
-    <style>
-    .sidebar-top {
-    position: fixed;
-    top: 0;
-    left: 0;
-    padding: 10px;
-    text-align: left;
-    font-size: 0.7vw;
-}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                       inicializar state
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -53,7 +37,6 @@ if "pass_reset" not in st.session_state:
     st.session_state["pass_reset"] = False
 if "page" not in st.session_state:
     st.session_state["page"] = None
-
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                         Authenticator
@@ -74,6 +57,15 @@ authenticator = stauth.Authenticate(
     config["pre-authorized"],
 )
 
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ SALVAR ALTERAÇÕES DE LOGIN ━━ #
+# Salvando o arquivo de configuração
+def save_config(c: dict) -> None:
+    """Salva as alterações feitas no arquivo de configuração."""
+    with open("config.yaml", "w") as f:
+        yaml.dump(c, f, default_flow_style=False)
+
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ LOGIN ━━ #
 # Criando o widget de login e recuperando os dados
 nome: str | None = None
@@ -91,19 +83,18 @@ if autenticado:
     # Para ter botão de logout só na página Inicial
     if st.session_state["page"] == "Home":
         authenticator.logout(location="sidebar")
-    st.sidebar.markdown(
-        f'<div class="sidebar-top">Logado como: {nome}</div>', unsafe_allow_html=True
-    )
+    # Recuperar o role do usuário
+    role = config["credentials"]["usernames"][username]["role"]
+    # Colocar o role no cookie
+    st.session_state["role"] = role
 elif autenticado is False:
     st.sidebar.error("Email/password incorreto")
 elif autenticado is None:
     st.sidebar.warning("Por favor, preencha o email e a senha para logar")
 
-# Recuperar o role do usuário
-role = config["credentials"]["usernames"][username]["role"]
+if st.session_state["username"] is None:
+    st.session_state["role"] = None
 
-# Colocar o role no cookie
-st.session_state["role"] = role
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ REGISTRAR USUÁRIO ━━ #
 if st.session_state["add_user"]:
@@ -121,6 +112,7 @@ if st.session_state["add_user"]:
             )
         )
         if email_of_registered_user:
+            save_config(config)
             st.toast("Usuário registrado com sucesso")
             st.success("Usuário registrado com sucesso")
             time.sleep(3)
@@ -145,6 +137,7 @@ def handle_password_reset():
     """
     try:
         if authenticator.reset_password(st.session_state["username"], fields=pass_fields):
+            save_config(config)
             st.success("Senha alterada com sucesso")
             time.sleep(3)
             st.session_state["pass_reset"] = False
@@ -157,10 +150,6 @@ def handle_password_reset():
 
 if st.session_state["authentication_status"] and st.session_state["pass_reset"]:
     handle_password_reset()
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ SALVAR ALTERAÇÕES DE LOGIN ━━ #
-# Salvando o arquivo de configuração
-with open("config.yaml", "w") as file:
-    yaml.dump(config, file, default_flow_style=False)
 
 # ================================================================================================ #
 #                                               PAGES                                              #
@@ -196,11 +185,6 @@ pcp_page = st.Page(
     icon=":material/production_quantity_limits:",
 )
 
-grafana_page = st.Page(
-    page="app/pages/pg_grafana.py",
-    title="NEW PAGE",
-    icon=":material/live_tv:",
-)
 
 # ================================================================================================ #
 #                                         LAYOUT AND CONFIG                                        #
@@ -215,10 +199,14 @@ def get_navigation(user_role):
 
     # Conjuntos de páginas para reutilização
     paginas_basicas = [login_page]
-    paginas_lider_supervisor = [shop_floor_management_page, all_lines_page, per_hour_page]
+    paginas_lider_supervisor = paginas_basicas + [
+        shop_floor_management_page,
+        all_lines_page,
+        per_hour_page,
+    ]
     paginas_coordenacao = paginas_lider_supervisor + [pcp_page]
-    paginas_pcp = [pcp_page] + paginas_lider_supervisor
-    paginas_dev = paginas_basicas + paginas_coordenacao + [grafana_page]
+    paginas_pcp = paginas_basicas + [pcp_page]
+    paginas_dev = paginas_coordenacao
 
     # Mapeamento de roles para listas de páginas
     role_pages = {

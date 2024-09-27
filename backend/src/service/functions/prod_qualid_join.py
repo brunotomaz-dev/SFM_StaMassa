@@ -17,7 +17,9 @@ class ProdQualidJoin:
         self.df_quality = None
         self.df_production = None
 
-    def join_data(self, df_quality, df_production, data_products: pd.DataFrame | None = None) -> pd.DataFrame:
+    def join_data(
+        self, df_quality, df_production, data_products: pd.DataFrame | None = None
+    ) -> pd.DataFrame:
         """
         Junta os DataFrames de qualidade e produção.
         """
