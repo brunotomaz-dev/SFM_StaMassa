@@ -185,11 +185,6 @@ pcp_page = st.Page(
     icon=":material/production_quantity_limits:",
 )
 
-grafana_page = st.Page(
-    page="app/pages/pg_grafana.py",
-    title="NEW PAGE",
-    icon=":material/live_tv:",
-)
 
 # ================================================================================================ #
 #                                         LAYOUT AND CONFIG                                        #
@@ -211,7 +206,7 @@ def get_navigation(user_role):
     ]
     paginas_coordenacao = paginas_lider_supervisor + [pcp_page]
     paginas_pcp = paginas_basicas + [pcp_page]
-    paginas_dev = paginas_coordenacao + [grafana_page]
+    paginas_dev = paginas_coordenacao
 
     # Mapeamento de roles para listas de páginas
     role_pages = {

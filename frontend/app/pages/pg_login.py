@@ -87,29 +87,29 @@ if st.session_state["authentication_status"]:
         st.session_state["pass_reset"] = 1 if st.session_state["pass_reset"] == 0 else 0
         st.rerun()
 
-if ROLE == "dev":
-    st.sidebar.write("Opções:")
-    add_user = st.sidebar.button("Adicionar Usuário")
-
-    if add_user:
-        st.session_state["add_user"] = 1 if st.session_state["add_user"] == 0 else 0
-        st.rerun()
-
 
 # ================================================================================================ #
 #                                              SIDEBAR                                             #
 # ================================================================================================ #
 if "absenteeism" not in st.session_state:
     st.session_state["absenteeism"] = False
-if ROLE == "supervisor":
+if ROLE in ["supervisor", "dev"]:
     st.sidebar.divider()
-    absent = st.sidebar.button("Registrar Absenteísmo")
+    absent = st.sidebar.button("Registrar Absenteísmo", type="primary")
     if absent:
         st.session_state["absenteeism"] = (
             True if st.session_state["absenteeism"] is False else False
         )
         st.rerun()
 
+if ROLE == "dev":
+    st.sidebar.divider()
+    st.sidebar.write("Opções de Desenvolvedor:")
+    add_user = st.sidebar.button("Adicionar Usuário")
+
+    if add_user:
+        st.session_state["add_user"] = 1 if st.session_state["add_user"] == 0 else 0
+        st.rerun()
 
 # ================================================================================================ #
 #                                            DATAFRAMES                                            #
