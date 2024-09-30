@@ -297,9 +297,15 @@ if ROLE in ["supervisor", "dev"] and st.session_state["absenteeism"]:
         with st.container(border=True):
             st.write("###### Registros de Absenteísmo pendentes de envio:")
             if "abs_df" in st.session_state and not st.session_state["abs_df"].empty:
-                st.table(st.session_state["abs_df"])
+                abs_df_edited = st.data_editor(
+                    st.session_state["abs_df"],
+                    num_rows="dynamic",
+                    use_container_width=True,
+                    hide_index=True,
+                )
                 enviar = st.button("Enviar")
                 if enviar:
+                    st.session_state["absenteismo_df"] = abs_df_edited
                     reg_abs.salvar_csv()
                     st.toast("Dados enviados com sucesso!")
                     st.session_state["absenteeism"] = False
