@@ -22,7 +22,7 @@ absent_df = reg_abs.ler_csv()
 
 ROLE = st.session_state["role"]
 USER_NAME = st.session_state["name"]
-SETORES = ["Panificação", "Recheio", "Embalagem", "Pasta"]
+SETORES = ["Panificação", "Recheio", "Embalagem", "Pasta", "Forno"]
 FALTAS_TIPOS = ["Falta", "Atraso", "Afastamento", "Saída Antecipada"]
 
 # ================================================================================================ #
@@ -305,6 +305,7 @@ if ROLE in ["supervisor", "dev"] and st.session_state["absenteeism"]:
                 )
                 enviar = st.button("Enviar")
                 if enviar:
+                    # cspell: word absenteismo
                     st.session_state["absenteismo_df"] = abs_df_edited
                     reg_abs.salvar_csv()
                     st.toast("Dados enviados com sucesso!")

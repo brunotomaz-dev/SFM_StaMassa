@@ -192,6 +192,7 @@ with r1_col1:
 
     # ── Status ───────────────────────────────────────────────────────────────────────────────── #
     _, turno_atual = get_date.get_this_turn()
+    opt_1 = ""
     df_maq_info_status = df_maq_info_original[(df_maq_info_original.turno == turno_atual)]
     # Recuperar o status da última entrada de maq_info
     if turn == turn_opt:
