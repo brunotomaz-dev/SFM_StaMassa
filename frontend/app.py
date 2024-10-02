@@ -207,7 +207,7 @@ def get_navigation(user_role):
     paginas_coordenacao = paginas_lider_supervisor
     paginas_coordenacao_pcp = paginas_coordenacao + [pcp_page]
     paginas_pcp = paginas_basicas + [pcp_page]
-    paginas_dev = paginas_coordenacao
+    paginas_dev = paginas_coordenacao_pcp
 
     # Mapeamento de roles para listas de páginas
     role_pages = {
