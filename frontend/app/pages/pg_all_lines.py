@@ -33,6 +33,7 @@ st.markdown(
 }
 [data-testid="stMetric"] {
     background-color: #fff;
+    color: #000;
     padding: 10px 25px;
     border: 1px solid #ddd;
     border-radius: 10px;
@@ -113,34 +114,7 @@ def get_df():
 #                                          Nav Widgets
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-turn_opt: str
-line: int
-
-turns = {
-    "NOT": ["NOT"],
-    "MAT": ["MAT", "NOT"],
-    "VES": ["VES", "MAT", "NOT"],
-}[turn]
-
-lines = list(range(1, 15))
-
-turn_opt = st.sidebar.selectbox(
-    "Selecione a opção de visualização:", ("Dia Atual", *turns), index=1
-)
-
-line = st.sidebar.selectbox("Selecione a linha:", lines, index=0)
-
-if st.sidebar.button("Atualizar Dados"):
-    st.cache_data.clear()
-    st.rerun()
-
-#    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-#                                           Dataframes
-#    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 df_eff, df_maq_info_original, df_prod, df_info = get_df()
-
-# ════════════════════════════════════════════════════════════════ Ajustar O Dataframe De Info ══ #
-
 # Garantir que a data é um pandas Timestamp só com a data
 df_maq_info_original.data_registro = pd.to_datetime(df_maq_info_original.data_registro).dt.date
 df_eff.data_registro = pd.to_datetime(df_eff.data_registro).dt.date
@@ -152,6 +126,41 @@ df_maq_info_original = df_maq_info_original[(df_maq_info_original.data_registro 
 df_eff = df_eff[(df_eff.data_registro == today)]
 df_prod = df_prod[(df_prod.data_registro == today)]
 df_info = df_info[(df_info.data_registro == today)]
+
+turn_opt: str
+line: int
+
+turns = {
+    "NOT": ["NOT"],
+    "MAT": ["MAT", "NOT"],
+    "VES": ["VES", "MAT", "NOT"],
+}[turn]
+
+lines = list(range(1, 15))
+
+# Verificar se o turno está no dataframe
+is_valid_turn = turn in df_maq_info_original.turno.unique()
+is_valid_turn = is_valid_turn and turn in df_eff.turno.unique()
+is_valid_turn = is_valid_turn and turn in df_prod.turno.unique()
+is_valid_turn = is_valid_turn and turn in df_info.turno.unique()
+
+TURN_INDEX = 1 if is_valid_turn else 0
+
+turn_opt = st.sidebar.selectbox(
+    "Selecione a opção de visualização:", ("Dia Atual", *turns), index=TURN_INDEX
+)
+
+line = st.sidebar.selectbox("Selecione a linha:", lines, index=0)
+
+if st.sidebar.button("Atualizar Dados"):
+    st.cache_data.clear()
+    st.rerun()
+
+#    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+#                                           Dataframes
+#    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+# ════════════════════════════════════════════════════════════════ Ajustar O Dataframe De Info ══ #
 
 df_maq_info = df_maq_info_original.copy()
 if turn_opt != "Dia Atual":
@@ -192,6 +201,7 @@ with r1_col1:
 
     # ── Status ───────────────────────────────────────────────────────────────────────────────── #
     _, turno_atual = get_date.get_this_turn()
+    opt_1 = ""
     df_maq_info_status = df_maq_info_original[(df_maq_info_original.turno == turno_atual)]
     # Recuperar o status da última entrada de maq_info
     if turn == turn_opt:
@@ -345,7 +355,10 @@ with r1_col2:
     timeline_data.motivo = timeline_data.motivo.fillna("Não apontado")
     timeline_data.causa = timeline_data.causa.fillna("")
     # Se a causa for refeição, preencher o problema com refeição
-    timeline_data.motivo = timeline_data.motivo.mask(timeline_data.causa == "Refeição", "Refeição")
+    timeline_data.motivo = timeline_data.motivo.mask(
+        (timeline_data.causa == "Refeição") & (timeline_data.motivo != "Saída para Backup"),
+        "Refeição",
+    )
     motivos_presentes = timeline_data.motivo.unique()
     color_timeline = {motivo: COLOR_DICT[motivo] for motivo in motivos_presentes}
 

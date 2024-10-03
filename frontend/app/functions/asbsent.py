@@ -26,10 +26,10 @@ class RegistroAbsenteismo:
         self.__absenteismo_file = "./assets/absenteismo.csv"
         if "absenteismo_df" not in st.session_state:
             st.session_state["absenteismo_df"] = pd.DataFrame(
-                columns=["Setor", "Turno", "Nome", "Tipo", "Motivo", "Data", "Hora"]
+                columns=["Setor", "Turno", "Nome", "Tipo", "Motivo", "Data", "Hora", "Usuario"]
             )
 
-    def adicionar_registro(self, setor, turno, nome, tipo, motivo) -> pd.DataFrame:
+    def adicionar_registro(self, setor, turno, nome, tipo, motivo, user) -> pd.DataFrame:
         """
         Adiciona um novo registro ao DataFrame filtrado pelo setor e turno atuais.
         Args:
@@ -61,6 +61,7 @@ class RegistroAbsenteismo:
                     "Motivo": motivo,
                     "Data": data,
                     "Hora": hora,
+                    "Usuario": user,
                 }
             ]
         )

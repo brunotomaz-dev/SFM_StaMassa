@@ -18,8 +18,12 @@ from app.pages.pg_sfm import get_df as get_ind
 get_date = GetDate()
 ind_play = IndicatorsPlayground()
 reg_abs = RegistroAbsenteismo()
+absent_df = reg_abs.ler_csv()
 
 ROLE = st.session_state["role"]
+USER_NAME = st.session_state["name"]
+SETORES = ["Panificação", "Recheio", "Embalagem", "Pasta", "Forno"]
+FALTAS_TIPOS = ["Falta", "Atraso", "Afastamento", "Saída Antecipada"]
 
 # ================================================================================================ #
 #                                              ESTILOS                                             #
@@ -40,6 +44,7 @@ st.markdown(
     }
     [data-testid="stMetric"] {
         background-color: #fff;
+        color: #000;
         padding: 5px 15px;
         border: 1px solid #ddd;
         border-radius: 10px;
@@ -87,6 +92,44 @@ if st.session_state["authentication_status"]:
         st.session_state["pass_reset"] = 1 if st.session_state["pass_reset"] == 0 else 0
         st.rerun()
 
+# ================================================================================================ #
+#                                               MODAL                                              #
+# ================================================================================================ #
+
+
+@st.dialog("Registros de Absenteísmo", width="large")
+def show_absent(
+    df: pd.DataFrame,
+    abs_date: list,
+    abs_name: str | None = None,
+    abs_setor: str = "",
+    abs_type: str = "",
+):
+    """Mostra os registros de absenteísmo."""
+
+    df["Data"] = pd.to_datetime(df["Data"]).dt.date
+    # Construir a string de consulta usando as variáveis
+    query_str = "Data >= @abs_date[0] and Data <= @abs_date[1]"
+    if abs_name:
+        query_str += " and Nome.str.contains(@abs_name, case=False)"
+    if abs_setor:
+        query_str += " and Setor == @abs_setor"
+    if abs_type:
+        query_str += " and Tipo == @abs_type"
+    # Filtrar o DataFrame usando query
+    filtered_df = df.query(
+        query_str,
+        local_dict={
+            "abs_date": abs_date,
+            "abs_name": abs_name,
+            "abs_setor": abs_setor,
+            "abs_type": abs_type,
+        },
+    )
+    # Exibir os registros filtrados
+    st.write("#### Registros Filtrados")
+    st.dataframe(filtered_df, hide_index=True, use_container_width=True)
+
 
 # ================================================================================================ #
 #                                              SIDEBAR                                             #
@@ -95,12 +138,27 @@ if "absenteeism" not in st.session_state:
     st.session_state["absenteeism"] = False
 if ROLE in ["supervisor", "dev"]:
     st.sidebar.divider()
-    absent = st.sidebar.button("Registrar Absenteísmo", type="primary")
+    st.sidebar.write("#### Absenteísmo")
+    absent = st.sidebar.button("Registrar", type="primary", use_container_width=True)
     if absent:
-        st.session_state["absenteeism"] = (
-            True if st.session_state["absenteeism"] is False else False
-        )
+        st.session_state["absenteeism"] = not st.session_state["absenteeism"]
         st.rerun()
+
+    with st.sidebar.form(key="absenteeism-form-search", clear_on_submit=True):
+        st.write("##### Consultar Registros")
+        absent_date = st.date_input(
+            "Data",
+            max_value=get_date.get_today(),
+            min_value=get_date.get_today() - pd.Timedelta(days=7),
+            format="DD/MM/YYYY",
+            value=[get_date.get_today(), get_date.get_today()],
+        )
+        absent_name = st.text_input("Nome")
+        absent_setor = st.selectbox("Setor", ["", *SETORES])
+        absent_type = st.selectbox("Tipo", ["", *FALTAS_TIPOS])
+        submit_form = st.form_submit_button("Buscar")
+    if submit_form:
+        show_absent(absent_df, absent_date, absent_name, absent_setor, absent_type)
 
 if ROLE == "dev":
     st.sidebar.divider()
@@ -220,31 +278,38 @@ estoque_cam_fria = estoque_cam_fria.style.format(thousands=".", decimal=",", pre
 # ================================================================================================ #
 
 # =============================================================================== Form Absenteísmo #
-if ROLE == "supervisor" and st.session_state["absenteeism"]:
+if ROLE in ["supervisor", "dev"] and st.session_state["absenteeism"]:
     f_col, d_col = st.columns([1, 2])
     with f_col:
         with st.form(key="abs", clear_on_submit=True):
             st.write("###### Dados de Absenteísmo:")
             turno = st.radio("Turno", ["Matutino", "Vespertino", "Noturno"], horizontal=True)
             s_col, t_col = st.columns([1, 1])
-            setor = s_col.selectbox("Setor", ["Panificação", "Recheio", "Embalagem", "Pasta"])
-            tipo = t_col.selectbox("Tipo", ["Falta", "Atraso", "Afastamento", "Saída Antecipada"])
+            setor = s_col.selectbox("Setor", [*SETORES])
+            tipo = t_col.selectbox("Tipo", [*FALTAS_TIPOS])
             nome = st.text_input("Nome")
             motivo = st.text_area("Motivo")
             col_sub, col_save = st.columns([4, 1])
             submit = col_sub.form_submit_button("Adicionar")
             if submit:
                 # Atualize o estado ou faça qualquer processamento necessário
-                abs_df = reg_abs.adicionar_registro(setor, turno, nome, tipo, motivo)
+                abs_df = reg_abs.adicionar_registro(setor, turno, nome, tipo, motivo, USER_NAME)
                 st.session_state["abs_df"] = abs_df
                 st.toast("Dados adicionados com sucesso!")
     with d_col:
         with st.container(border=True):
             st.write("###### Registros de Absenteísmo pendentes de envio:")
             if "abs_df" in st.session_state and not st.session_state["abs_df"].empty:
-                st.table(st.session_state["abs_df"])
+                abs_df_edited = st.data_editor(
+                    st.session_state["abs_df"],
+                    num_rows="dynamic",
+                    use_container_width=True,
+                    hide_index=True,
+                )
                 enviar = st.button("Enviar")
                 if enviar:
+                    # cspell: word absenteismo
+                    st.session_state["absenteismo_df"] = abs_df_edited
                     reg_abs.salvar_csv()
                     st.toast("Dados enviados com sucesso!")
                     st.session_state["absenteeism"] = False
@@ -271,7 +336,7 @@ with col_1:
             create_gauge_chart(IndicatorType.REPAIR, gg_rep, "login_rep_gauge", pos="top")
 
     # ================================================================================ Absenteísmo #
-    absent_df = reg_abs.ler_csv()
+
     if absent_df.empty:
         faltas, atrasos, afastamentos, s_antecipada = 0, 0, 0, 0
     else:
@@ -299,10 +364,14 @@ with col_2:
         with st.container(border=True):
             st.subheader("Produção")
             st.table(df_production)
+
         # ================================================================================= Linhas #
         with st.container(border=True):
             st.subheader("Linhas Rodando")
-            st.table(df_info)
+            if not df_info.empty:
+                st.table(df_info)
+            else:
+                st.write("Nenhuma linha rodando.")
     with col_2_2:
         # ================================================================================ Estoque #
         with st.container(border=True):
