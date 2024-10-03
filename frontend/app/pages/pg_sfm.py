@@ -288,7 +288,7 @@ if selected_page == SUB_OPT_2:
         g1, g2, g3 = st.columns(3)
         with g1:
             sfm_gg2.create_gauge_chart(
-                IndicatorType.EFFICIENCY, efficiency_actual, "opt1_eff_gauge"
+                IndicatorType.EFFICIENCY, efficiency_actual, "opt1_eff_gauge", pos="top"
             )
 
         with g2:
@@ -297,7 +297,9 @@ if selected_page == SUB_OPT_2:
             )
 
         with g3:
-            sfm_gg2.create_gauge_chart(IndicatorType.REPAIR, repair_actual, "opt1_rep_gauge")
+            sfm_gg2.create_gauge_chart(
+                IndicatorType.REPAIR, repair_actual, "opt1_rep_gauge", pos="top"
+            )
 
     with r1_col2:
         alt_fig = (
