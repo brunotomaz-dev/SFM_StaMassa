@@ -44,6 +44,7 @@ st.markdown(
     }
     [data-testid="stMetric"] {
         background-color: #fff;
+        color: #000;
         padding: 5px 15px;
         border: 1px solid #ddd;
         border-radius: 10px;
@@ -138,12 +139,13 @@ if "absenteeism" not in st.session_state:
 if ROLE in ["supervisor", "dev"]:
     st.sidebar.divider()
     st.sidebar.write("#### Absenteísmo")
-    absent = st.sidebar.button("Registrar", type="primary")
+    absent = st.sidebar.button("Registrar", type="primary", use_container_width=True)
     if absent:
         st.session_state["absenteeism"] = not st.session_state["absenteeism"]
         st.rerun()
 
-    with st.sidebar.expander("Consultar", expanded=False):
+    with st.sidebar.form(key="absenteeism-form-search", clear_on_submit=True):
+        st.write("##### Consultar Registros")
         absent_date = st.date_input(
             "Data",
             max_value=get_date.get_today(),
@@ -154,8 +156,9 @@ if ROLE in ["supervisor", "dev"]:
         absent_name = st.text_input("Nome")
         absent_setor = st.selectbox("Setor", ["", *SETORES])
         absent_type = st.selectbox("Tipo", ["", *FALTAS_TIPOS])
-        if st.button("Consultar"):
-            show_absent(absent_df, absent_date, absent_name, absent_setor, absent_type)
+        submit_form = st.form_submit_button("Buscar")
+    if submit_form:
+        show_absent(absent_df, absent_date, absent_name, absent_setor, absent_type)
 
 if ROLE == "dev":
     st.sidebar.divider()
