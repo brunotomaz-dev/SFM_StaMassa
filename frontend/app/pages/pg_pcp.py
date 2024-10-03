@@ -17,7 +17,6 @@ import streamlit_antd_components as stc
 from app.api.requests_ import fetch_api_data
 from app.api.urls import APIUrl
 from app.functions.get_date import GetDate
-from app.functions.production_adj import adjust_pao
 from app.helpers.variables import RENDIMENTO_PASTA_PAO
 
 get_date = GetDate()
@@ -100,21 +99,41 @@ with st.sidebar:
 if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
     # Primeiro e último dia do mês
     FIRST, LAST = get_date.get_this_month()
-
+    # Primeiro e último dia do mês passado
+    FIRST_LM, LAST_LM = get_date.get_last_month()
+    FIRST_LM = pd.to_datetime(FIRST_LM)
     # Usar start e retroceder 6 meses
-    FIRST = FIRST - pd.DateOffset(months=6)
+    FIRST_D = FIRST - pd.DateOffset(months=6)
 
-    FIRST = str(FIRST.date()).replace("-", "")
-    LAST = str(LAST.date()).replace("-", "")
+    FIRST_D = str(FIRST_D.date()).replace("-", "")
+    LAST_D = str(LAST.date()).replace("-", "")
 
-    df_estoque = get_estoque(FIRST, LAST)
+    df_estoque = get_estoque(FIRST_D, LAST_D)
 
+    # Ajustar a data para datetime
+    df_estoque["data_emissao"] = pd.to_datetime(df_estoque["data_emissao"], format="%Y%m%d")
+
+    # Verificar e o mês da data FIRST está presente no dataframe
+    first_month_period = FIRST.to_period("M")
+    is_first_month_present = (
+        first_month_period in df_estoque["data_emissao"].dt.to_period("M").unique()
+    )
+
+    # Definir o index
+    i = 0 if is_first_month_present else 1
+
+    selected_month = st.sidebar.selectbox(
+        "Mês Apresentado no Gráfico",
+        [FIRST, FIRST_LM],
+        index=i,
+        format_func=lambda x: x.strftime("%B %Y"),
+    )
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                           Dataframes
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-df_massa, df_pasta, df_massa_week, df_pasta_week, df_caixas_cf = get_df()
+df_massa, df_pasta, df_massa_week, df_pasta_week, production = get_df()
 
 
 # Ajuste de cor para as tabelas
@@ -125,8 +144,6 @@ def color_highlight(val):
 
 
 if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
-    # Ajustar a data para datetime
-    df_estoque["data_emissao"] = pd.to_datetime(df_estoque["data_emissao"], format="%Y%m%d")
 
     # Ordenar pela data de emissão
     df_estoque = df_estoque.sort_values(by="data_emissao", ascending=False)
@@ -201,8 +218,6 @@ st.header("PCP")
 #    │                                Visualização de Massa                                 │
 #    ╰─                                                                                    ─╯
 
-# Ajustar a produção de pães
-production = adjust_pao(df_caixas_cf)
 
 if pg_selection == PageSelection.MASSA.value:
     st.subheader("Análise de Massa - Produzido x Consumido")
@@ -648,23 +663,20 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
 
     # ═══════════════════════════════════════════════════════════════════════ Pareto Mês Atual ══ #
     # Ajustar a tabela mantendo apenas o mês atual
-    df_estoque_p_actual = df_estoque.copy()
-
-    # Pegar a o primeiro dia do mês
-    f_day = get_date.get_this_month()[0]
+    df_estoque_p = df_estoque.copy()
 
     # Ordenar por custo
-    df_estoque_p_actual = df_estoque_p_actual.sort_values(by="custo", ascending=False)
+    df_estoque_p = df_estoque_p.sort_values(by="custo", ascending=False)
 
     df_estoque_p_general = (
-        df_estoque_p_actual.groupby(["descricao"], as_index=False)["custo"]
+        df_estoque_p.groupby(["descricao"], as_index=False)["custo"]
         .mean()
         .sort_values(by="custo", ascending=False)
         .reset_index()
     )
 
     # Ajustar a tabela mantendo apenas o mês atual
-    df_estoque_p_actual = df_estoque_p_actual[df_estoque_p_actual["data_emissao"] >= f_day]
+    df_estoque_p_actual = df_estoque_p[df_estoque_p["data_emissao"] >= selected_month]
 
     # Arredondar os valores para 2 casas decimais
     df_estoque_p_actual["custo"] = df_estoque_p_actual["custo"].round(2)
@@ -755,11 +767,11 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
 
     # ───────────────────────────────────────────────────────────────────────────────── Tabela ── #
     # Ajustar as datas para dia/mês/ano
-    FIRST = datetime.strptime(FIRST, "%Y%m%d").strftime("%d/%m/%Y")
-    LAST = datetime.strptime(LAST, "%Y%m%d").strftime("%d/%m/%Y")
+    FIRST_D = datetime.strptime(FIRST_D, "%Y%m%d").strftime("%d/%m/%Y")
+    LAST_D = datetime.strptime(LAST_D, "%Y%m%d").strftime("%d/%m/%Y")
 
     # Título para tabela
-    st.write(f"###### Tabela de Ajuste de Estoque - {FIRST} até {LAST}")
+    st.write(f"###### Tabela de Ajuste de Estoque - {FIRST_D} até {LAST_D}")
 
     # Ajustar a data para dia/mês/ano
     df_estoque["data_emissao"] = df_estoque["data_emissao"].dt.strftime("%d/%m/%Y")

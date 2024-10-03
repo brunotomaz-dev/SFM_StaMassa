@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.responses import JSONResponse
 
 # pylint: disable=E0401
@@ -250,12 +250,12 @@ def get_protheus_cyv_pasta_week() -> JSONResponse:
 
 
 @app.get("/protheus_sd3/production")
-def get_protheus_sd3_production() -> JSONResponse:
+def get_protheus_sd3_production(week: bool = Query(False)) -> JSONResponse:
     """
     Retorna os dados de SD3 Produção do DB local.
     """
     try:
-        data = protheus_sd3_production_controller.get_sd3_data()
+        data = protheus_sd3_production_controller.get_sd3_data(week)
         return create_json_response(data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
