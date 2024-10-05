@@ -39,10 +39,14 @@ st.markdown(
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
+.st-emotion-cache-q49buc {
+    color: #000;
+}
 .card2 {
     text-align: center;
     font-size: 1vw;
     background-color: #fff;
+    color: #000;
     padding: 10px;
     margin-top: 20px;
     border: 1px solid #ddd;

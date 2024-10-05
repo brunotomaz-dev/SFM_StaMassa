@@ -25,7 +25,7 @@ with open("style.css") as css:
     st.markdown(f"<style>{css.read()}</style>", unsafe_allow_html=True)
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-#                                       inicializar state
+#                                       Inicializar State
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 # Inicializar state
@@ -185,6 +185,12 @@ pcp_page = st.Page(
     icon=":material/production_quantity_limits:",
 )
 
+all_lines_hist_page = st.Page(
+    page="app/pages/pg_all_lines_hist.py",
+    title="Histórico das Linhas",
+    icon=":material/history:",
+)
+
 
 # ================================================================================================ #
 #                                         LAYOUT AND CONFIG                                        #
@@ -202,6 +208,7 @@ def get_navigation(user_role):
     paginas_lider_supervisor = paginas_basicas + [
         shop_floor_management_page,
         all_lines_page,
+        all_lines_hist_page,
         per_hour_page,
     ]
     paginas_coordenacao = paginas_lider_supervisor

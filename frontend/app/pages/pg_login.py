@@ -32,15 +32,20 @@ FALTAS_TIPOS = ["Falta", "Atraso", "Afastamento", "Saída Antecipada"]
 st.markdown(
     """
     <style>
-    .st-emotion-cache-4uzi61 {
+    .st-emotion-cache-4uzi61,
+    .st-emotion-cache-fplge5,
+    .st-emotion-cache-1yycg8b {
     padding: 10px 25px;
     border: 1px solid #ddd;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
     [data-testid="stMetricValue"] {
-    font-size: 3vw;
+    font-size: 4vw;
     text-align: center;
+    }
+    .st-emotion-cache-q49buc {
+        color: #000;
     }
     [data-testid="stMetric"] {
         background-color: #fff;
@@ -272,9 +277,8 @@ estoque_cam_fria.loc["TOTAL"] = estoque_cam_fria.sum()
 # Ajustar os valores para formato brasileiro
 estoque_cam_fria = estoque_cam_fria.style.format(thousands=".", decimal=",", precision=0)
 
-
 # ================================================================================================ #
-#                                              LAYOUT                                              #
+#                                     FORMULÁRIO DE ABSENTEÍSMO                                    #
 # ================================================================================================ #
 
 # =============================================================================== Form Absenteísmo #
@@ -318,62 +322,61 @@ if ROLE in ["supervisor", "dev"] and st.session_state["absenteeism"]:
             else:
                 st.write("Nenhum registro pendente.")
 
+# ================================================================================================ #
+if absent_df.empty:
+    faltas, atrasos, afastamentos, s_antecipada = 0, 0, 0, 0
+else:
+    absent_df["Data"] = pd.to_datetime(absent_df["Data"]).dt.date
+    absent_df = absent_df[absent_df["Data"] == today]
+    faltas = absent_df[absent_df["Tipo"] == "Falta"].shape[0]
+    atrasos = absent_df[absent_df["Tipo"] == "Atraso"].shape[0]
+    afastamentos = absent_df[absent_df["Tipo"] == "Afastamento"].shape[0]
+    s_antecipada = absent_df[absent_df["Tipo"] == "Saída Antecipada"].shape[0]
 
+# ================================================================================================ #
+#                                              LAYOUT                                              #
+# ================================================================================================ #
 st.title("Dados do dia")
 
-col_1, col_2 = st.columns([1, 2])
+col_1, col_2 = st.columns([1.5, 1])
 
-with col_1:
-    # ===================================================================================== Gauges #
-    with st.container(border=True):
-        st.subheader("Indicadores")
-        g1, g2, g3 = st.columns(3)
-        with g1:
-            create_gauge_chart(IndicatorType.EFFICIENCY, gg_eff, "login_eff_gauge", pos="top")
-        with g2:
-            create_gauge_chart(IndicatorType.PERFORMANCE, gg_perf, "login_perf_gauge")
-        with g3:
-            create_gauge_chart(IndicatorType.REPAIR, gg_rep, "login_rep_gauge", pos="top")
+# ========================================================================================= Gauges #
+with col_1.container():
+    st.subheader("Indicadores")
+    g1, g2, g3 = st.columns(3, gap="large", vertical_alignment="center")
+    with g1:
+        create_gauge_chart(IndicatorType.EFFICIENCY, gg_eff, "login_eff_gauge", large=True)
+    with g2:
+        create_gauge_chart(IndicatorType.PERFORMANCE, gg_perf, "login_perf_gauge", large=True)
+    with g3:
+        create_gauge_chart(IndicatorType.REPAIR, gg_rep, "login_rep_gauge", large=True)
 
-    # ================================================================================ Absenteísmo #
+# ==================================================================================== Absenteísmo #
+with col_2.container():
+    st.subheader("Absenteísmo")
+    f_col, a_col = st.columns(2)
+    f_col.metric("Faltas", faltas)
+    a_col.metric("Atrasos", atrasos)
+    af_col, sa_col = st.columns(2)
+    af_col.metric("Afastamentos", afastamentos)
+    sa_col.metric("Saídas Antecipadas", s_antecipada)
 
-    if absent_df.empty:
-        faltas, atrasos, afastamentos, s_antecipada = 0, 0, 0, 0
+col_prod, col_lines, col_status = st.columns(3)
+
+with col_prod.container(border=True):
+    # =============================================================================== Produção #
+    st.subheader("Produção")
+    st.table(df_production)
+
+with col_lines.container(border=True):
+    # ================================================================================= Linhas #
+    st.subheader("Linhas Rodando")
+    if not df_info.empty:
+        st.table(df_info)
     else:
-        absent_df["Data"] = pd.to_datetime(absent_df["Data"]).dt.date
-        absent_df = absent_df[absent_df["Data"] == today]
-        faltas = absent_df[absent_df["Tipo"] == "Falta"].shape[0]
-        atrasos = absent_df[absent_df["Tipo"] == "Atraso"].shape[0]
-        afastamentos = absent_df[absent_df["Tipo"] == "Afastamento"].shape[0]
-        s_antecipada = absent_df[absent_df["Tipo"] == "Saída Antecipada"].shape[0]
+        st.write("Nenhuma linha rodando.")
 
-    with st.container(border=True):
-        st.subheader("Absenteísmo")
-        f_col, a_col = st.columns(2)
-        f_col.metric("Faltas", faltas)
-        a_col.metric("Atrasos", atrasos)
-        af_col, sa_col = st.columns(2)
-        af_col.metric("Afastamentos", afastamentos)
-        sa_col.metric("Saídas Antecipadas", s_antecipada)
-
-
-with col_2:
-    col_2_1, col_2_2 = st.columns(2)
-    with col_2_1:
-        # =============================================================================== Produção #
-        with st.container(border=True):
-            st.subheader("Produção")
-            st.table(df_production)
-
-        # ================================================================================= Linhas #
-        with st.container(border=True):
-            st.subheader("Linhas Rodando")
-            if not df_info.empty:
-                st.table(df_info)
-            else:
-                st.write("Nenhuma linha rodando.")
-    with col_2_2:
-        # ================================================================================ Estoque #
-        with st.container(border=True):
-            st.subheader("Estoque")
-            st.table(estoque_cam_fria)
+with col_status.container(border=True):
+    # ================================================================================ Estoque #
+    st.subheader("Estoque")
+    st.table(estoque_cam_fria)

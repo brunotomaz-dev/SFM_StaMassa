@@ -672,11 +672,14 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
         df_estoque_p.groupby(["descricao"], as_index=False)["custo"]
         .mean()
         .sort_values(by="custo", ascending=False)
-        .reset_index()
+        .reset_index(drop=True)
     )
 
+    # Copia o dataframe
+    df_estoque_p_actual = df_estoque_p.copy()
+
     # Ajustar a tabela mantendo apenas o mês atual
-    df_estoque_p_actual = df_estoque_p[df_estoque_p["data_emissao"] >= selected_month]
+    df_estoque_p_actual = df_estoque_p_actual[df_estoque_p_actual["data_emissao"] >= selected_month]
 
     # Arredondar os valores para 2 casas decimais
     df_estoque_p_actual["custo"] = df_estoque_p_actual["custo"].round(2)
