@@ -13,7 +13,6 @@ from app.functions.asbsent import RegistroAbsenteismo
 from app.functions.get_date import GetDate
 from app.functions.indicators_playground import IndicatorsPlayground
 from app.helpers.variables import IndicatorType
-from app.pages.pg_sfm import get_df as get_ind
 
 get_date = GetDate()
 ind_play = IndicatorsPlayground()
@@ -22,7 +21,7 @@ absent_df = reg_abs.ler_csv()
 
 ROLE = st.session_state["role"]
 USER_NAME = st.session_state["name"]
-SETORES = ["Panificação", "Recheio", "Embalagem", "Pasta", "Forno"]
+SETORES = ["Panificação", "Recheio", "Embalagem", "Pasta", "Forno", "Pães Diversos"]
 FALTAS_TIPOS = ["Falta", "Atraso", "Afastamento", "Saída Antecipada"]
 
 # ================================================================================================ #
@@ -75,12 +74,42 @@ async def get_api_data() -> tuple:
     return production_result, caixas_cf
 
 
+async def retrieve_data() -> tuple:
+    """
+    Obtém os dados da API.
+
+    Returns:
+        tuple: Tupla contendo os DataFrames de eficiência, performance, reparo e informações da IHM.
+    """
+    urls = [
+        APIUrl.URL_EFF.value,
+        APIUrl.URL_PERF.value,
+        APIUrl.URL_REP.value,
+        APIUrl.URL_INFO_IHM.value,
+    ]
+    tasks = [fetch_api_data(url) for url in urls]
+    results = await asyncio.gather(*tasks)
+    ef, pe, re, ii = results
+
+    return ef, pe, re, ii
+
+
 @st.cache_data(ttl=60, show_spinner="Carregando dados...")
 def get_data() -> tuple:
     """Obtém os dados da API."""
 
     production_result, caixas_cf = asyncio.run(get_api_data())
     return production_result, caixas_cf
+
+
+@st.cache_data(ttl=600, show_spinner="Carregando dados...")
+def get_ind() -> tuple:
+    """Obtém os dados da API.
+    Retorna:
+    Eficiência, performance, reparo e informações da IHM.
+    """
+    eff, perf, rep, inf_ihm = asyncio.run(retrieve_data())
+    return eff, perf, rep, inf_ihm
 
 
 # ================================================================================================ #
@@ -97,9 +126,10 @@ if st.session_state["authentication_status"]:
         st.session_state["pass_reset"] = 1 if st.session_state["pass_reset"] == 0 else 0
         st.rerun()
 
+
 # ================================================================================================ #
 #                                               MODAL                                              #
-# ================================================================================================ #
+# ================================================================================================
 
 
 @st.dialog("Registros de Absenteísmo", width="large")
@@ -113,6 +143,7 @@ def show_absent(
     """Mostra os registros de absenteísmo."""
 
     df["Data"] = pd.to_datetime(df["Data"]).dt.date
+
     # Construir a string de consulta usando as variáveis
     query_str = "Data >= @abs_date[0] and Data <= @abs_date[1]"
     if abs_name:
@@ -121,6 +152,7 @@ def show_absent(
         query_str += " and Setor == @abs_setor"
     if abs_type:
         query_str += " and Tipo == @abs_type"
+
     # Filtrar o DataFrame usando query
     filtered_df = df.query(
         query_str,
@@ -131,6 +163,18 @@ def show_absent(
             "abs_type": abs_type,
         },
     )
+
+    # Supervisor / Turno
+    if ROLE == "supervisor":
+        sup_turn = {
+            "Claudia Antunes": "MAT",
+            "Rogerio Inacio": "VES",
+            "Everton de Oliveira": "NOT",
+        }[USER_NAME]
+
+        # Caso role = supervisor mostrar dados do turno do supervisor
+        filtered_df = filtered_df[filtered_df["Turno"] == sup_turn]
+
     # Exibir os registros filtrados
     st.write("#### Registros Filtrados")
     st.dataframe(filtered_df, hide_index=True, use_container_width=True)
@@ -178,7 +222,7 @@ if ROLE == "dev":
 #                                            DATAFRAMES                                            #
 # ================================================================================================ #
 
-eficiencia, performance, reparo, _, info_ihm = get_ind()
+eficiencia, performance, reparo, info_ihm = get_ind()
 production, estoque_cam_fria = get_data()
 today, this_turn = get_date.get_this_turn()
 

@@ -707,6 +707,20 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
     # ============================================================================ Ajuste Negativo #
     c_1, c_2 = st.columns(2)
 
+    # Adicionar coluna formatada
+    df_estoque_p_actual_neg["custo_br"] = df_estoque_p_actual_neg["custo"].apply(
+        lambda x: locale.currency(x, grouping=True)
+    )
+    df_estoque_p_actual_pos["custo_br"] = df_estoque_p_actual_pos["custo"].apply(
+        lambda x: locale.currency(x, grouping=True)
+    )
+    df_estoque_p_general_neg["custo_br"] = df_estoque_p_general_neg["custo"].apply(
+        lambda x: locale.currency(x, grouping=True)
+    )
+    df_estoque_p_general_pos["custo_br"] = df_estoque_p_general_pos["custo"].apply(
+        lambda x: locale.currency(x, grouping=True)
+    )
+
     # Criar o chart
     chart_neg = (
         alt.Chart(df_estoque_p_actual_neg)
@@ -714,15 +728,10 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
         .encode(
             y=alt.Y("descricao:O", sort="-x", title="Descricão", axis=alt.Axis()),
             x=alt.X("custo:Q", title="Custo"),
-            tooltip=[alt.Tooltip("custo:Q", title="Custo", format=",.2f", formatType="number")],
+            tooltip=[alt.Tooltip("custo_br:N", title="Custo")],
         )
         .properties(title="Ajuste de Estoque - Negativo")
     )
-
-    # Adicionar o símbolo de moeda no tooltip
-    chart_neg = chart_neg.transform_calculate(
-        custo_br="'R$ ' + format(datum.custo, ',.2f')"
-    ).encode(tooltip=[alt.Tooltip("custo_br:N", title="Custo")])
 
     c_1.altair_chart(chart_neg, use_container_width=True)
 
@@ -733,6 +742,7 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
         .encode(
             y=alt.Y("descricao:O", sort="-x", title="Descricão", axis=alt.Axis()),
             x=alt.X("custo:Q", title="Custo"),
+            tooltip=[alt.Tooltip("custo_br:N", title="Custo")],
         )
         .properties(title="Média de ajuste - Negativo")
     )
@@ -749,6 +759,7 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
         .encode(
             y=alt.Y("descricao:O", sort="-x", title="Descricão", axis=alt.Axis()),
             x=alt.X("custo:Q", title="Custo"),
+            tooltip=[alt.Tooltip("custo_br:N", title="Custo")],
         )
         .properties(title="Ajuste de Estoque - Positivo")
     )
@@ -762,6 +773,7 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
         .encode(
             y=alt.Y("descricao:O", sort="-x", title="Descricão", axis=alt.Axis()),
             x=alt.X("custo:Q", title="Custo"),
+            tooltip=[alt.Tooltip("custo_br:N", title="Custo")],
         )
         .properties(title="Média de ajuste - Positivo")
     )

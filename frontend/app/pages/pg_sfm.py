@@ -19,6 +19,7 @@ from app.components.sfm_heatmap import create_heatmap_chart
 from app.components.sfm_line import create_line_chart
 from app.functions.indicators_playground import IndicatorsPlayground
 from app.helpers.variables import TURNOS, ColorsSTM, IndicatorType
+from app.pages.pg_login import get_ind
 from streamlit_extras.metric_cards import style_metric_cards
 
 ind_play = IndicatorsPlayground()
@@ -53,27 +54,19 @@ async def get_all_data() -> tuple:
 
     """
     urls = [
-        APIUrl.URL_EFF.value,
-        APIUrl.URL_PERF.value,
-        APIUrl.URL_REP.value,
         APIUrl.URL_HIST_IND.value,
-        APIUrl.URL_INFO_IHM.value,
     ]
     tasks = [get_data(url) for url in urls]
     results = await asyncio.gather(*tasks)
-    eff = results[0]
-    perf = results[1]
-    rep = results[2]
-    ind = results[3]
-    ihm = results[4]
-    return eff, perf, rep, ind, ihm
+
+    return results[0]
 
 
 @st.cache_data(show_spinner="Obtendo dados", ttl=600)
 def get_df():
     """Obtém os dados da API."""
-    eff, perf, rep, ind, ihm = asyncio.run(get_all_data())
-    return eff, perf, rep, ind, ihm
+    ind = asyncio.run(get_all_data())
+    return ind
 
 
 # ================================================================================================ #
@@ -132,7 +125,9 @@ if selected_page == SUB_OPT_2:
 # ================================================================================================ #
 #                                            DATAFRAMES                                            #
 # ================================================================================================ #
-eficiencia, performance, reparo, history_ind, stops = get_df()
+history_ind = get_df()
+eficiencia, performance, reparo, stops = get_ind()
+
 
 # ==================================== Ajustes Dos Indicadores =================================== #
 df_eff = ind_play.get_indicator(eficiencia, IndicatorType.EFFICIENCY, turn, line_turn, fabrica)

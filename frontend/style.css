@@ -15,3 +15,13 @@ div * {
 .myFont {
   font-family: Poppins, Helvetica, sans-serif !important;
 }
+
+.card_production {
+  text-align: center;
+    font-size: 1vw;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}

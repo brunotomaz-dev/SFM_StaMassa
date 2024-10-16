@@ -27,7 +27,7 @@ def create_gauge_chart(
             [1, ColorsSTM.RED.value],  # Acima de 4% é vermelho
         ],
         IndicatorType.EFFICIENCY: [
-            [0.9, ColorsSTM.RED.value],  # Até 90% é vermelho
+            [0.899, ColorsSTM.RED.value],  # Até 90% é vermelho
             [1, ColorsSTM.GREEN.value],  # Acima de 90% é verde
         ],
     }[indicator]
@@ -53,10 +53,11 @@ def create_gauge_chart(
 
     # Ajuste de posição do gauge
     position_y: str = {
-        "center": "50%",
         "top": "35%",
-        "up_center": "55%",
-        "down_center": "45%",
+        "up_center": "45%",
+        "center": "50%",
+        "down_center": "55%",
+        "bottom": "65%",
     }[pos]
 
     return st_echarts(
@@ -84,7 +85,7 @@ def create_gauge_chart(
                     },
                     "type": "gauge",
                     "radius": "90%",
-                    "center": ["50%", "45%"] if large else ["50%", position_y],
+                    "center": ["50%", position_y],
                     "detail": {
                         "formatter": "{value}%",
                         "valueAnimation": True,

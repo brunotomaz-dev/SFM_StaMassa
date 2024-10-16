@@ -169,7 +169,7 @@ shop_floor_management_page = st.Page(
 
 all_lines_page = st.Page(
     page="app/pages/pg_all_lines.py",
-    title="Ao Vivo",
+    title="Linhas Ao Vivo",
     icon=":material/precision_manufacturing:",
 )
 
@@ -187,8 +187,14 @@ pcp_page = st.Page(
 
 all_lines_hist_page = st.Page(
     page="app/pages/pg_all_lines_hist.py",
-    title="Histórico das Linhas",
+    title="Linhas Histórico",
     icon=":material/history:",
+)
+
+management_page = st.Page(
+    page="app/pages/pg_management.py",
+    title="Gestão",
+    icon=":material/manage_history:",
 )
 
 
@@ -207,11 +213,10 @@ def get_navigation(user_role):
     paginas_basicas = [login_page]
     paginas_lider_supervisor = paginas_basicas + [
         shop_floor_management_page,
-        all_lines_page,
-        all_lines_hist_page,
         per_hour_page,
+        all_lines_page,
     ]
-    paginas_coordenacao = paginas_lider_supervisor
+    paginas_coordenacao = paginas_lider_supervisor + [all_lines_hist_page, management_page]
     paginas_coordenacao_pcp = paginas_coordenacao + [pcp_page]
     paginas_pcp = paginas_basicas + [pcp_page]
     paginas_dev = paginas_coordenacao_pcp
