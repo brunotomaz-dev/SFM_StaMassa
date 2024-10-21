@@ -1,7 +1,61 @@
 """ Módulo para plano d e ação """
 
+import asyncio
+
 import pandas as pd
 import streamlit as st
+
+# pylint: disable=import-error
+from app.api.requests_ import delete_api_data, fetch_api_data, insert_api_data, update_api_data
+from app.api.urls import APIUrl
+
+# ================================================================================================ #
+#                                            API HANDLE                                            #
+# ================================================================================================ #
+
+
+async def insert_action_plan(dict_list: list[dict]) -> None:
+    """Insere os dados na tabela de plano de ação."""
+    await insert_api_data(APIUrl.URL_ACTION_PLAN.value, dict_list)
+
+
+@st.cache_data(ttl=60 * 5, show_spinner="Carregando dados...")
+def fetch_action_plan() -> pd.DataFrame:
+    """Busca os dados da tabela de plano de ação."""
+    return asyncio.run(fetch_api_data(APIUrl.URL_ACTION_PLAN.value))
+
+
+def delete_action_plan(list_index: dict) -> None:
+    """Deleta os dados da tabela de plano de ação."""
+    asyncio.run(delete_api_data(APIUrl.URL_ACTION_PLAN.value, list_index))
+
+
+def update_action_plan(index: list[int], dict_list: list[dict]) -> None:
+    """Atualiza os dados da tabela de plano de ação."""
+    asyncio.run(update_api_data(APIUrl.URL_ACTION_PLAN.value, index, dict_list))
+
+
+# ================================================================================================ #
+#                                            DATAFRAMES                                            #
+# ================================================================================================ #
+
+
+action_plan_model_df = pd.DataFrame(
+    columns=[
+        "Data",
+        "Indicador",
+        "Dias_em_Aberto",
+        "Prioridade",
+        "Descricao_do_Problema",
+        "Impacto",
+        "Causa_Raiz",
+        "Contencao",
+        "Solucao",
+        "Feedback",
+        "Responsavel",
+        "Conclusao",
+    ],
+)
 
 
 def edit_action() -> None:
@@ -21,6 +75,10 @@ def add_action() -> None:
 
 def save_action(df: pd.DataFrame) -> None:
     """Salva as adições feitas pelo formulário."""
+    df_adjusted = df.copy()
+    df_adjusted["Data"] = pd.to_datetime(df_adjusted["Data"]).dt.strftime("%Y-%m-%d")
+    dict_to_save = df_adjusted.to_dict(orient="records")
+    asyncio.run(insert_action_plan(dict_to_save))
 
     st.session_state.table_action = pd.concat(
         [st.session_state.table_action, df], ignore_index=True
@@ -34,7 +92,7 @@ def add_action_form() -> None:
     st.session_state.add_action = not st.session_state.add_action
 
 
-def handle_added_rows(alt_table: pd.DataFrame) -> None:
+def handle_added_rows(alt_table: list[dict]) -> None:
     """Adiciona as linhas adicionadas na edição da tabela de plano de ação.
 
     Essa função pega as linhas que foram adicionadas na edição da tabela e
@@ -44,9 +102,21 @@ def handle_added_rows(alt_table: pd.DataFrame) -> None:
         alt_table (pd.DataFrame): A tabela editada com as linhas adicionadas.
     """
     if len(alt_table["added_rows"]) > 0:
-        print(alt_table["added_rows"])
+        expected_columns = action_plan_model_df.columns
+        df = pd.DataFrame(columns=expected_columns)
+        for row in alt_table["added_rows"]:
+            add_row = pd.DataFrame([row], columns=expected_columns)
+            add_row["Impacto"] = add_row["Impacto"].fillna(0).astype(float)
+            add_row = add_row.fillna("")
+            add_row["Dias_em_Aberto"] = abs(
+                (pd.to_datetime(add_row["Data"]) - pd.Timestamp("today").normalize()).dt.days
+            )
+            df = pd.concat([df, add_row], ignore_index=True)
+        list_of_dicts = df.to_dict(orient="records")
+        asyncio.run(insert_action_plan(list_of_dicts))
+
         st.session_state.table_action = pd.concat(
-            [st.session_state.table_action, pd.DataFrame(alt_table["added_rows"])],
+            [st.session_state.table_action, pd.DataFrame(df)],
             ignore_index=True,
         )
 
@@ -58,7 +128,8 @@ def handle_deleted_rows(alt_table: pd.DataFrame) -> None:
     as remove da tabela original de plano de ação.
     """
     if len(alt_table["deleted_rows"]) > 0:
-        print(alt_table["deleted_rows"])
+        delete_action_plan(alt_table["deleted_rows"])
+
         st.session_state.table_action = st.session_state.table_action.drop(
             alt_table["deleted_rows"], axis=0
         )
@@ -73,13 +144,15 @@ def handle_edited_rows(alt_table: pd.DataFrame) -> None:
     if len(alt_table["edited_rows"]) > 0:
         keys = list(alt_table["edited_rows"].keys())
         values = list(alt_table["edited_rows"].values())
+        update_action_plan(keys, values)
+
         for str_idx, changes in alt_table["edited_rows"].items():
             idx = int(str_idx)
             for col, new_value in changes.items():
                 st.session_state.table_action.at[idx, col] = new_value
 
 
-def session_state_start() -> None:
+def session_state_start(df: pd.DataFrame) -> None:
     """
     Initializes session state variables related to the action plan.
 
@@ -97,22 +170,7 @@ def session_state_start() -> None:
         st.session_state.add_action = False
 
     if "table_action" not in st.session_state:
-        st.session_state.table_action = pd.DataFrame(
-            columns=[
-                "Data",
-                "Indicador",
-                "Dias em Aberto",
-                "Prioridade",
-                "Descrição do Problema",
-                "Impacto %",
-                "Causa Raiz",
-                "Contenção",
-                "Solução",
-                "Feedback",
-                "Responsável",
-                "Conclusão",
-            ],
-        )
+        st.session_state.table_action = df
 
 
 # ================================================================================================ #
@@ -122,7 +180,8 @@ def session_state_start() -> None:
 
 def action_plan() -> None:
     """Plano de ação."""
-    session_state_start()
+    action_plan_df = fetch_action_plan()
+    session_state_start(action_plan_df)
 
     # Tabela
     df_action = st.session_state.table_action
@@ -132,16 +191,16 @@ def action_plan() -> None:
         config = {
             "Data": st.column_config.DateColumn(format="DD/MM/YYYY", default=pd.Timestamp("today")),
             "Indicador": st.column_config.SelectboxColumn(options=["S", "Q", "D", "C"]),
-            "Dias em Aberto": st.column_config.NumberColumn(),
+            "Dias_em_Aberto": st.column_config.NumberColumn(),
             "Prioridade": st.column_config.SelectboxColumn(options=[1, 2, 3]),
-            "Descrição do Problema": st.column_config.TextColumn(),
-            "Impacto %": st.column_config.NumberColumn(format="%.2f%%", min_value=0, max_value=100),
-            "Causa Raiz": st.column_config.TextColumn(),
-            "Contenção": st.column_config.TextColumn(),
-            "Solução": st.column_config.TextColumn(),
+            "Descricao_do_Problema": st.column_config.TextColumn(),
+            "Impacto": st.column_config.NumberColumn(format="%.2f%%", min_value=0, max_value=100),
+            "Causa_Raiz": st.column_config.TextColumn(),
+            "Contencao": st.column_config.TextColumn(),
+            "Solucao": st.column_config.TextColumn(),
             "Feedback": st.column_config.TextColumn(),
-            "Responsável": st.column_config.TextColumn(),
-            "Conclusão": st.column_config.CheckboxColumn(default=False),
+            "Responsavel": st.column_config.TextColumn(),
+            "Conclusao": st.column_config.CheckboxColumn(default=False),
         }
         with st.form(key="action_plan_form"):
             st.write("Plano de ação - Em edição")
@@ -156,12 +215,13 @@ def action_plan() -> None:
             st.form_submit_button("Salvar", on_click=add_action)
     else:
         st.write("Plano de ação")
-        df_action_filtered = df_action[df_action["Conclusão"] == 0]
+        df_action_filtered = df_action[df_action["Conclusao"] == 0]
         # Configuração da coluna "Impacto %"
         config = {
-            "Impacto %": st.column_config.NumberColumn(
+            "Impacto": st.column_config.NumberColumn(
                 format="%.0f%%",  # Formato de porcentagem
                 help="Impacto em porcentagem",
+                label="Impacto %",
             )
         }
         st.dataframe(
@@ -201,20 +261,8 @@ def action_plan() -> None:
 
             # Cria um DataFrame com os dados
             df_action_form = pd.DataFrame(
-                {
-                    "Data": [f1],
-                    "Indicador": [f2],
-                    "Dias em Aberto": [f3],
-                    "Prioridade": [f4],
-                    "Descrição do Problema": [f5],
-                    "Impacto %": [f6],
-                    "Causa Raiz": [f7],
-                    "Contenção": [f8],
-                    "Solução": [f9],
-                    "Feedback": [f10],
-                    "Responsável": [f11],
-                    "Conclusão": [f12],
-                }
+                columns=action_plan_model_df.columns,
+                data=[[f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12]],
             )
             add_action_form_submit = st.form_submit_button("Adicionar")
             if add_action_form_submit:

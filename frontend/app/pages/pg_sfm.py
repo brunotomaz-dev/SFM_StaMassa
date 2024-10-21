@@ -62,7 +62,7 @@ async def get_all_data() -> tuple:
     return results[0]
 
 
-@st.cache_data(show_spinner="Obtendo dados", ttl=600)
+@st.cache_data(show_spinner="Obtendo dados", ttl=60 * 10)
 def get_df():
     """Obtém os dados da API."""
     ind = asyncio.run(get_all_data())

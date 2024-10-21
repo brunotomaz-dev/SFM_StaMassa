@@ -105,7 +105,7 @@ async def get_data() -> tuple:
     return eff, info_ihm, prod, info
 
 
-@st.cache_data(show_spinner="Obtendo dados", ttl=1200)
+@st.cache_data(show_spinner="Obtendo dados", ttl=60 * 60)
 def get_df():
     """
     Obtém os dados da API.

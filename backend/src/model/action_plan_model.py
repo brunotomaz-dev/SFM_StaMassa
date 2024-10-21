@@ -19,7 +19,7 @@ class ActionPlanModel:
             Data TEXT,
             Indicador TEXT,
             Dias_em_aberto INTEGER,
-            Prioridade TEXT,
+            Prioridade INTEGER,
             Descricao_do_problema TEXT,
             Impacto TEXT,
             Causa_raiz TEXT,
@@ -39,7 +39,6 @@ class ActionPlanModel:
 
     def insert_data(self, data: pd.DataFrame) -> None:
         """Insere os dados na tabela de action_plan do banco de dados local"""
-
         self.__db_automacao_local.insert_data(data, self.__table)
 
     def update_data(self, index: int, changes: dict) -> None:

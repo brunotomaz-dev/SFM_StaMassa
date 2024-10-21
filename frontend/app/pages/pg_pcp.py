@@ -67,14 +67,14 @@ async def get_all_data() -> tuple:
     return massa, pasta, massa_week, pasta_week, caixas_cf
 
 
-@st.cache_data(show_spinner="Obtendo dados", ttl=60000)
+@st.cache_data(show_spinner="Obtendo dados", ttl=60 * 60 * 24)
 def get_df():
     """Função para obter os dados da API. Existe para manter um cache."""
     massa, pasta, massa_week, pasta_week, caixas_cf = asyncio.run(get_all_data())
     return massa, pasta, massa_week, pasta_week, caixas_cf
 
 
-@st.cache_data(show_spinner="Obtendo dados", ttl=60000)
+@st.cache_data(show_spinner="Obtendo dados", ttl=60 * 60 * 24)
 def get_estoque(start_date: str, end_date: str):
     """Função para obter os dados do estoque. Existe para manter um cache."""
 

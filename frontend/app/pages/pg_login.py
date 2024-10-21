@@ -103,7 +103,7 @@ def get_data() -> tuple:
     return production_result, caixas_cf
 
 
-@st.cache_data(ttl=600, show_spinner="Carregando dados...")
+@st.cache_data(ttl=60 * 10, show_spinner="Carregando dados...")
 def get_ind() -> tuple:
     """Obtém os dados da API.
     Retorna:

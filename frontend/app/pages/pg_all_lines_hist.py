@@ -61,7 +61,7 @@ async def get_data():
     return maq_info_data, prod_data
 
 
-@st.cache_data(ttl=6000)
+@st.cache_data(ttl=60 * 60)
 def get_api_data():
     """Função para buscar os dados da API."""
 

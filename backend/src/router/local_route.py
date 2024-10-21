@@ -77,7 +77,7 @@ class ActionPlanData(BaseModel):
     Data: str
     Indicador: str
     Dias_em_Aberto: int
-    Prioridade: str
+    Prioridade: int
     Descricao_do_Problema: str
     Impacto: float
     Causa_Raiz: str
@@ -85,7 +85,7 @@ class ActionPlanData(BaseModel):
     Solucao: str
     Feedback: str
     Responsavel: str
-    Conclusao: str
+    Conclusao: bool
 
 
 class ActionPlanUpdate(BaseModel):
@@ -277,10 +277,10 @@ def insert_action_plan(data: List[ActionPlanData]) -> JSONResponse:
     """Insere dados na tabela action_plan do DB local.
 
     Args:
-        data (dict): Dados a serem inseridos na tabela action_plan.
+        data (List[ActionPlanData]): Dados a serem inseridos na tabela action_plan.
 
     Returns:
-    JSONResponse: Mensagem de sucesso ou erro.
+        JSONResponse: Mensagem de sucesso ou erro.
     """
     dataframe = pd.DataFrame([d.model_dump() for d in data])
 
