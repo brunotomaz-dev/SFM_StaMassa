@@ -30,7 +30,7 @@ def save_action(df: pd.DataFrame) -> None:
 
 
 def add_action_form() -> None:
-    """Togle de edição da tabela de plano de ação."""
+    """Toggle de edição da tabela de plano de ação."""
     st.session_state.add_action = not st.session_state.add_action
 
 
@@ -43,7 +43,8 @@ def handle_added_rows(alt_table: pd.DataFrame) -> None:
     Args:
         alt_table (pd.DataFrame): A tabela editada com as linhas adicionadas.
     """
-    if "added_rows" in alt_table:
+    if len(alt_table["added_rows"]) > 0:
+        print(alt_table["added_rows"])
         st.session_state.table_action = pd.concat(
             [st.session_state.table_action, pd.DataFrame(alt_table["added_rows"])],
             ignore_index=True,
@@ -56,7 +57,8 @@ def handle_deleted_rows(alt_table: pd.DataFrame) -> None:
     Essa função pega as linhas que foram excluídas na edição da tabela e
     as remove da tabela original de plano de ação.
     """
-    if "deleted_rows" in alt_table:
+    if len(alt_table["deleted_rows"]) > 0:
+        print(alt_table["deleted_rows"])
         st.session_state.table_action = st.session_state.table_action.drop(
             alt_table["deleted_rows"], axis=0
         )
@@ -68,7 +70,9 @@ def handle_edited_rows(alt_table: pd.DataFrame) -> None:
     Essa função pega as alterações feitas na edição da tabela e as aplica na
     tabela original de plano de ação.
     """
-    if "edited_rows" in alt_table:
+    if len(alt_table["edited_rows"]) > 0:
+        keys = list(alt_table["edited_rows"].keys())
+        values = list(alt_table["edited_rows"].values())
         for str_idx, changes in alt_table["edited_rows"].items():
             idx = int(str_idx)
             for col, new_value in changes.items():
@@ -76,6 +80,15 @@ def handle_edited_rows(alt_table: pd.DataFrame) -> None:
 
 
 def session_state_start() -> None:
+    """
+    Initializes session state variables related to the action plan.
+
+    This function checks if specific keys related to the action plan are present
+    in the Streamlit session state. If not, it initializes them with default values:
+    - 'edit_action': a boolean indicating whether the action plan is in edit mode.
+    - 'add_action': a boolean indicating whether a new action is being added.
+    - 'table_action': a DataFrame to store the action plan details with predefined columns.
+    """
     # Inicializar State
     if "edit_action" not in st.session_state:
         st.session_state.edit_action = False
@@ -92,7 +105,7 @@ def session_state_start() -> None:
                 "Prioridade",
                 "Descrição do Problema",
                 "Impacto %",
-                "Causa Raíz",
+                "Causa Raiz",
                 "Contenção",
                 "Solução",
                 "Feedback",
@@ -123,7 +136,7 @@ def action_plan() -> None:
             "Prioridade": st.column_config.SelectboxColumn(options=[1, 2, 3]),
             "Descrição do Problema": st.column_config.TextColumn(),
             "Impacto %": st.column_config.NumberColumn(format="%.2f%%", min_value=0, max_value=100),
-            "Causa Raíz": st.column_config.TextColumn(),
+            "Causa Raiz": st.column_config.TextColumn(),
             "Contenção": st.column_config.TextColumn(),
             "Solução": st.column_config.TextColumn(),
             "Feedback": st.column_config.TextColumn(),
@@ -179,7 +192,7 @@ def action_plan() -> None:
             f4 = form_col3.selectbox("Prioridade", options=[1, 2, 3])
             f5 = form_col5.text_area("Descrição do Problema", height=207)
             f6 = form_col4.number_input("Impacto %", min_value=0, max_value=100)
-            f7 = form_col6.text_input("Causa Raíz")
+            f7 = form_col6.text_input("Causa Raiz")
             f8 = form_col6.text_input("Contenção")
             f9 = form_col6.text_input("Solução")
             f10 = form_col7.text_input("Feedback")
@@ -195,7 +208,7 @@ def action_plan() -> None:
                     "Prioridade": [f4],
                     "Descrição do Problema": [f5],
                     "Impacto %": [f6],
-                    "Causa Raíz": [f7],
+                    "Causa Raiz": [f7],
                     "Contenção": [f8],
                     "Solução": [f9],
                     "Feedback": [f10],

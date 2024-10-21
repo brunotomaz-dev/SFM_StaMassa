@@ -336,5 +336,6 @@ with col_icicle.container(border=True):
     # Plot
     st.plotly_chart(ice_fig, use_container_width=True)
 
+# ================================================================================== Plano De Ação #
 st.divider()
 action_plan()

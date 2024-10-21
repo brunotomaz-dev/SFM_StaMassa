@@ -19,6 +19,8 @@ get_date = GetDate()
 
 FIRST_DAY, LAST_DAY = get_date.get_this_month()
 TODAY = get_date.get_today()
+TURN_DICT = None
+LINE_PICKED = None
 
 # ================================================================================================ #
 #                                               STYLE                                              #
@@ -82,13 +84,12 @@ date_picked = st.sidebar.date_input(
 )
 
 if date_picked:
-    line_picked = st.sidebar.selectbox("Escolha a linha", list(range(1, 15)))
+    LINE_PICKED = st.sidebar.selectbox("Escolha a linha", list(range(1, 15)))
 
     turn_picked = st.sidebar.selectbox(
         "Escolha o turno", ["Todos", "Matutino", "Vespertino", "Noturno"]
     )
 
-    TURN_DICT = None
     if turn_picked != "Todos":
         TURN_DICT = {"Matutino": "MAT", "Vespertino": "VES", "Noturno": "NOT"}[turn_picked]
 
@@ -168,12 +169,12 @@ reparos_df = reparos.copy()
 pareto_df = bar_df.copy()
 
 # Filtra pela linha escolhida e pelo turno escolhido
-eficiencia_df = eficiencia_df[eficiencia_df.linha == line_picked]
-performance_df = performance_df[performance_df.linha == line_picked]
-reparos_df = reparos_df[reparos_df.linha == line_picked]
-pareto_df = pareto_df[pareto_df.linha == line_picked]
-maq_info = maq_info[maq_info.linha == line_picked]
-production = production[production.linha == line_picked]
+eficiencia_df = eficiencia_df[eficiencia_df.linha == LINE_PICKED]
+performance_df = performance_df[performance_df.linha == LINE_PICKED]
+reparos_df = reparos_df[reparos_df.linha == LINE_PICKED]
+pareto_df = pareto_df[pareto_df.linha == LINE_PICKED]
+maq_info = maq_info[maq_info.linha == LINE_PICKED]
+production = production[production.linha == LINE_PICKED]
 
 if TURN_DICT:
     eficiencia_df = eficiencia_df[eficiencia_df.turno == TURN_DICT]
@@ -328,7 +329,7 @@ with st.container():
     timeline_df = info_ihm.copy()
 
     # Filtrar pela linha
-    timeline_df = timeline_df[timeline_df.linha == line_picked]
+    timeline_df = timeline_df[timeline_df.linha == LINE_PICKED]
 
     # Filtrar pelo turno
     if TURN_DICT:

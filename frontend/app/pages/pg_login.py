@@ -15,6 +15,7 @@ from app.functions.indicators_playground import IndicatorsPlayground
 from app.helpers.variables import IndicatorType
 
 get_date = GetDate()
+this_first, this_last = get_date.get_this_month()
 ind_play = IndicatorsPlayground()
 reg_abs = RegistroAbsenteismo()
 absent_df = reg_abs.ler_csv()
@@ -194,11 +195,12 @@ if ROLE in ["supervisor", "dev"]:
         st.rerun()
 
     with st.sidebar.form(key="absenteeism-form-search", clear_on_submit=True):
+
         st.write("##### Consultar Registros")
         absent_date = st.date_input(
             "Data",
             max_value=get_date.get_today(),
-            min_value=get_date.get_today() - pd.Timedelta(days=7),
+            min_value=pd.to_datetime(this_first).date(),
             format="DD/MM/YYYY",
             value=[get_date.get_today(), get_date.get_today()],
         )
@@ -225,7 +227,6 @@ if ROLE == "dev":
 eficiencia, performance, reparo, info_ihm = get_ind()
 production, estoque_cam_fria = get_data()
 today, this_turn = get_date.get_this_turn()
-
 
 # ==================================================================================== Indicadores #
 # Ajuste dos indicadores
