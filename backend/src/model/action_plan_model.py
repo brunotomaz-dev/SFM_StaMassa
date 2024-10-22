@@ -18,11 +18,11 @@ class ActionPlanModel:
         schema = """
             Data TEXT,
             Indicador TEXT,
-            Dias_em_aberto INTEGER,
+            Dias_em_Aberto INTEGER,
             Prioridade INTEGER,
-            Descricao_do_problema TEXT,
-            Impacto TEXT,
-            Causa_raiz TEXT,
+            Descricao_do_Problema TEXT,
+            Impacto REAL,
+            Causa_Raiz TEXT,
             Contencao TEXT,
             Solucao TEXT,
             Feedback TEXT,
@@ -57,17 +57,20 @@ class ActionPlanModel:
         # Substitui os dados
         self.__db_automacao_local.replace_data(df, self.__table)
 
-    def delete_data(self, index: int) -> None:
+    def delete_data(self, index: list[int]) -> None:
         """Deleta os dados na tabela de action_plan do banco de dados local"""
         # Busca os dados no banco de dados
         df = self.get_data()
 
-        # Verifica se o índice existe
-        if df is None or index not in df.index:
-            raise ValueError("Índice não encontrado")
+        for i in index:
+            i = int(i)
 
-        # Deleta os dados
-        df = df.drop(index)
+            # Verifica se o índice existe
+            if df is None or i not in df.index:
+                raise ValueError("Índice não encontrado")
+
+            # Deleta os dados
+            df = df.drop(i)
 
         # Substitui os dados
         self.__db_automacao_local.replace_data(df, self.__table)

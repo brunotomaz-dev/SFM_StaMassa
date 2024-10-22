@@ -57,8 +57,6 @@ class ActionPlanService:
             KeyError: Se algum índice for inexistente.
         """
         try:
-            for i in index:
-                i = int(i)
-                self.__action_plan_model.delete_data(i)
+            self.__action_plan_model.delete_data(index)
         except (ValueError, TypeError, KeyError) as e:
             print(f"An error occurred: {e}")

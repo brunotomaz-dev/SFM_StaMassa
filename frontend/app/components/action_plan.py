@@ -133,6 +133,7 @@ def handle_deleted_rows(alt_table: pd.DataFrame) -> None:
         st.session_state.table_action = st.session_state.table_action.drop(
             alt_table["deleted_rows"], axis=0
         )
+        st.session_state.table_action = st.session_state.table_action.reset_index(drop=True)
 
 
 def handle_edited_rows(alt_table: pd.DataFrame) -> None:
@@ -170,7 +171,7 @@ def session_state_start(df: pd.DataFrame) -> None:
         st.session_state.add_action = False
 
     if "table_action" not in st.session_state:
-        st.session_state.table_action = df
+        st.session_state.table_action = df if not df.empty else action_plan_model_df
 
 
 # ================================================================================================ #
@@ -186,22 +187,29 @@ def action_plan() -> None:
     # Tabela
     df_action = st.session_state.table_action
 
+    config = {
+        "Data": st.column_config.DateColumn(format="DD/MM/YYYY", default=pd.Timestamp("today")),
+        "Indicador": st.column_config.SelectboxColumn(options=["S", "Q", "D", "C"]),
+        "Dias_em_Aberto": st.column_config.NumberColumn(label="Dias em aberto"),
+        "Prioridade": st.column_config.SelectboxColumn(options=[1, 2, 3]),
+        "Descricao_do_Problema": st.column_config.TextColumn(label="Descricão do problema"),
+        "Impacto": st.column_config.NumberColumn(
+            format="%.1f%%",
+            min_value=0,
+            max_value=100,
+            help="Impacto em porcentagem",
+            label="Impacto %",
+        ),
+        "Causa_Raiz": st.column_config.TextColumn(label="Causa raiz"),
+        "Contencao": st.column_config.TextColumn(label="Contenção"),
+        "Solucao": st.column_config.TextColumn(label="Solução"),
+        "Feedback": st.column_config.TextColumn(),
+        "Responsavel": st.column_config.TextColumn(label="Responsável"),
+        "Conclusao": st.column_config.CheckboxColumn(default=False, label="Conclusão"),
+    }
+
     # Tabela
     if st.session_state.edit_action:
-        config = {
-            "Data": st.column_config.DateColumn(format="DD/MM/YYYY", default=pd.Timestamp("today")),
-            "Indicador": st.column_config.SelectboxColumn(options=["S", "Q", "D", "C"]),
-            "Dias_em_Aberto": st.column_config.NumberColumn(),
-            "Prioridade": st.column_config.SelectboxColumn(options=[1, 2, 3]),
-            "Descricao_do_Problema": st.column_config.TextColumn(),
-            "Impacto": st.column_config.NumberColumn(format="%.2f%%", min_value=0, max_value=100),
-            "Causa_Raiz": st.column_config.TextColumn(),
-            "Contencao": st.column_config.TextColumn(),
-            "Solucao": st.column_config.TextColumn(),
-            "Feedback": st.column_config.TextColumn(),
-            "Responsavel": st.column_config.TextColumn(),
-            "Conclusao": st.column_config.CheckboxColumn(default=False),
-        }
         with st.form(key="action_plan_form"):
             st.write("Plano de ação - Em edição")
             df_action["Data"] = pd.to_datetime(df_action["Data"]).dt.date
@@ -211,19 +219,13 @@ def action_plan() -> None:
                 num_rows="dynamic",
                 key="action_plan",
                 use_container_width=True,
+                hide_index=True,
             )
             st.form_submit_button("Salvar", on_click=add_action)
     else:
         st.write("Plano de ação")
         df_action_filtered = df_action[df_action["Conclusao"] == 0]
-        # Configuração da coluna "Impacto %"
-        config = {
-            "Impacto": st.column_config.NumberColumn(
-                format="%.0f%%",  # Formato de porcentagem
-                help="Impacto em porcentagem",
-                label="Impacto %",
-            )
-        }
+
         st.dataframe(
             df_action_filtered, use_container_width=True, column_config=config, hide_index=True
         )
