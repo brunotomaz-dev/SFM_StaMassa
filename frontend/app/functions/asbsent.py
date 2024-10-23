@@ -29,6 +29,51 @@ class RegistroAbsenteismo:
                 columns=["Setor", "Turno", "Nome", "Tipo", "Motivo", "Data", "Hora", "Usuario"]
             )
 
+    def registrar_presenca(self, d: dict) -> pd.DataFrame:
+        """
+        Registra presença em uma seção.
+
+        Args:
+            d (dict): Dicionário com as seguintes chaves:
+                - Panificação (bool): Seção Panificação.
+                - Forno (bool): Seção Forno.
+                - Pasta (bool): Seção Pasta.
+                - Recheio (bool): Seção Recheio.
+                - Embalagem (bool): Seção Embalagem.
+                - Pães Diversos (bool): Seção Pães Diversos.
+                - Turno (str): Turno da presença.
+                - Usuario (str): Usuário que registrou a presença.
+
+        Returns:
+            pd.DataFrame: DataFrame com os dados registrados.
+        """
+        data_atual = datetime.now()
+        data = data_atual.strftime("%Y-%m-%d")
+        hora = data_atual.strftime("%H:%M:%S")
+
+        new_data = pd.DataFrame(
+            [
+                {
+                    "Panificação": d["Panificação"],
+                    "Forno": d["Forno"],
+                    "Pasta": d["Pasta"],
+                    "Recheio": d["Recheio"],
+                    "Embalagem": d["Embalagem"],
+                    "Pães Diversos": d["Pães Diversos"],
+                    "Data": data,
+                    "Hora": hora,
+                    "Turno": d["Turno"],
+                    "Usuario": d["Usuario"],
+                }
+            ]
+        )
+
+        presentes = st.session_state["df_reg_pres"]
+        df = pd.concat([presentes, new_data], ignore_index=True)
+        st.session_state["df_reg_pres"] = df
+
+        return df
+
     def adicionar_registro(self, setor, turno, nome, tipo, motivo, user) -> pd.DataFrame:
         """
         Adiciona um novo registro ao DataFrame filtrado pelo setor e turno atuais.
