@@ -119,6 +119,7 @@ def get_df():
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 df_eff, df_maq_info_original, df_prod, df_info = get_df()
+
 # Garantir que a data é um pandas Timestamp só com a data
 df_maq_info_original.data_registro = pd.to_datetime(df_maq_info_original.data_registro).dt.date
 df_eff.data_registro = pd.to_datetime(df_eff.data_registro).dt.date
@@ -167,6 +168,7 @@ if st.sidebar.button("Atualizar Dados"):
 # ════════════════════════════════════════════════════════════════ Ajustar O Dataframe De Info ══ #
 
 df_maq_info = df_maq_info_original.copy()
+
 if turn_opt != "Dia Atual":
     df_maq_info = df_maq_info[(df_maq_info.turno == turn_opt)]
     df_eff = df_eff[(df_eff.turno == turn_opt)]

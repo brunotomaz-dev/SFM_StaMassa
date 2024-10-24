@@ -14,7 +14,7 @@ def create_heatmap_chart(
 
     is_lines = "NOT" not in choice
 
-    max_piece = 120 if is_lines else 100
+    max_piece = 150 if is_lines else 100
 
     # Peças do heatmap - Cores
     pieces = {

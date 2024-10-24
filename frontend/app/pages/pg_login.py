@@ -34,9 +34,7 @@ FALTAS_TIPOS: list[str] = ["Falta", "Atraso", "Afastamento", "Saída Antecipada"
 st.markdown(
     """
     <style>
-    .st-emotion-cache-4uzi61,
-    .st-emotion-cache-ngngzp,
-    .st-emotion-cache-10vncc0 {
+    .st-emotion-cache-4uzi61 {
     padding: 10px 25px;
     border: 1px solid #ddd;
     border-radius: 10px;
@@ -485,7 +483,7 @@ cx_pessoa = 0 if presentes_total < 1 else round(PRODUCTION_TOTAL / presentes_tot
 # ================================================================================================ #
 st.title("Dados do dia")
 
-col_1, col_2, col_3 = st.columns([3.4, 1.95, 1.05])
+col_1, col_2, col_3 = st.columns([4, 1.95, 1.05])
 
 
 # ========================================================================================= Gauges #

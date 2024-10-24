@@ -219,7 +219,6 @@ def action_plan() -> None:
                 num_rows="dynamic",
                 key="action_plan",
                 use_container_width=True,
-                hide_index=True,
             )
             st.form_submit_button("Salvar", on_click=add_action)
     else:
@@ -232,7 +231,7 @@ def action_plan() -> None:
 
     # Botões
     with st.sidebar:
-        st.subheader("Tabela de Ações")
+        st.subheader("Plano de Ação")
         side_col, side_col_2 = st.columns(2)
         side_col.button("Editar", on_click=edit_action, use_container_width=True)
         side_col_2.button("Adicionar", on_click=add_action_form, use_container_width=True)
