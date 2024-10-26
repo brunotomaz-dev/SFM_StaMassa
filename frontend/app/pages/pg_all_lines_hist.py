@@ -13,7 +13,6 @@ from app.api.urls import APIUrl
 from app.components.sfm_gauge_opt2 import create_gauge_chart
 from app.functions.get_date import GetDate
 from app.helpers.variables import COLOR_DICT, IndicatorType
-from app.pages.pg_login import get_ind
 
 get_date = GetDate()
 
@@ -49,25 +48,31 @@ async def get_data():
     """Função para buscar os dados da API."""
     start = FIRST_DAY.strftime("%Y-%m-%d")
     end = LAST_DAY.strftime("%Y-%m-%d")
-    url = [
-        f"{APIUrl.URL_MAQ_INFO.value}?start={start}&end={end}",
-        APIUrl.URL_PROD.value,
-    ]
+    url = [f"{APIUrl.URL_MAQ_INFO.value}?start={start}&end={end}"]
 
     tasks = [fetch_api_data(url) for url in url]
     data = await asyncio.gather(*tasks)
-    maq_info_data, prod_data = data
+    maq_info_data = data[0]
 
-    return maq_info_data, prod_data
+    return maq_info_data
 
 
-@st.cache_data(ttl=60 * 60, show_spinner=False)
+@st.fragment()
 def get_api_data():
-    """Função para buscar os dados da API."""
+    """
+    Função para buscar os dados da API a cada 60 segundos e
+    atualizar a variável de estado 'maquina_info' com os dados
+    obtidos. Isso garante que os dados sejam atualizados mesmo
+    quando o usuário não interage com a aplicação.
+    """
+    maquina_info_data = asyncio.run(get_data())
+    st.session_state["maquina_info"] = maquina_info_data
 
-    maquina_info_data, production_data = asyncio.run(get_data())
+    return
 
-    return maquina_info_data, production_data
+
+if "maquina_info" not in st.session_state:
+    get_api_data()
 
 
 # ================================================================================================ #
@@ -97,8 +102,12 @@ if date_picked:
 #                                            DATAFRAMES                                            #
 # ================================================================================================ #
 
-eficiencia, performance, reparos, info_ihm = get_ind()
-maq_info, production = get_api_data()
+maq_info = st.session_state.maquina_info
+eficiencia = st.session_state.eficiência
+performance = st.session_state.performance
+reparos = st.session_state.reparos
+info_ihm = st.session_state.info_ihm
+production = st.session_state.produção
 
 # Ajustar a data para datetime
 info_ihm.data_registro = pd.to_datetime(info_ihm.data_registro).dt.date

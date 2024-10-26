@@ -1,7 +1,5 @@
 """Página de indicadores de eficiência, performance e reparo."""
 
-import asyncio
-
 import altair as alt
 import pandas as pd
 import streamlit as st
@@ -10,8 +8,6 @@ import streamlit as st
 import streamlit_antd_components as stc
 
 # pylint: disable=import-error
-from app.api.requests_ import fetch_api_data
-from app.api.urls import APIUrl
 from app.components import sfm_gauge as sfm_gg
 from app.components import sfm_gauge_opt2 as sfm_gg2
 from app.components.sfm_bar_eff import BarChartEff
@@ -19,7 +15,6 @@ from app.components.sfm_heatmap import create_heatmap_chart
 from app.components.sfm_line import create_line_chart
 from app.functions.indicators_playground import IndicatorsPlayground
 from app.helpers.variables import TURNOS, ColorsSTM, IndicatorType
-from app.pages.pg_login import get_ind
 from streamlit_extras.metric_cards import style_metric_cards
 
 ind_play = IndicatorsPlayground()
@@ -28,46 +23,6 @@ create_bar_chart_eff = BarChartEff().create_bar_chart_eff
 # ================================== Visualizações - Sub-páginas ================================= #
 SUB_OPT_1 = "Principal"
 SUB_OPT_2 = "Análise Mensal"
-
-# ================================================================================================ #
-#                                         REQUISIÇÃO DE API                                        #
-# ================================================================================================ #
-
-
-async def get_data(url: str, start: str | None = None, end: str | None = None) -> pd.DataFrame:
-    """Obtém os dados da API."""
-    url = f"{url}?start={start}&end={end}" if start and end else url
-    data = await fetch_api_data(url)
-    return data
-
-
-async def get_all_data() -> tuple:
-    """
-    Obtém os dados da API.
-
-    Retorna:
-    - eff (pd.DataFrame): Dados de eficiência.
-    - perf (pd.DataFrame): Dados de performance.
-    - rep (pd.DataFrame): Dados de reparo.
-    - ind (pd.DataFrame): Dados históricos dos indicadores.
-    - info_ihm (pd.DataFrame): Dados da IHM e da máquina.
-
-    """
-    urls = [
-        APIUrl.URL_HIST_IND.value,
-    ]
-    tasks = [get_data(url) for url in urls]
-    results = await asyncio.gather(*tasks)
-
-    return results[0]
-
-
-@st.cache_data(show_spinner="Obtendo dados", ttl=60 * 10)
-def get_df():
-    """Obtém os dados da API."""
-    ind = asyncio.run(get_all_data())
-    return ind
-
 
 # ================================================================================================ #
 #                                            MENU WIDGET                                           #
@@ -125,8 +80,11 @@ if selected_page == SUB_OPT_2:
 # ================================================================================================ #
 #                                            DATAFRAMES                                            #
 # ================================================================================================ #
-history_ind = get_df()
-eficiencia, performance, reparo, stops = get_ind()
+history_ind = st.session_state.hist_ind
+eficiencia = st.session_state.eficiência
+performance = st.session_state.performance
+reparo = st.session_state.reparos
+stops = st.session_state.info_ihm
 
 
 # ==================================== Ajustes Dos Indicadores =================================== #

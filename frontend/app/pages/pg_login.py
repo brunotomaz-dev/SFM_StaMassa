@@ -1,16 +1,13 @@
 """ Módulo responsável por renderizar a página de login. """
 
-import asyncio
 import time
 
 import pandas as pd
 import streamlit as st
 
 # pylint: disable=import-error
-from app.api.requests_ import fetch_api_data
-from app.api.urls import APIUrl
 from app.components.sfm_gauge_opt2 import create_gauge_chart
-from app.functions.asbsent import RegistroAbsenteismo
+from app.functions.absent import RegistroAbsenteismo
 from app.functions.get_date import GetDate
 from app.functions.indicators_playground import IndicatorsPlayground
 from app.helpers.variables import IndicatorType
@@ -74,57 +71,14 @@ if "absenteeism" not in st.session_state:
 if "registro_presença" not in st.session_state:
     st.session_state["registro_presença"] = False
 
-# ================================================================================================ #
-#                                         REQUISIÇÃO DE API                                        #
-# ================================================================================================ #
 
+eficiencia = st.session_state.eficiência
+performance = st.session_state.performance
+reparo = st.session_state.reparos
+info_ihm = st.session_state.info_ihm
 
-async def get_api_data() -> tuple:
-    """Obtém os dados da API."""
-    urls = [APIUrl.URL_PROD.value, APIUrl.URL_CAIXAS_ESTOQUE.value]
-    tasks = [fetch_api_data(url) for url in urls]
-    results = await asyncio.gather(*tasks)
-    production_result, caixas_cf = results
-
-    return production_result, caixas_cf
-
-
-async def retrieve_data() -> tuple:
-    """
-    Obtém os dados da API.
-
-    Returns:
-        tuple: Tupla contendo os DataFrames de eficiência, performance, reparo e informações da IHM.
-    """
-    urls = [
-        APIUrl.URL_EFF.value,
-        APIUrl.URL_PERF.value,
-        APIUrl.URL_REP.value,
-        APIUrl.URL_INFO_IHM.value,
-    ]
-    tasks = [fetch_api_data(url) for url in urls]
-    results = await asyncio.gather(*tasks)
-    ef, pe, re, ii = results
-
-    return ef, pe, re, ii
-
-
-@st.cache_data(ttl=60, show_spinner="Carregando dados...")
-def get_data() -> tuple:
-    """Obtém os dados da API."""
-
-    production_result, caixas_cf = asyncio.run(get_api_data())
-    return production_result, caixas_cf
-
-
-@st.cache_data(ttl=60 * 10, show_spinner="Carregando dados...")
-def get_ind() -> tuple:
-    """Obtém os dados da API.
-    Retorna:
-    Eficiência, performance, reparo e informações da IHM.
-    """
-    eff, perf, rep, inf_ihm = asyncio.run(retrieve_data())
-    return eff, perf, rep, inf_ihm
+production = st.session_state.produção
+estoque_cam_fria = st.session_state.caixas_estoque
 
 
 # ================================================================================================ #
@@ -353,9 +307,6 @@ if ROLE == "dev":
 #                                            DATAFRAMES                                            #
 # ================================================================================================ #
 
-eficiencia, performance, reparo, info_ihm = get_ind()
-production, estoque_cam_fria = get_data()
-
 # ==================================================================================== Indicadores #
 # Ajuste dos indicadores
 gg_eff = ind_play.get_indicator(eficiencia, IndicatorType.EFFICIENCY, line_turn="Turno")
@@ -463,7 +414,7 @@ df_presentes = df_presentes.groupby("Data").sum().drop(columns=["Hora", "Turno",
 presentes_total = 0 if df_presentes.empty else df_presentes.Total.sum()
 
 # Criar variável com total de produção
-PRODUCTION_TOTAL = 0 if prod_total.empty else int(prod_total["Produção"])
+PRODUCTION_TOTAL = 0 if prod_total.empty else int(prod_total["Produção"].iloc[0])
 
 # ================================================================================================ #
 if absent_df.empty:
@@ -520,13 +471,32 @@ with col_prod:
     with st.container(border=True):
         # =========================================================================== Produção #
         st.subheader("Produção")
-        st.table(df_production)
+
+        @st.fragment(run_every=60)
+        def render_table():
+            """
+            Fragmento que renderiza a tabela de produção na página de login.
+            Este fragmento é executado a cada 60 segundos para garantir que
+            os dados de produção sejam atualizados em tempo real.
+            """
+            st.table(df_production)
+
+        render_table()
 
 with col_lines.container(border=True):
     # ================================================================================= Linhas #
     st.subheader("Linhas Rodando")
     if not df_info.empty:
-        st.table(df_info)
+
+        @st.fragment(run_every=60)
+        def lines():
+            """
+            Fragmento que renderiza a tabela com as linhas rodando e suas respectivos produtos.
+            Atualiza a cada 60 segundos.
+            """
+            st.table(df_info)
+
+        lines()
     else:
         st.write("Nenhuma linha rodando.")
 

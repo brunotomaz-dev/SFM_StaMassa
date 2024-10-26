@@ -693,7 +693,7 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
         selected_month_last = max_date
 
     selected_start, selected_end = st.slider(
-        "Selecione o período",
+        "Selecione o período para o Gráfico de Ajuste de Estoque",
         min_value=min_date,
         max_value=max_date,
         value=(selected_month.date(), selected_month_last),

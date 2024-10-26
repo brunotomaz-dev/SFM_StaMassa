@@ -1,6 +1,5 @@
 """Página de visão das linhas."""
 
-import asyncio
 from datetime import datetime
 
 import altair as alt
@@ -8,8 +7,6 @@ import pandas as pd
 import streamlit as st
 
 # pylint: disable=E0401
-from app.api.requests_ import fetch_api_data
-from app.api.urls import APIUrl
 from app.components.sfm_gauge_opt2 import create_gauge_chart
 from app.functions.get_date import GetDate
 from app.helpers.variables import COLOR_DICT, ColorsSTM, IndicatorType
@@ -78,47 +75,14 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-
-#    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-#                                       Requisição de Api
-#    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-
-async def get_data() -> tuple:
-    """
-    Obtém os dados da API.
-    """
-    date_now = datetime.now()
-    now_ = date_now.strftime("%Y-%m-%d")
-    urls = [
-        APIUrl.URL_EFF.value,
-        APIUrl.URL_INFO_IHM.value,
-        APIUrl.URL_PROD.value,
-        f"{APIUrl.URL_MAQ_INFO.value}?start={now_}&end={now_}",
-    ]
-    tasks = [fetch_api_data(url) for url in urls]
-    results = await asyncio.gather(*tasks)
-    eff = results[0]
-    info_ihm = results[1]
-    prod = results[2]
-    info = results[3]
-    return eff, info_ihm, prod, info
-
-
-@st.cache_data(show_spinner="Obtendo dados", ttl=60 * 60)
-def get_df():
-    """
-    Obtém os dados da API.
-    """
-    eff, info_ihm, prod, info = asyncio.run(get_data())
-    return eff, info_ihm, prod, info
-
-
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                          Nav Widgets
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+df_eff = st.session_state.eficiência
+df_maq_info_original = st.session_state.info_ihm
+df_prod = st.session_state.produção
+df_info = st.session_state.maquina_info_today
 
-df_eff, df_maq_info_original, df_prod, df_info = get_df()
 
 # Garantir que a data é um pandas Timestamp só com a data
 df_maq_info_original.data_registro = pd.to_datetime(df_maq_info_original.data_registro).dt.date
@@ -156,10 +120,6 @@ turn_opt = st.sidebar.selectbox(
 )
 
 line = st.sidebar.selectbox("Selecione a linha:", lines, index=0)
-
-if st.sidebar.button("Atualizar Dados"):
-    st.cache_data.clear()
-    st.rerun()
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                           Dataframes

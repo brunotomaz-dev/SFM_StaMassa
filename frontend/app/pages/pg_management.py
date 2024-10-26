@@ -10,7 +10,6 @@ import streamlit as st
 from app.components.action_plan import action_plan
 from app.functions.get_date import GetDate
 from app.helpers.variables import COLOR_DICT
-from app.pages.pg_login import get_ind
 from streamlit_echarts import st_echarts
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -34,7 +33,6 @@ st.markdown(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ GLOBAL VARIABLES ━━ #
 
 get_date = GetDate()
-_, _, _, info_ihm = get_ind()
 
 TODAY = get_date.get_today()
 FIRST_DAY, LAST_DAY = get_date.get_this_month()
@@ -57,6 +55,7 @@ date_choice = st.sidebar.date_input(
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                           Dataframes
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+info_ihm = st.session_state.info_ihm
 
 # Ajustar a data de registro
 info_ihm["data_registro"] = pd.to_datetime(info_ihm["data_registro"]).dt.date
