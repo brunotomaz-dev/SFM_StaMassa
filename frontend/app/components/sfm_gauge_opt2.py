@@ -1,12 +1,18 @@
 """Componente de gráfico de gauge."""
 
 # pylint: disable=import-error
+from typing import Literal
+
 from app.helpers.variables import ColorsSTM, IndicatorType
 from streamlit_echarts import st_echarts
 
 
 def create_gauge_chart(
-    indicator: IndicatorType, data: int, key_: str, large: bool = False, pos: str = "up_center"
+    indicator: IndicatorType,
+    data: int,
+    key_: str,
+    large: bool = False,
+    pos: Literal["top", "up_center", "center", "down_center", "bottom"] = "up_center",
 ) -> None:
     """
     Cria o gráfico de gauge.
@@ -27,7 +33,7 @@ def create_gauge_chart(
             [1, ColorsSTM.RED.value],  # Acima de 4% é vermelho
         ],
         IndicatorType.EFFICIENCY: [
-            [0.9, ColorsSTM.RED.value],  # Até 90% é vermelho
+            [0.899, ColorsSTM.RED.value],  # Até 90% é vermelho
             [1, ColorsSTM.GREEN.value],  # Acima de 90% é verde
         ],
     }[indicator]
@@ -53,13 +59,15 @@ def create_gauge_chart(
 
     # Ajuste de posição do gauge
     position_y: str = {
-        "center": "50%",
         "top": "35%",
-        "up_center": "55%",
-        "down_center": "45%",
+        "up_center": "45%",
+        "center": "50%",
+        "down_center": "55%",
+        "bottom": "65%",
     }[pos]
 
     return st_echarts(
+        height="300px",
         options={
             "tooltip": {
                 "formatter": "{b} : {c}%",
@@ -72,19 +80,24 @@ def create_gauge_chart(
                 {
                     "name": indicator,
                     "title": {
-                        "show": False if large else True,
-                        "offsetCenter": [0, "110%"],
+                        "show": True,
+                        "offsetCenter": [0, "100%" if large else "110%"],
                         "color": "auto",
-                        "textStyle": {"fontSize": 24 if large else 14, "fontWeight": "bold"},
+                        "textStyle": {
+                            "fontSize": 24 if large else 14,
+                            "fontWeight": "bold",
+                            "fontFamily": "Cursive",
+                        },
                     },
                     "type": "gauge",
-                    "center": ["50%", "45%"] if large else ["50%", position_y],
+                    "radius": "90%",
+                    "center": ["50%", position_y],
                     "detail": {
                         "formatter": "{value}%",
                         "valueAnimation": True,
                         "fontSize": 26 if large else 18,
                         "color": "inherit",
-                        "offsetCenter": [0, "50%"] if large else [0, "78%"],
+                        "offsetCenter": [0, "60%"] if large else [0, "78%"],
                     },
                     "pointer": {"itemStyle": {"color": "auto"}, "width": 4},
                     "data": [
@@ -95,7 +108,6 @@ def create_gauge_chart(
                     ],
                     "startAngle": 220,
                     "endAngle": -40,
-                    "radius": "85%",
                     "min": opt_range_min,
                     "max": opt_range_max,
                     "axisLine": {

@@ -67,14 +67,14 @@ async def get_all_data() -> tuple:
     return massa, pasta, massa_week, pasta_week, caixas_cf
 
 
-@st.cache_data(show_spinner="Obtendo dados", ttl=60000)
+@st.cache_data(show_spinner="Obtendo dados", ttl=60 * 60 * 24)
 def get_df():
     """Função para obter os dados da API. Existe para manter um cache."""
     massa, pasta, massa_week, pasta_week, caixas_cf = asyncio.run(get_all_data())
     return massa, pasta, massa_week, pasta_week, caixas_cf
 
 
-@st.cache_data(show_spinner="Obtendo dados", ttl=60000)
+@st.cache_data(show_spinner="Obtendo dados", ttl=60 * 60 * 24)
 def get_estoque(start_date: str, end_date: str):
     """Função para obter os dados do estoque. Existe para manter um cache."""
 
@@ -672,11 +672,43 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
         df_estoque_p.groupby(["descricao"], as_index=False)["custo"]
         .mean()
         .sort_values(by="custo", ascending=False)
-        .reset_index()
+        .reset_index(drop=True)
     )
 
-    # Ajustar a tabela mantendo apenas o mês atual
-    df_estoque_p_actual = df_estoque_p[df_estoque_p["data_emissao"] >= selected_month]
+    # Copia o dataframe
+    df_estoque_p_actual = df_estoque_p.copy()
+
+    # Converter as datas para o formato datetime
+    df_estoque_p_actual["data_emissao"] = pd.to_datetime(df_estoque_p_actual["data_emissao"])
+
+    # Obter os valores mínimos e máximos das datas como datetime.date
+    min_date = df_estoque_p_actual["data_emissao"].min().date()
+    max_date = df_estoque_p_actual["data_emissao"].max().date()
+
+    # Encontrar último dia do mês de selected_month
+    selected_month_last = (selected_month.normalize() + pd.offsets.MonthEnd(0)).date()
+
+    # Se max_date for maior que selected_month_last, ajustar max_date para selected_month_last
+    if max_date < selected_month_last:
+        selected_month_last = max_date
+
+    selected_start, selected_end = st.slider(
+        "Selecione o período para o Gráfico de Ajuste de Estoque",
+        min_value=min_date,
+        max_value=max_date,
+        value=(selected_month.date(), selected_month_last),
+        format="DD/MM/YYYY",
+    )
+
+    # Converter as datas selecionadas de volta para o formato datetime
+    selected_start_date = pd.to_datetime(selected_start)
+    selected_end_date = pd.to_datetime(selected_end)
+
+    # Filtrar por ano e mês
+    df_estoque_p_actual = df_estoque_p_actual[
+        (df_estoque_p_actual["data_emissao"] >= selected_start_date)
+        & (df_estoque_p_actual["data_emissao"] <= selected_end_date)
+    ]
 
     # Arredondar os valores para 2 casas decimais
     df_estoque_p_actual["custo"] = df_estoque_p_actual["custo"].round(2)
@@ -704,6 +736,20 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
     # ============================================================================ Ajuste Negativo #
     c_1, c_2 = st.columns(2)
 
+    # Adicionar coluna formatada
+    df_estoque_p_actual_neg["custo_br"] = df_estoque_p_actual_neg["custo"].apply(
+        lambda x: locale.currency(x, grouping=True)
+    )
+    df_estoque_p_actual_pos["custo_br"] = df_estoque_p_actual_pos["custo"].apply(
+        lambda x: locale.currency(x, grouping=True)
+    )
+    df_estoque_p_general_neg["custo_br"] = df_estoque_p_general_neg["custo"].apply(
+        lambda x: locale.currency(x, grouping=True)
+    )
+    df_estoque_p_general_pos["custo_br"] = df_estoque_p_general_pos["custo"].apply(
+        lambda x: locale.currency(x, grouping=True)
+    )
+
     # Criar o chart
     chart_neg = (
         alt.Chart(df_estoque_p_actual_neg)
@@ -711,15 +757,10 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
         .encode(
             y=alt.Y("descricao:O", sort="-x", title="Descricão", axis=alt.Axis()),
             x=alt.X("custo:Q", title="Custo"),
-            tooltip=[alt.Tooltip("custo:Q", title="Custo", format=",.2f", formatType="number")],
+            tooltip=[alt.Tooltip("custo_br:N", title="Custo")],
         )
         .properties(title="Ajuste de Estoque - Negativo")
     )
-
-    # Adicionar o símbolo de moeda no tooltip
-    chart_neg = chart_neg.transform_calculate(
-        custo_br="'R$ ' + format(datum.custo, ',.2f')"
-    ).encode(tooltip=[alt.Tooltip("custo_br:N", title="Custo")])
 
     c_1.altair_chart(chart_neg, use_container_width=True)
 
@@ -730,6 +771,7 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
         .encode(
             y=alt.Y("descricao:O", sort="-x", title="Descricão", axis=alt.Axis()),
             x=alt.X("custo:Q", title="Custo"),
+            tooltip=[alt.Tooltip("custo_br:N", title="Custo")],
         )
         .properties(title="Média de ajuste - Negativo")
     )
@@ -746,6 +788,7 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
         .encode(
             y=alt.Y("descricao:O", sort="-x", title="Descricão", axis=alt.Axis()),
             x=alt.X("custo:Q", title="Custo"),
+            tooltip=[alt.Tooltip("custo_br:N", title="Custo")],
         )
         .properties(title="Ajuste de Estoque - Positivo")
     )
@@ -759,6 +802,7 @@ if pg_selection == PageSelection.AJUSTE_ESTOQUE.value:
         .encode(
             y=alt.Y("descricao:O", sort="-x", title="Descricão", axis=alt.Axis()),
             x=alt.X("custo:Q", title="Custo"),
+            tooltip=[alt.Tooltip("custo_br:N", title="Custo")],
         )
         .properties(title="Média de ajuste - Positivo")
     )

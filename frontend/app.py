@@ -1,10 +1,15 @@
 """ Arquivo principal da aplicação Streamlit. """
 
+import asyncio
 import time
 
 import streamlit as st
+import streamlit.components.v1 as components
 import streamlit_authenticator as stauth
 import yaml
+
+# pylint: disable=E0401
+from app.api.fetch_api import update_api
 from streamlit_authenticator.utilities import (
     CredentialsError,
     Hasher,
@@ -24,8 +29,24 @@ st.set_page_config(
 with open("style.css") as css:
     st.markdown(f"<style>{css.read()}</style>", unsafe_allow_html=True)
 
+# Adicionar a tag <html lang="pt-br"> no cabeçalho da página
+components.html(
+    """
+    <!DOCTYPE html>
+    <html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <title>Shop Floor Management</title>
+    </head>
+    <body>
+    </body>
+    </html>
+    """,
+    height=0,
+)
+
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-#                                       inicializar state
+#                                       Inicializar State
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 # Inicializar state
@@ -37,6 +58,50 @@ if "pass_reset" not in st.session_state:
     st.session_state["pass_reset"] = False
 if "page" not in st.session_state:
     st.session_state["page"] = None
+if "api_running" not in st.session_state:
+    st.session_state["api_running"] = False
+
+
+# ================================================================================================ #
+#                                         REQUISIÇÃO DE API                                        #
+# ================================================================================================ #
+
+
+@st.fragment(run_every=60)
+def api_session_update() -> None:
+    """
+    Esta função é decorada com `@st.fragment` para ser executada automaticamente a cada 60 segundos.
+    Ela garante que a API não seja chamada se uma chamada anterior ainda estiver em execução.
+    Se a API não estiver em execução, define o estado `api_running` como True, busca dados
+    atualizados usando a função `update_api`, atualiza várias variáveis de estado da sessão como
+    'produção', 'caixas_estoque', 'eficiência', 'performance', 'reparos' e 'info_ihm', e finalmente
+    define `api_running` como False.
+    """
+    if st.session_state["api_running"]:
+        time.sleep(20)
+        st.session_state["api_running"] = False
+        return
+
+    st.session_state["api_running"] = True
+
+    result = asyncio.run(update_api())
+
+    st.session_state["produção"] = result[0]
+    st.session_state["caixas_estoque"] = result[1]
+    st.session_state["eficiência"] = result[2]
+    st.session_state["performance"] = result[3]
+    st.session_state["reparos"] = result[4]
+    st.session_state["info_ihm"] = result[5]
+    st.session_state["hist_ind"] = result[6]
+    st.session_state["maquina_info_today"] = result[7]
+    st.session_state["api_running"] = False
+
+    return
+
+
+if "produção" not in st.session_state:
+    api_session_update()
+
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                         Authenticator
@@ -169,7 +234,7 @@ shop_floor_management_page = st.Page(
 
 all_lines_page = st.Page(
     page="app/pages/pg_all_lines.py",
-    title="Ao Vivo",
+    title="Linhas Ao Vivo",
     icon=":material/precision_manufacturing:",
 )
 
@@ -183,6 +248,18 @@ pcp_page = st.Page(
     page="app/pages/pg_pcp.py",
     title="PCP",
     icon=":material/production_quantity_limits:",
+)
+
+all_lines_hist_page = st.Page(
+    page="app/pages/pg_all_lines_hist.py",
+    title="Linhas Histórico",
+    icon=":material/history:",
+)
+
+management_page = st.Page(
+    page="app/pages/pg_management.py",
+    title="Gestão",
+    icon=":material/manage_history:",
 )
 
 
@@ -201,10 +278,10 @@ def get_navigation(user_role):
     paginas_basicas = [login_page]
     paginas_lider_supervisor = paginas_basicas + [
         shop_floor_management_page,
-        all_lines_page,
         per_hour_page,
+        all_lines_page,
     ]
-    paginas_coordenacao = paginas_lider_supervisor
+    paginas_coordenacao = paginas_lider_supervisor + [all_lines_hist_page, management_page]
     paginas_coordenacao_pcp = paginas_coordenacao + [pcp_page]
     paginas_pcp = paginas_basicas + [pcp_page]
     paginas_dev = paginas_coordenacao_pcp
@@ -233,3 +310,5 @@ else:
 st.session_state["page"] = PG.title
 
 PG.run()
+
+api_session_update()

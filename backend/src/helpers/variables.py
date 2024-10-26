@@ -14,6 +14,7 @@ class LocalTables(Enum):
     PRODUCTION = "producao"
     INFO_IHM = "info_ihm"
     HISTORIC_IND = "historic_info"
+    ACTION_PLAN = "action_plan"
 
 
 class IndicatorType(Enum):

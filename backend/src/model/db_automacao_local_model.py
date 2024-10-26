@@ -55,3 +55,17 @@ class DBAutomacaoLocalModel(ConnectionLocal):
         finally:
             if conn:
                 conn.dispose()
+
+    def create_table(self, table: str, schema: str) -> None:
+        """Cria tabela no banco de dados local."""
+        conn = None
+        try:
+            conn = self.get_session()
+            conn.execute(f"CREATE TABLE IF NOT EXISTS {table} ({schema})")
+        # pylint: disable=W0718
+        except Exception as error:
+            print(f"Erro ao criar a tabela: {error}")
+
+        finally:
+            if conn:
+                conn.dispose()
