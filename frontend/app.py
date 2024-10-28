@@ -2,9 +2,9 @@
 
 import asyncio
 import time
+from datetime import datetime, timedelta
 
 import streamlit as st
-import streamlit.components.v1 as components
 import streamlit_authenticator as stauth
 import yaml
 
@@ -44,6 +44,8 @@ if "page" not in st.session_state:
     st.session_state["page"] = None
 if "api_running" not in st.session_state:
     st.session_state["api_running"] = False
+if "last_api_call" not in st.session_state:
+    st.session_state["last_api_call"] = datetime.min
 
 
 # ================================================================================================ #
@@ -61,12 +63,16 @@ def api_session_update() -> None:
     'produção', 'caixas_estoque', 'eficiência', 'performance', 'reparos' e 'info_ihm', e finalmente
     define `api_running` como False.
     """
-    if st.session_state["api_running"]:
-        time.sleep(20)
-        st.session_state["api_running"] = False
+    # if st.session_state["api_running"]:
+    #     time.sleep(20)
+    #     st.session_state["api_running"] = False
+    #     return
+    now = datetime.now()
+    if now - st.session_state.last_api_call < timedelta(seconds=60):
+
         return
 
-    st.session_state["api_running"] = True
+    st.session_state["last_api_call"] = now
 
     result = asyncio.run(update_api())
 
@@ -78,14 +84,11 @@ def api_session_update() -> None:
     st.session_state["info_ihm"] = result[5]
     st.session_state["hist_ind"] = result[6]
     st.session_state["maquina_info_today"] = result[7]
-    st.session_state["api_running"] = False
 
     return
 
 
-if "produção" not in st.session_state:
-    api_session_update()
-
+api_session_update()
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                         Authenticator
@@ -294,5 +297,3 @@ else:
 st.session_state["page"] = PG.title
 
 PG.run()
-
-api_session_update()

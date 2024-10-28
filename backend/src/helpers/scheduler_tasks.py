@@ -27,6 +27,17 @@ NON_CRITICAL_INTERVAL = 60
 
 # Iniciar o agendador
 def start_scheduler() -> None:
+    """
+    Inicia o planejador de tarefas em segundo plano para gerenciar várias atividades periódicas.
+    A função agenda as seguintes tarefas para execução em intervalos específicos:
+
+    - Geração de dados de produção do mês atual: programada com prioridade baixa.
+    - Geração de dados para IHM e informações da máquina: programada com prioridade alta.
+    - Criação de indicadores de produção: programada com prioridade alta.
+    - Criação de histórico de indicadores: programada com prioridade não crítica.
+    Cada tarefa é configurada com um atraso inicial e um limite para o número de instâncias
+    simultâneas em execução.
+    """
 
     # Cria a tarefa de criação dos dados de produção do mês corrente
     scheduler.add_job(

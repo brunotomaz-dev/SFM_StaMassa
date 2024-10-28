@@ -46,8 +46,13 @@ st.markdown(
 
 async def get_data():
     """Função para buscar os dados da API."""
-    start = FIRST_DAY.strftime("%Y-%m-%d")
+
+    # Último dia do mês atual
     end = LAST_DAY.strftime("%Y-%m-%d")
+
+    # Obter a data de 31 dias antes da data de hoje
+    start = TODAY - pd.DateOffset(days=31)
+
     url = [f"{APIUrl.URL_MAQ_INFO.value}?start={start}&end={end}"]
 
     tasks = [fetch_api_data(url) for url in url]
@@ -84,8 +89,11 @@ st.sidebar.title("Configurações")
 # Encontrar a data de ontem baseado em TODAY
 yesterday = TODAY - pd.Timedelta(days=1)
 
+# Encontrar 31 dias antes da data de hoje
+f_day = TODAY - pd.DateOffset(days=31)
+
 date_picked = st.sidebar.date_input(
-    "Escolha a data", value=yesterday, min_value=FIRST_DAY, max_value=yesterday, format="DD/MM/YYYY"
+    "Escolha a data", value=yesterday, min_value=f_day, max_value=yesterday, format="DD/MM/YYYY"
 )
 
 if date_picked:

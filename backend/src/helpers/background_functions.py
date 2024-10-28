@@ -52,9 +52,14 @@ def create_production_data() -> None:
         start = start.strftime("%Y-%m-%d")
         end = end.strftime("%Y-%m-%d")
 
+        today = date_f.get_date()
+
+        # obter a data de 31 dias antes da data de hoje
+        start_31 = today - pd.DateOffset(days=31)
+
         # Obter os dados da máquina Info e Qualidade
-        prod = maquina_info_service.get_production_data((start, end))
-        qual = maquina_qualidade_service.get_data((start, end))
+        prod = maquina_info_service.get_production_data((start_31, end))
+        qual = maquina_qualidade_service.get_data((start_31, end))
 
         # Receber os produtos do protheus
         products_data = protheus_sb1_produtos_service.get_data()
@@ -81,9 +86,14 @@ def create_maq_ihm_info_data() -> None:
         start = start.strftime("%Y-%m-%d")
         end = end.strftime("%Y-%m-%d")
 
+        today = date_f.get_date()
+
+        # obter a data de 31 dias antes da data de hoje
+        start_31 = today - pd.DateOffset(days=31)
+
         # Obter os dados da máquina Info e Qualidade
-        maq_ihm = maquina_ihm_service.get_data((start, end))
-        maq_info = maquina_info_service.get_data((start, end))
+        maq_ihm = maquina_ihm_service.get_data((start_31, end))
+        maq_info = maquina_info_service.get_data((start_31, end))
 
         info_ihm_join = InfoIHMJoin(maq_ihm, maq_info)
 

@@ -44,25 +44,41 @@ FIRST_DAY, LAST_DAY = get_date.get_this_month()
 # Título
 st.sidebar.title("Configurações")
 
+# Dados da maquina e IHM
+info_data = st.session_state.info_ihm
+
+# Data inicial do dataframe
+day_one = pd.to_datetime(info_data["data_registro"].min())
+
+# Data final do dataframe
+day_last = pd.to_datetime(info_data["data_registro"].max())
+
 # Data do início e fim baseada no hoje.
-yesterday = TODAY - pd.Timedelta(days=1)
+yesterday = day_last - pd.Timedelta(days=1)
 
 # Seleção de data
 date_choice = st.sidebar.date_input(
-    "Escolha a data", value=None, min_value=FIRST_DAY, max_value=yesterday, format="DD/MM/YYYY"
+    "Escolha a data", value=None, min_value=day_one, max_value=yesterday, format="DD/MM/YYYY"
 )
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                           Dataframes
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-info_ihm = st.session_state.info_ihm
+info_ihm = info_data.copy()
 
 # Ajustar a data de registro
-info_ihm["data_registro"] = pd.to_datetime(info_ihm["data_registro"]).dt.date
+info_ihm["data_registro"] = pd.to_datetime(info_ihm["data_registro"])
 
-# Se necessário, filtrar pela data
-if date_choice:
-    info_ihm = info_ihm[info_ihm["data_registro"] == date_choice]
+# Se necessário, filtrar pela data, se não mantêm apenas os dados do mês atual
+info_ihm = (
+    info_ihm[info_ihm["data_registro"].dt.date == date_choice]
+    if date_choice
+    else info_ihm[info_ihm["data_registro"].dt.month == info_ihm["data_registro"].dt.month.max()]
+)
+
+
+# Manter apenas a data
+info_ihm["data_registro"] = info_ihm["data_registro"].dt.date
 
 
 @st.cache_data()
@@ -133,7 +149,7 @@ echart_df, programado_df, n_programado_df, geral_n_programado_df = df_echart_adj
 #                                             Layout
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ GRAFICO DE BARRAS DO ECHART ━━ #
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ GRÁFICO DE BARRAS DO ECHART ━━ #
 with st.container(border=True):
     # Criação da série de dados
     series = [
