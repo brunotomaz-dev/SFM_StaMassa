@@ -53,13 +53,11 @@ async def get_data():
     # Obter a data de 31 dias antes da data de hoje
     start = TODAY - pd.DateOffset(days=31)
 
-    url = [f"{APIUrl.URL_MAQ_INFO.value}?start={start}&end={end}"]
+    url = f"{APIUrl.URL_MAQ_INFO.value}?start={start}&end={end}"
 
-    tasks = [fetch_api_data(url) for url in url]
-    data = await asyncio.gather(*tasks)
-    maq_info_data = data[0]
+    data = await fetch_api_data(url)
 
-    return maq_info_data
+    return data
 
 
 @st.fragment()
@@ -70,10 +68,18 @@ def get_api_data():
     obtidos. Isso garante que os dados sejam atualizados mesmo
     quando o usuário não interage com a aplicação.
     """
-    maquina_info_data = asyncio.run(get_data())
-    st.session_state["maquina_info"] = maquina_info_data
+    progress = st.empty()
 
-    return
+    progress.progress(value=5, text="Carregando dados...")
+    maquina_info_data = asyncio.run(get_data())
+    progress.progress(100)
+    if maquina_info_data.empty:
+        st.error("Não foi possível carregar os dados.")
+        progress.empty()
+        st.stop()
+    else:
+        st.session_state["maquina_info"] = maquina_info_data
+        progress.empty()
 
 
 if "maquina_info" not in st.session_state:
@@ -89,8 +95,9 @@ st.sidebar.title("Configurações")
 # Encontrar a data de ontem baseado em TODAY
 yesterday = TODAY - pd.Timedelta(days=1)
 
-# Encontrar 31 dias antes da data de hoje
-f_day = TODAY - pd.DateOffset(days=31)
+# Encontrar a data mínima do dataframe
+f_day = st.session_state.maquina_info.data_registro.min()
+f_day = pd.to_datetime(f_day).date()
 
 date_picked = st.sidebar.date_input(
     "Escolha a data", value=yesterday, min_value=f_day, max_value=yesterday, format="DD/MM/YYYY"

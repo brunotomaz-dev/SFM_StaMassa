@@ -286,14 +286,16 @@ with r1_col2:
             y=alt.Y("media_ciclos"), tooltip=[alt.Tooltip("media_ciclos", title="Média de Ciclos")]
         )
     )
+
     # Figura com marcação dos ciclos médios
     str_media = f"Média de Ciclos: {media_ciclos}"
     alt_fig_2 += (
         alt.Chart(pd.DataFrame({"Média de Ciclos": [media_ciclos]}))
-        .mark_text(color="cadetblue", dy=-10, fontSize=12)
+        .mark_text(color="cadetblue", dy=10, fontSize=12)
         .encode(y=alt.Y("Média de Ciclos"), text=alt.Text("Média de Ciclos"))
     )
-    alt_fig_2 = alt_fig_2.properties(height=200, title=f"Média de Ciclos: {media_ciclos}")
+
+    alt_fig_2 = alt_fig_2.properties(height=200, title=str_media)
 
     st.divider()
     st.altair_chart(alt_fig_2, use_container_width=True)

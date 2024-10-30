@@ -52,8 +52,6 @@ def get_prod_data() -> None:
 
     st.session_state["maq_info_2_days"] = data
 
-    return
-
 
 if "maq_info_2_days" not in st.session_state:
     get_prod_data()

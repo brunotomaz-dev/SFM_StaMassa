@@ -78,6 +78,7 @@ class ActionPlanData(BaseModel):
     Indicador: str
     Dias_em_Aberto: int
     Prioridade: int
+    Turno: str
     Descricao_do_Problema: str
     Impacto: float
     Causa_Raiz: str

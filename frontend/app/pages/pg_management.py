@@ -353,4 +353,4 @@ with col_icicle.container(border=True):
 
 # ================================================================================== Plano De Ação #
 st.divider()
-action_plan()
+action_plan(date_choice)

@@ -12,6 +12,7 @@ from src.helpers.background_functions import (
     create_ind_prod,
     create_maq_ihm_info_data,
     create_production_data,
+    update_action_plan,
 )
 
 # ================================================================================================ #
@@ -23,6 +24,7 @@ scheduler = BackgroundScheduler()
 HIGH_PRIORITY_INTERVAL = 1
 LOW_PRIORITY_INTERVAL = 5
 NON_CRITICAL_INTERVAL = 60
+DAILY_INTERVAL = 60 * 24
 
 
 # Iniciar o agendador
@@ -71,6 +73,15 @@ def start_scheduler() -> None:
         create_ind_history,
         "interval",
         minutes=NON_CRITICAL_INTERVAL,
+        start_date=datetime.now() + timedelta(seconds=10),
+        max_instances=1,
+    )
+
+    # Cria a tarefa para atualizar o plano de ação
+    scheduler.add_job(
+        update_action_plan,
+        "interval",
+        minutes=DAILY_INTERVAL,
         start_date=datetime.now() + timedelta(seconds=10),
         max_instances=1,
     )
