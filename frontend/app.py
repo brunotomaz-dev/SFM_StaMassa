@@ -2,9 +2,9 @@
 
 import asyncio
 import time
+from datetime import datetime, timedelta
 
 import streamlit as st
-import streamlit.components.v1 as components
 import streamlit_authenticator as stauth
 import yaml
 
@@ -44,6 +44,8 @@ if "page" not in st.session_state:
     st.session_state["page"] = None
 if "api_running" not in st.session_state:
     st.session_state["api_running"] = False
+if "last_api_call" not in st.session_state:
+    st.session_state["last_api_call"] = datetime.min
 
 
 # ================================================================================================ #
@@ -54,38 +56,76 @@ if "api_running" not in st.session_state:
 @st.fragment(run_every=60)
 def api_session_update() -> None:
     """
-    Esta função é decorada com `@st.fragment` para ser executada automaticamente a cada 60 segundos.
-    Ela garante que a API não seja chamada se uma chamada anterior ainda estiver em execução.
-    Se a API não estiver em execução, define o estado `api_running` como True, busca dados
-    atualizados usando a função `update_api`, atualiza várias variáveis de estado da sessão como
-    'produção', 'caixas_estoque', 'eficiência', 'performance', 'reparos' e 'info_ihm', e finalmente
-    define `api_running` como False.
+    Função que atualiza os dados da API a cada 60 segundos.
+
+    Verifica se a chamada foi recente, caso sim, retorna. Caso contrário,
+    atualiza o estado de 'last_api_call' para a data e hora atual e faz
+    a requisição da API. O resultado é armazenado nas chaves da API/State.
     """
-    if st.session_state["api_running"]:
-        time.sleep(20)
-        st.session_state["api_running"] = False
+    progress = st.empty()
+    # Encontra a data e hora atual
+    now = datetime.now()
+
+    # Verifica se a chamada foi recente, caso sim, retorna
+    if now - st.session_state.last_api_call < timedelta(seconds=60):
         return
 
-    st.session_state["api_running"] = True
+    # Atualiza o progresso
+    progress.progress(value=0, text="Atualizando dados...")
 
+    # Seta o estado de 'last_api_call' para a data e hora atual
+    st.session_state["last_api_call"] = now
+
+    # Atualiza o progresso
+    progress.progress(25, "Atualizando dados...")
+
+    # Faz a requisição da API
     result = asyncio.run(update_api())
 
-    st.session_state["produção"] = result[0]
-    st.session_state["caixas_estoque"] = result[1]
-    st.session_state["eficiência"] = result[2]
-    st.session_state["performance"] = result[3]
-    st.session_state["reparos"] = result[4]
-    st.session_state["info_ihm"] = result[5]
-    st.session_state["hist_ind"] = result[6]
-    st.session_state["maquina_info_today"] = result[7]
-    st.session_state["api_running"] = False
+    # Atualiza o progresso
+    progress.progress(50, "Atualizando dados...")
+    # Chaves da API/State
+    keys = [
+        "produção",
+        "caixas_estoque",
+        "eficiência",
+        "performance",
+        "reparos",
+        "info_ihm",
+        "hist_ind",
+        "maquina_info_today",
+    ]
 
-    return
+    # Corre as chaves e armazena os resultados se existirem
+    for key, res in zip(keys, result):
+        prog = 50 + 50 * (keys.index(key) + 1) / len(keys)
+        progress.progress(int(prog), "Atualizando dados...")
+        if not res.empty:
+            st.session_state[key] = res
+
+    # Atualiza o progresso
+    progress.progress(100, "Dados atualizados")
+    time.sleep(2)
+
+    # Remove o progresso
+    progress.empty()
 
 
-if "produção" not in st.session_state:
+# Chaves do State a serem verificadas
+keys_to_check = [
+    "produção",
+    "caixas_estoque",
+    "eficiência",
+    "performance",
+    "reparos",
+    "info_ihm",
+    "hist_ind",
+    "maquina_info_today",
+]
+
+# Faz a verificação das chaves, caso não existam, faz a requisição
+if any(key not in st.session_state for key in keys_to_check):
     api_session_update()
-
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                         Authenticator

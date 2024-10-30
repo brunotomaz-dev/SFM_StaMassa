@@ -6,6 +6,7 @@ import pandas as pd
 from src.functions import date_f
 from src.functions import history_functions as hist_f
 from src.helpers.variables import IndicatorType
+from src.service.action_plan_service import ActionPlanService
 from src.service.efficiency_service import EfficiencyService
 from src.service.functions.ind_prod import IndProd
 from src.service.functions.info_ihm_join import InfoIHMJoin
@@ -33,6 +34,7 @@ reparo_service = ReparoService()
 historic_ind_service = HistoricIndService()
 prod_qualid_join = ProdQualidJoin()
 ind_production = IndProd()
+action_plan_service = ActionPlanService()
 
 # Configura o logging
 logging.basicConfig(level=logging.ERROR)
@@ -52,9 +54,14 @@ def create_production_data() -> None:
         start = start.strftime("%Y-%m-%d")
         end = end.strftime("%Y-%m-%d")
 
+        today = date_f.get_date()
+
+        # obter a data de 31 dias antes da data de hoje
+        start_31 = today - pd.DateOffset(days=31)
+
         # Obter os dados da máquina Info e Qualidade
-        prod = maquina_info_service.get_production_data((start, end))
-        qual = maquina_qualidade_service.get_data((start, end))
+        prod = maquina_info_service.get_production_data((start_31, end))
+        qual = maquina_qualidade_service.get_data((start_31, end))
 
         # Receber os produtos do protheus
         products_data = protheus_sb1_produtos_service.get_data()
@@ -81,9 +88,14 @@ def create_maq_ihm_info_data() -> None:
         start = start.strftime("%Y-%m-%d")
         end = end.strftime("%Y-%m-%d")
 
+        today = date_f.get_date()
+
+        # obter a data de 31 dias antes da data de hoje
+        start_31 = today - pd.DateOffset(days=31)
+
         # Obter os dados da máquina Info e Qualidade
-        maq_ihm = maquina_ihm_service.get_data((start, end))
-        maq_info = maquina_info_service.get_data((start, end))
+        maq_ihm = maquina_ihm_service.get_data((start_31, end))
+        maq_info = maquina_info_service.get_data((start_31, end))
 
         info_ihm_join = InfoIHMJoin(maq_ihm, maq_info)
 
@@ -177,3 +189,39 @@ def create_ind_history() -> None:
     # pylint: disable=w0718
     except Exception as e:
         logger.error("Erro inesperado ao criar histórico de indicadores: %s", e, exc_info=True)
+
+
+def update_action_plan() -> None:
+    """Atualiza os dias em aberto da tabela de plano de ação."""
+
+    try:
+        # Obter dados
+        df_action_plan = action_plan_service.get_data()
+
+        # Garantir que conclusão seja um bool
+        df_action_plan["Conclusao"] = df_action_plan["Conclusao"].astype(bool)
+
+        # Manter apenas onde a coluna 'conclusão' seja false
+        df_action_plan = df_action_plan[~df_action_plan["Conclusao"]]
+
+        # Atualizar os dias em abertos
+        df_action_plan["Dias_em_Aberto"] = abs(
+            (pd.to_datetime(df_action_plan["Data"]) - pd.Timestamp("today").normalize()).dt.days
+        )
+
+        # Garantir que os dias em aberto sejam inteiros
+        df_action_plan["Dias_em_Aberto"] = df_action_plan["Dias_em_Aberto"].astype(int)
+
+        # Pegar os indexes dos dias em aberto
+        index = df_action_plan.index.tolist()
+
+        # Criar uma lista de dict com dados alterados
+        data = [{"Dias_em_Aberto": df_action_plan.loc[i, "Dias_em_Aberto"]} for i in index]
+
+        # Atualizar o DB
+        action_plan_service.update_data(index, data)
+    except (ValueError, KeyError, TypeError) as e:
+        logger.error("Erro ao atualizar os dias em aberto: %s", e)
+    # pylint: disable=w0718
+    except Exception as e:
+        logger.error("Erro inesperado ao atualizar os dias em aberto: %s", e, exc_info=True)

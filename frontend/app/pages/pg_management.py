@@ -44,25 +44,52 @@ FIRST_DAY, LAST_DAY = get_date.get_this_month()
 # Título
 st.sidebar.title("Configurações")
 
+# Dados da maquina e IHM
+info_data = st.session_state.info_ihm
+
+# Data inicial do dataframe
+day_one = pd.to_datetime(info_data["data_registro"].min())
+
+# Data final do dataframe
+day_last = pd.to_datetime(info_data["data_registro"].max())
+
 # Data do início e fim baseada no hoje.
-yesterday = TODAY - pd.Timedelta(days=1)
+yesterday = day_last - pd.Timedelta(days=1)
 
 # Seleção de data
 date_choice = st.sidebar.date_input(
-    "Escolha a data", value=None, min_value=FIRST_DAY, max_value=yesterday, format="DD/MM/YYYY"
+    "Escolha a data", value=None, min_value=day_one, max_value=yesterday, format="DD/MM/YYYY"
 )
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                           Dataframes
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-info_ihm = st.session_state.info_ihm
+info_ihm = info_data.copy()
+production = st.session_state.produção
 
 # Ajustar a data de registro
-info_ihm["data_registro"] = pd.to_datetime(info_ihm["data_registro"]).dt.date
+info_ihm["data_registro"] = pd.to_datetime(info_ihm["data_registro"])
+production["data_registro"] = pd.to_datetime(production["data_registro"])
 
-# Se necessário, filtrar pela data
-if date_choice:
-    info_ihm = info_ihm[info_ihm["data_registro"] == date_choice]
+# Se necessário, filtrar pela data, se não mantêm apenas os dados do mês atual
+info_ihm = (
+    info_ihm[info_ihm["data_registro"].dt.date == date_choice]
+    if date_choice
+    else info_ihm[info_ihm["data_registro"].dt.month == info_ihm["data_registro"].dt.month.max()]
+)
+
+# Filtrar pela data escolhida
+production = (
+    production[production["data_registro"].dt.date == date_choice]
+    if date_choice
+    else production[
+        production["data_registro"].dt.month == production["data_registro"].dt.month.max()
+    ]
+)
+
+# Manter apenas a data
+info_ihm["data_registro"] = info_ihm["data_registro"].dt.date
+production.data_registro = production.data_registro.dt.date
 
 
 @st.cache_data()
@@ -133,7 +160,7 @@ echart_df, programado_df, n_programado_df, geral_n_programado_df = df_echart_adj
 #                                             Layout
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ GRAFICO DE BARRAS DO ECHART ━━ #
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ GRÁFICO DE BARRAS DO ECHART ━━ #
 with st.container(border=True):
     # Criação da série de dados
     series = [
@@ -335,6 +362,49 @@ with col_icicle.container(border=True):
     # Plot
     st.plotly_chart(ice_fig, use_container_width=True)
 
+# ================================================================================================ #
+#                                              TABELAS                                             #
+# ================================================================================================ #
+
+# ================================================================================= Tabelas Gerais #
+with st.expander("Tabelas"):
+    # Manter apenas as colunas necessárias
+    production = production[
+        ["data_registro", "fabrica", "linha", "turno", "produto", "total_produzido"]
+    ]
+
+    production.total_produzido = production.total_produzido.clip(lower=0)
+    production.total_produzido = production.total_produzido
+
+    # Agrupar os dados por data e turno e produto
+    df_production_turn = (
+        production.groupby(["data_registro", "turno", "produto"], observed=False)
+        .agg({"total_produzido": "sum"})
+        .reset_index()
+    )
+
+    # Agrupar os dados por dia e produto
+    df_production_day = (
+        production.groupby(["data_registro", "produto"], observed=False)
+        .agg({"total_produzido": "sum"})
+        .reset_index()
+    )
+
+    # Usar styler para formatar o total produzido
+    production = production.style.format(thousands=".", decimal=",", precision=2)
+    df_production_turn = df_production_turn.style.format(thousands=".", decimal=",", precision=2)
+    df_production_day = df_production_day.style.format(thousands=".", decimal=",", precision=2)
+
+    # Tabela de Produção
+    prod_col, prod_turn_col, prod_day_col = st.columns([1.4, 1.2, 1.07])
+    prod_col.write("##### Produção por máquina")
+    prod_col.dataframe(production, hide_index=True, use_container_width=True)
+    prod_turn_col.write("##### Produção por turno")
+    prod_turn_col.dataframe(df_production_turn, hide_index=True, use_container_width=True)
+    prod_day_col.write("##### Produção por dia")
+    prod_day_col.dataframe(df_production_day, hide_index=True, use_container_width=True)
+
+
 # ================================================================================== Plano De Ação #
 st.divider()
-action_plan()
+action_plan(date_choice)

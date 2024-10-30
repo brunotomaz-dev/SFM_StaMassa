@@ -46,6 +46,7 @@ action_plan_model_df = pd.DataFrame(
         "Indicador",
         "Dias_em_Aberto",
         "Prioridade",
+        "Turno",
         "Descricao_do_Problema",
         "Impacto",
         "Causa_Raiz",
@@ -170,7 +171,7 @@ def session_state_start(df: pd.DataFrame) -> None:
     if "add_action" not in st.session_state:
         st.session_state.add_action = False
 
-    if "table_action" not in st.session_state:
+    if "table_action" not in st.session_state or st.session_state.table_action.empty:
         st.session_state.table_action = df if not df.empty else action_plan_model_df
 
 
@@ -179,19 +180,27 @@ def session_state_start(df: pd.DataFrame) -> None:
 # ================================================================================================ #
 
 
-def action_plan() -> None:
+def action_plan(date_choice: str | None) -> None:
     """Plano de ação."""
     action_plan_df = fetch_action_plan()
+
+    # Inicializar State
     session_state_start(action_plan_df)
 
     # Tabela
     df_action = st.session_state.table_action
+
+    if date_choice:
+        date_choice = pd.Timestamp(date_choice)
+        df_action["Data"] = pd.to_datetime(df_action["Data"])
+        df_action = df_action[df_action["Data"] == date_choice]
 
     config = {
         "Data": st.column_config.DateColumn(format="DD/MM/YYYY", default=pd.Timestamp("today")),
         "Indicador": st.column_config.SelectboxColumn(options=["S", "Q", "D", "C"]),
         "Dias_em_Aberto": st.column_config.NumberColumn(label="Dias em aberto"),
         "Prioridade": st.column_config.SelectboxColumn(options=[1, 2, 3]),
+        "Turno": st.column_config.SelectboxColumn(options=["Matutino", "Vespertino", "Noturno"]),
         "Descricao_do_Problema": st.column_config.TextColumn(label="Descricão do problema"),
         "Impacto": st.column_config.NumberColumn(
             format="%.1f%%",
@@ -200,8 +209,8 @@ def action_plan() -> None:
             help="Impacto em porcentagem",
             label="Impacto %",
         ),
-        "Causa_Raiz": st.column_config.TextColumn(label="Causa raiz"),
         "Contencao": st.column_config.TextColumn(label="Contenção"),
+        "Causa_Raiz": st.column_config.TextColumn(label="Causa raiz"),
         "Solucao": st.column_config.TextColumn(label="Solução"),
         "Feedback": st.column_config.TextColumn(),
         "Responsavel": st.column_config.TextColumn(label="Responsável"),
@@ -239,7 +248,7 @@ def action_plan() -> None:
     if st.session_state.add_action:
         with st.form(key="form_add_action", clear_on_submit=True):
             st.write("Plano de ação - Adicionar")
-            form_col1, form_col2, form_col3, form_col4 = st.columns(4)
+            form_col1, form_col2, form_col3, form_col4, form_col9 = st.columns(5)
             form_col5, form_col6 = st.columns(2)
             form_col7, form_col8 = st.columns(2)
             # Coleta dos dados
@@ -251,20 +260,57 @@ def action_plan() -> None:
             # Mudar o sinal pra ficar positivo
             f3 = abs(f3)
             f4 = form_col3.selectbox("Prioridade", options=[1, 2, 3])
-            f5 = form_col5.text_area("Descrição do Problema", height=207)
+            f13 = form_col9.selectbox("Turno", options=["Matutino", "Vespertino", "Noturno"])
+            problema_help = (
+                "Problema - Explicar porque parou(do ponto de vista da produção)"
+                " e porque não atingiu a meta"
+            )
+            f5 = (
+                form_col5.text_area(
+                    "Descrição do Problema",
+                    height=207,
+                    placeholder="Incluir a máquina, linha, produto, setor e problema",
+                    help=problema_help,
+                ),
+            )
             f6 = form_col4.number_input("Impacto %", min_value=0, max_value=100)
-            f7 = form_col6.text_input("Causa Raiz")
-            f8 = form_col6.text_input("Contenção")
-            f9 = form_col6.text_input("Solução")
-            f10 = form_col7.text_input("Feedback")
-            f11 = form_col8.text_input("Responsável")
+            f8 = form_col6.text_input(
+                "Contenção",
+                placeholder="Ação provisória",
+                help="O que eu fiz para não parar a produção até solucionar o problema",
+            )
+            f7 = form_col6.text_input(
+                "Causa Raiz",
+                placeholder="Qual foi a causa raiz",
+                help="Qual foi a causa que gerou o problema",
+            )
+            solucao_help = (  # cspell:disable-line
+                "O que eu fiz para eliminar a causa raiz "
+                "e o que eu fiz para o problema não ocorrer novamente"
+            )
+            f9 = form_col6.text_input(
+                "Solução",
+                placeholder="Ação para eliminar a causa raiz",
+                help=solucao_help,  # cspell:disable-line
+            )
+            feed_help = (
+                "Feedback da solução( que informação importante vai ser dada? )"
+                " e nome do responsável pelo feedback"
+            )
+            f10 = form_col7.text_input(
+                "Feedback",
+                placeholder="Feedback da solução e nome do responsável",
+                help=feed_help,
+            )
+            f11 = form_col8.text_input("Responsável", placeholder="Nome do responsável pela ação")
             f12 = st.checkbox("Conclusão", value=False)
 
             # Cria um DataFrame com os dados
             df_action_form = pd.DataFrame(
                 columns=action_plan_model_df.columns,
-                data=[[f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12]],
+                data=[[f1, f2, f3, f4, f13, f5[0], f6, f7, f8, f9, f10, f11, f12]],
             )
+
             add_action_form_submit = st.form_submit_button("Adicionar")
             if add_action_form_submit:
                 save_action(df_action_form)

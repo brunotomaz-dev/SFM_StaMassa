@@ -16,13 +16,20 @@ get_date = GetDate()
 this_first, this_last = get_date.get_this_month()
 ind_play = IndicatorsPlayground()
 reg_abs = RegistroAbsenteismo()
-absent_df = reg_abs.ler_csv()
+absent_df = reg_abs.ler_csv("Absent")
+presence_df = reg_abs.ler_csv("Presence")
 today, this_turn = get_date.get_this_turn()
 
 ROLE: str = st.session_state["role"]
 USER_NAME: str = st.session_state["name"]
 SETORES: list[str] = ["Panificação", "Forno", "Pasta", "Recheio", "Embalagem", "Pães Diversos"]
-FALTAS_TIPOS: list[str] = ["Falta", "Atraso", "Afastamento", "Saída Antecipada"]
+FALTAS_TIPOS: list[str] = [
+    "Falta",
+    "Atraso",
+    "Afastamento",
+    "Saída Antecipada",
+    "Pessoas Remanejadas",
+]
 
 # ================================================================================================ #
 #                                              ESTILOS                                             #
@@ -204,7 +211,7 @@ def att_session_state_abs():
                     if enviar:
                         # cspell: word absenteismo
                         st.session_state["absenteismo_df"] = abs_df_edited
-                        reg_abs.salvar_csv()
+                        reg_abs.salvar_csv("Absent")
                         st.toast("Dados enviados com sucesso!")
                         time.sleep(5)
                         st.session_state["absenteeism"] = False
@@ -254,8 +261,10 @@ def att_session_state():
                 submit_form_pres = st.form_submit_button("Enviar")
                 if submit_form_pres:
                     reg_abs.registrar_presenca(data_form)
+                    time.sleep(1)
+                    reg_abs.salvar_csv("Presence")
                     st.toast("Dados enviados com sucesso!")
-                    time.sleep(5)
+                    time.sleep(3)
                 st.session_state["registro_presença"] = False
                 if submit_form_pres:
                     st.rerun()
@@ -402,23 +411,23 @@ estoque_cam_fria.loc["TOTAL"] = estoque_cam_fria.sum()
 estoque_cam_fria = estoque_cam_fria.style.format(thousands=".", decimal=",", precision=0)
 
 # ====================================================================================== Presenças #
-
-df_presentes = st.session_state["df_reg_pres"]
+if presence_df.empty:
+    presence_df = pd.DataFrame(columns=SETORES + ["Data", "Hora", "Turno", "Usuario"])
 
 # Acrescentar uma coluna com o total de presentes somando as colunas dos setores
-df_presentes["Total"] = df_presentes[SETORES].sum(axis=1)
+presence_df["Total"] = presence_df[SETORES].sum(axis=1)
 # Agrupar por data
-df_presentes = df_presentes.groupby("Data").sum().drop(columns=["Hora", "Turno", "Usuario"])
+presence_df = presence_df.groupby("Data").sum().drop(columns=["Hora", "Turno", "Usuario"])
 
 # Criar variável com total de presentes
-presentes_total = 0 if df_presentes.empty else df_presentes.Total.sum()
+presentes_total = 0 if presence_df.empty else presence_df.Total.sum()
 
 # Criar variável com total de produção
 PRODUCTION_TOTAL = 0 if prod_total.empty else int(prod_total["Produção"].iloc[0])
 
 # ================================================================================================ #
 if absent_df.empty:
-    faltas, atrasos, afastamentos, s_antecipada = 0, 0, 0, 0
+    faltas, atrasos, afastamentos, s_antecipada, remanejamento = 0, 0, 0, 0, 0
 else:
     absent_df["Data"] = pd.to_datetime(absent_df["Data"]).dt.date
     absent_df = absent_df[absent_df["Data"] == today]
@@ -426,15 +435,14 @@ else:
     atrasos = absent_df[absent_df["Tipo"] == "Atraso"].shape[0]
     afastamentos = absent_df[absent_df["Tipo"] == "Afastamento"].shape[0]
     s_antecipada = absent_df[absent_df["Tipo"] == "Saída Antecipada"].shape[0]
-
-cx_pessoa = 0 if presentes_total < 1 else round(PRODUCTION_TOTAL / presentes_total)
+    remanejamento = absent_df[absent_df["Tipo"] == "Pessoas Remanejadas"].shape[0]
 
 # ================================================================================================ #
 #                                              LAYOUT                                              #
 # ================================================================================================ #
 st.title("Dados do dia")
 
-col_1, col_2, col_3 = st.columns([4, 1.95, 1.05])
+col_1, col_2, col_3 = st.columns([4, 2, 1])
 
 
 # ========================================================================================= Gauges #
@@ -462,8 +470,8 @@ with col_2.container():
 # =================================================================================== Presenças #
 with col_3.container():
     st.subheader("Presenças")
-    st.metric("Presenças", df_presentes["Total"].sum())
-    st.metric("Caixas por Pessoa", cx_pessoa)
+    st.metric("Presenças", presence_df["Total"].sum())
+    st.metric("Pessoas Remanejadas", remanejamento)
 
 col_prod, col_lines, col_status = st.columns(3)
 
