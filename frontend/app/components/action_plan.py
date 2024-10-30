@@ -193,8 +193,6 @@ def action_plan(date_choice: str | None) -> None:
     if date_choice:
         date_choice = pd.Timestamp(date_choice)
         df_action["Data"] = pd.to_datetime(df_action["Data"])
-        st.write(date_choice)
-        st.write(df_action["Data"])
         df_action = df_action[df_action["Data"] == date_choice]
 
     config = {

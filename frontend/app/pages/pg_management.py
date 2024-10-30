@@ -65,9 +65,11 @@ date_choice = st.sidebar.date_input(
 #                                           Dataframes
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 info_ihm = info_data.copy()
+production = st.session_state.produção
 
 # Ajustar a data de registro
 info_ihm["data_registro"] = pd.to_datetime(info_ihm["data_registro"])
+production["data_registro"] = pd.to_datetime(production["data_registro"])
 
 # Se necessário, filtrar pela data, se não mantêm apenas os dados do mês atual
 info_ihm = (
@@ -76,9 +78,18 @@ info_ihm = (
     else info_ihm[info_ihm["data_registro"].dt.month == info_ihm["data_registro"].dt.month.max()]
 )
 
+# Filtrar pela data escolhida
+production = (
+    production[production["data_registro"].dt.date == date_choice]
+    if date_choice
+    else production[
+        production["data_registro"].dt.month == production["data_registro"].dt.month.max()
+    ]
+)
 
 # Manter apenas a data
 info_ihm["data_registro"] = info_ihm["data_registro"].dt.date
+production.data_registro = production.data_registro.dt.date
 
 
 @st.cache_data()
@@ -350,6 +361,49 @@ with col_icicle.container(border=True):
     )
     # Plot
     st.plotly_chart(ice_fig, use_container_width=True)
+
+# ================================================================================================ #
+#                                              TABELAS                                             #
+# ================================================================================================ #
+
+# ================================================================================= Tabelas Gerais #
+with st.expander("Tabelas"):
+    # Manter apenas as colunas necessárias
+    production = production[
+        ["data_registro", "fabrica", "linha", "turno", "produto", "total_produzido"]
+    ]
+
+    production.total_produzido = production.total_produzido.clip(lower=0)
+    production.total_produzido = production.total_produzido
+
+    # Agrupar os dados por data e turno e produto
+    df_production_turn = (
+        production.groupby(["data_registro", "turno", "produto"], observed=False)
+        .agg({"total_produzido": "sum"})
+        .reset_index()
+    )
+
+    # Agrupar os dados por dia e produto
+    df_production_day = (
+        production.groupby(["data_registro", "produto"], observed=False)
+        .agg({"total_produzido": "sum"})
+        .reset_index()
+    )
+
+    # Usar styler para formatar o total produzido
+    production = production.style.format(thousands=".", decimal=",", precision=2)
+    df_production_turn = df_production_turn.style.format(thousands=".", decimal=",", precision=2)
+    df_production_day = df_production_day.style.format(thousands=".", decimal=",", precision=2)
+
+    # Tabela de Produção
+    prod_col, prod_turn_col, prod_day_col = st.columns([1.4, 1.2, 1.07])
+    prod_col.write("##### Produção por máquina")
+    prod_col.dataframe(production, hide_index=True, use_container_width=True)
+    prod_turn_col.write("##### Produção por turno")
+    prod_turn_col.dataframe(df_production_turn, hide_index=True, use_container_width=True)
+    prod_day_col.write("##### Produção por dia")
+    prod_day_col.dataframe(df_production_day, hide_index=True, use_container_width=True)
+
 
 # ================================================================================== Plano De Ação #
 st.divider()
