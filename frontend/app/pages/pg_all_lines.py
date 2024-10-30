@@ -1,6 +1,5 @@
 """Página de visão das linhas."""
 
-import asyncio
 from datetime import datetime
 
 import altair as alt
@@ -8,8 +7,6 @@ import pandas as pd
 import streamlit as st
 
 # pylint: disable=E0401
-from app.api.requests_ import fetch_api_data
-from app.api.urls import APIUrl
 from app.components.sfm_gauge_opt2 import create_gauge_chart
 from app.functions.get_date import GetDate
 from app.helpers.variables import COLOR_DICT, ColorsSTM, IndicatorType
@@ -78,47 +75,15 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-
-#    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-#                                       Requisição de Api
-#    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-
-async def get_data() -> tuple:
-    """
-    Obtém os dados da API.
-    """
-    date_now = datetime.now()
-    now_ = date_now.strftime("%Y-%m-%d")
-    urls = [
-        APIUrl.URL_EFF.value,
-        APIUrl.URL_INFO_IHM.value,
-        APIUrl.URL_PROD.value,
-        f"{APIUrl.URL_MAQ_INFO.value}?start={now_}&end={now_}",
-    ]
-    tasks = [fetch_api_data(url) for url in urls]
-    results = await asyncio.gather(*tasks)
-    eff = results[0]
-    info_ihm = results[1]
-    prod = results[2]
-    info = results[3]
-    return eff, info_ihm, prod, info
-
-
-@st.cache_data(show_spinner="Obtendo dados", ttl=1200)
-def get_df():
-    """
-    Obtém os dados da API.
-    """
-    eff, info_ihm, prod, info = asyncio.run(get_data())
-    return eff, info_ihm, prod, info
-
-
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                          Nav Widgets
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+df_eff = st.session_state.eficiência
+df_maq_info_original = st.session_state.info_ihm
+df_prod = st.session_state.produção
+df_info = st.session_state.maquina_info_today
 
-df_eff, df_maq_info_original, df_prod, df_info = get_df()
+
 # Garantir que a data é um pandas Timestamp só com a data
 df_maq_info_original.data_registro = pd.to_datetime(df_maq_info_original.data_registro).dt.date
 df_eff.data_registro = pd.to_datetime(df_eff.data_registro).dt.date
@@ -156,10 +121,6 @@ turn_opt = st.sidebar.selectbox(
 
 line = st.sidebar.selectbox("Selecione a linha:", lines, index=0)
 
-if st.sidebar.button("Atualizar Dados"):
-    st.cache_data.clear()
-    st.rerun()
-
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                           Dataframes
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -167,6 +128,7 @@ if st.sidebar.button("Atualizar Dados"):
 # ════════════════════════════════════════════════════════════════ Ajustar O Dataframe De Info ══ #
 
 df_maq_info = df_maq_info_original.copy()
+
 if turn_opt != "Dia Atual":
     df_maq_info = df_maq_info[(df_maq_info.turno == turn_opt)]
     df_eff = df_eff[(df_eff.turno == turn_opt)]
@@ -205,14 +167,16 @@ with r1_col1:
 
     # ── Status ───────────────────────────────────────────────────────────────────────────────── #
     _, turno_atual = get_date.get_this_turn()
-    opt_1 = ""
+    STATUS_CARD_STYLES = ""
     df_maq_info_status = df_maq_info_original[(df_maq_info_original.turno == turno_atual)]
     # Recuperar o status da última entrada de maq_info
     if turn == turn_opt:
         with st.container():
             status = df_maq_info_status.status.iloc[-1].capitalize()
             back_color = ColorsSTM.GREEN.value if status == "Rodando" else ColorsSTM.RED.value
-            opt_1 = f"background-color: {back_color}; color: {ColorsSTM.LIGHT_GREY.value};"
+            STATUS_CARD_STYLES = (
+                f"background-color: {back_color}; color: {ColorsSTM.LIGHT_GREY.value};"
+            )
             st.markdown(f"""<div class="card">{status}</div>""", unsafe_allow_html=True)
 
         if status != "Rodando":
@@ -257,7 +221,7 @@ with r1_col2:
             f"""<div class="card3">
             <p style="font-size: 0.7vw; text-align: left;
             padding-left: 0.5vw; margin-bottom: 0; margin-top: 10px;">Produto</p>
-            <h1 style="font-size: 1.1vw;">{df_prod.produto.iloc[-1]}</h1>
+            <h1 style="font-size: 1.1vw;">{df_prod.produto.iloc[-1] if producao > 0 else "-"}</h1>
             <p style="font-size: 0.7vw; text-align: left ;
             padding-left: 0.5vw ; margin-bottom: 0;">Produção de Bandejas</p>
             <h1 style="font-size: 2vw;">{producao}</h1>
@@ -322,16 +286,16 @@ with r1_col2:
             y=alt.Y("media_ciclos"), tooltip=[alt.Tooltip("media_ciclos", title="Média de Ciclos")]
         )
     )
+
     # Figura com marcação dos ciclos médios
     str_media = f"Média de Ciclos: {media_ciclos}"
     alt_fig_2 += (
         alt.Chart(pd.DataFrame({"Média de Ciclos": [media_ciclos]}))
-        .mark_text(color="cadetblue", dy=-10, fontSize=12)
+        .mark_text(color="cadetblue", dy=10, fontSize=12)
         .encode(y=alt.Y("Média de Ciclos"), text=alt.Text("Média de Ciclos"))
     )
-    alt_fig_2 = alt_fig_2.properties(
-        height=200,
-    )
+
+    alt_fig_2 = alt_fig_2.properties(height=200, title=str_media)
 
     st.divider()
     st.altair_chart(alt_fig_2, use_container_width=True)
@@ -373,10 +337,10 @@ with r1_col2:
         .encode(
             x=alt.X("data_hora:T", title="Hora", axis=alt.Axis(format="%H:%M")),
             x2="data_hora_final:T",
-            y=alt.Y("turno:N", title="Turno"),
+            y=alt.Y("data_registro:N", title="Timeline", axis=alt.Axis(labels=False)),
             color=alt.Color(
                 "motivo:N",
-                legend=alt.Legend(orient="bottom"),
+                legend=alt.Legend(orient="top"),
                 title="Motivos",
                 scale=alt.Scale(
                     domain=list(color_timeline.keys()), range=list(color_timeline.values())
@@ -461,7 +425,7 @@ st.markdown(
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     height: 100%;
     """
-    + opt_1
+    + STATUS_CARD_STYLES
     + """
 }
 </style>

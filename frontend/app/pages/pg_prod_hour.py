@@ -24,8 +24,11 @@ get_date = GetDate()
 
 async def get_all_data() -> pd.DataFrame:
     """
-    Obtém os dados da API.
+    Função assíncrona que obtém os dados de todas as máquinas.
+
+    Retorna um DataFrame com todos os dados de todas as máquinas.
     """
+
     # Obtém a data de hoje
     today = get_date.get_today()
     # Ajusta a data para o formato correto
@@ -38,14 +41,20 @@ async def get_all_data() -> pd.DataFrame:
     return results[0]
 
 
-@st.cache_data(ttl=60, show_spinner="Carregando dados...")
-def get_prod_data() -> pd.DataFrame:
+@st.fragment(run_every=60)
+def get_prod_data() -> None:
     """
-    Obtém os dados das linhas.
+    Atualiza os dados de produção por hora de todas as linhas a cada 60 segundos.
+    Os dados são armazenados na variável de estado 'maq_info_2_days'.
     """
+
     data = asyncio.run(get_all_data())
 
-    return data
+    st.session_state["maq_info_2_days"] = data
+
+
+if "maq_info_2_days" not in st.session_state:
+    get_prod_data()
 
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -68,107 +77,139 @@ def adjust_selected_date(date_: str) -> str:
     return (get_date.get_today() - timedelta(days=1)).strftime("%Y-%m-%d")
 
 
-# Recebe os dados
-df_original = get_prod_data()
+@st.fragment(run_every=30)
+def update_table() -> None:
+    """Atualiza a tabela com os dados de produção por hora.
 
-# Ajustar a data para comparação
-df_original.data_registro = pd.to_datetime(df_original.data_registro)
-df_original.data_registro = df_original.data_registro.dt.strftime("%Y-%m-%d")
+    Essa função é chamada a cada 30 segundos.
 
-# Cria uma cópia para manipulação
-df = df_original.copy()
-df = df[df.data_registro == adjust_selected_date(select_option)]
+    Ela recebe os dados de produção por dia e ajusta para a data
+    selecionada pelo usuário na sidebar.
 
-if df.empty:
-    st.subheader("Sem dados")
-    st.stop()
+    Em seguida, ela ajusta a data_hora para o formato correto e
+    remove a linha 0 (máquina em preventiva).
 
+    Depois, ela cria uma coluna com a data e hora, ajusta a data_hora
+    para o formato correto e define data e linha como índices.
 
-# Ajusta a data
-df.data_registro = pd.to_datetime(df.data_registro).dt.date
+    Em seguida, ela agrupa os dados por linha e resample por hora,
+    calcula a diferença entre o primeiro e o último - produção e
+    ciclos e ajusta a produção - se a diferença de produção e ciclos
+    for maior de 25%, o total deve ser o total de ciclos, se não for,
+    o total deve ser o total de produção.
 
-# Se houver, remove a linha 0 (máquina em preventiva)
-df = df[df.linha != 0]
+    Por fim, ela mantém apenas as colunas necessárias, ajusta os valores
+    mínimos de 0 para coluna total, divide o total por 10 que é o número
+    de bandejas por caixa e garante que as colunas sejam do tipo inteiro
+    e valor mínimo de 0.
 
-# Cria uma coluna com a data e hora
-df["data_hora"] = (
-    df.data_registro.astype(str) + " " + df.hora_registro.astype(str).str.split(".").str[0]
-)
+    A tabela resultante é então exibida na página.
+    """
 
-# Ajusta a data_hora para o formato correto
-df.data_hora = pd.to_datetime(df.data_hora)
+    # Recebe os dados
+    df_original = st.session_state.maq_info_2_days
 
-# Preencher a linha com 2 caracteres
-df.linha = df.linha.astype(str).str.zfill(2)
+    # Ajustar a data para comparação
+    df_original.data_registro = pd.to_datetime(df_original.data_registro)
+    df_original.data_registro = df_original.data_registro.dt.strftime("%Y-%m-%d")
 
-# Ajustar o conteúdo da coluna linha para 'Linha 1' etc.
-df.linha = df.linha.apply(lambda x: f"Linha {x}")
+    # Cria uma cópia para manipulação
+    df = df_original.copy()
+    df = df[df.data_registro == adjust_selected_date(select_option)]
 
-# Definir data e linha como índices
-df = df.set_index(["data_hora", "linha"])
+    if df.empty:
+        st.subheader("Sem dados")
+        st.stop()
 
-# Agrupar os dados
-df = (
-    df.groupby("linha")
-    .resample("h", level="data_hora")
-    .agg(
-        {
-            "contagem_total_produzido": ["first", "last"],
-            "contagem_total_ciclos": ["first", "last"],
-        }
+    # Ajusta a data
+    df.data_registro = pd.to_datetime(df.data_registro).dt.date
+
+    # Se houver, remove a linha 0 (máquina em preventiva)
+    df = df[df.linha != 0]
+
+    # Cria uma coluna com a data e hora
+    df["data_hora"] = (
+        df.data_registro.astype(str) + " " + df.hora_registro.astype(str).str.split(".").str[0]
     )
-)
 
-# Calcular a diferença entre o primeiro e o último - produção
-df["total_produzido"] = (
-    df["contagem_total_produzido"]["last"] - df["contagem_total_produzido"]["first"]
-)
+    # Ajusta a data_hora para o formato correto
+    df.data_hora = pd.to_datetime(df.data_hora)
 
-# Calcular a diferença entre o primeiro e o último - ciclos
-df["total_ciclos"] = df["contagem_total_ciclos"]["last"] - df["contagem_total_ciclos"]["first"]
+    # Preencher a linha com 2 caracteres
+    df.linha = df.linha.astype(str).str.zfill(2)
 
-# Reiniciar o index
-df = df.reset_index()
+    # Ajustar o conteúdo da coluna linha para 'Linha 1' etc.
+    df.linha = df.linha.apply(lambda x: f"Linha {x}")
 
-# Ajuste a produção - se a diferença de produção e ciclos for maior de 25%,
-# o total deve ser o total de ciclos, se não for, o total deve ser o total de produção
-mask = (df.total_ciclos - df.total_produzido) / df.total_ciclos > 0.25
-df["total"] = np.where(mask, df.total_ciclos, df.total_produzido)
+    # Definir data e linha como índices
+    df = df.set_index(["data_hora", "linha"])
 
-# Manter apenas as colunas necessárias
-df = df[["data_hora", "total", "linha"]]
+    # Agrupar os dados
+    df = (
+        df.groupby("linha")
+        .resample("h", level="data_hora")
+        .agg(
+            {
+                "contagem_total_produzido": ["first", "last"],
+                "contagem_total_ciclos": ["first", "last"],
+            }
+        )
+    )
 
-# Valores mínimos de 0 para coluna total
-df.loc[:, "total"] = df.total.fillna(0)
+    # Calcular a diferença entre o primeiro e o último - produção
+    df["total_produzido"] = (
+        df["contagem_total_produzido"]["last"] - df["contagem_total_produzido"]["first"]
+    )
 
-# Dividir o total por 10 que é o número de bandejas por caixa
-df.loc[:, "total"] = np.floor(df.total / 10).astype(int)
+    # Calcular a diferença entre o primeiro e o último - ciclos
+    df["total_ciclos"] = df["contagem_total_ciclos"]["last"] - df["contagem_total_ciclos"]["first"]
 
-# Tabela para pivot
-df = df.pivot(index="data_hora", columns="linha", values="total")
+    # Reiniciar o index
+    df = df.reset_index()
 
-# Garantir que as colunas sejam do tipo inteiro e valor mínimo de 0
-df = df.fillna(0)
-df = df.astype(int)
-df = df.where(df > 0, 0)
+    # Ajuste a produção - se a diferença de produção e ciclos for maior de 25%,
+    # o total deve ser o total de ciclos, se não for, o total deve ser o total de produção
+    mask = (df.total_ciclos - df.total_produzido) / df.total_ciclos > 0.25
+    df["total"] = np.where(mask, df.total_ciclos, df.total_produzido)
 
-# Criar uma coluna com o intervalo de tempo
-df["Intervalo"] = df.index.hour.astype(str) + "hs - " + (df.index.hour + 1).astype(str) + "hs"
+    # Manter apenas as colunas necessárias
+    df = df[["data_hora", "total", "linha"]]
 
-# Fazer com que intervalo seja o index
-df = df.set_index("Intervalo")
+    # Valores mínimos de 0 para coluna total
+    df.loc[:, "total"] = df.total.fillna(0)
 
-# Calcular o total de cada coluna (linha de produção)
-totals = df.sum(axis=0).to_frame().T
+    # Dividir o total por 10 que é o número de bandejas por caixa
+    df.loc[:, "total"] = np.floor(df.total / 10).astype(int)
 
-# Adicionar uma nova linha com os totais ao DataFrame
-totals.index = ["Total"]
-df = pd.concat([df, totals])
+    # Tabela para pivot
+    df = df.pivot(index="data_hora", columns="linha", values="total")
+
+    # Garantir que as colunas sejam do tipo inteiro e valor mínimo de 0
+    df = df.fillna(0)
+    df = df.astype(int)
+    df = df.where(df > 0, 0)
+
+    # Criar uma coluna com o intervalo de tempo
+    df["Intervalo"] = df.index.hour.astype(str) + "hs - " + (df.index.hour + 1).astype(str) + "hs"
+
+    # Fazer com que intervalo seja o index
+    df = df.set_index("Intervalo")
+
+    # Calcular o total de cada coluna (linha de produção)
+    totals = df.sum(axis=0).to_frame().T
+
+    # Adicionar uma nova linha com os totais ao DataFrame
+    totals.index = ["Total"]
+    df = pd.concat([df, totals])
+
+    container.table(df)
 
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #    ┃                                        Layout                                        ┃
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-if not df.empty:
-    st.subheader("Caixas Produzidas por Hora")
-    st.table(df)
+
+st.subheader("Caixas Produzidas por Hora")
+container = st.empty()
+update_table()
+get_prod_data()

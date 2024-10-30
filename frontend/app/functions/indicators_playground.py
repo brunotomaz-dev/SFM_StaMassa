@@ -25,8 +25,8 @@ class IndicatorsPlayground:
         # Ajustar o indicador para  X%
         df_ind[indicator] = df_ind[indicator] * 100
 
-        # Corrigir erros possíveis limitando a 0 min e 120 max
-        df_ind[indicator] = df_ind[indicator].clip(0, 120)
+        # Corrigir erros possíveis limitando a 0 min e 150 max
+        df_ind[indicator] = df_ind[indicator].clip(0, 150)
 
         return df_ind
 

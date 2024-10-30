@@ -7,8 +7,7 @@ Panificação,MAT,Flavia Maria Cordeiro ,Falta,Não avisou,2024-10-01,15:00:44,C
 Recheio,MAT,Samara de Oliveira ,Falta,Levar filho ao médico,2024-10-01,15:01:59,Claudia Antunes
 Recheio,MAT,Camila da Silva Pereira ,Falta,Consulta médica,2024-10-01,15:04:11,Claudia Antunes
 Recheio,MAT,Taina Ribeiro da Silva,Afastamento,,2024-10-01,15:21:11,Claudia Antunes
-Recheio,MAT,Ana Carolina Vilas Boas,Saída Antecipada,"Saiu às 15:10h, filho passando mal															
-",2024-10-01,15:30:40,Claudia Antunes
+Recheio,MAT,Ana Carolina Vilas Boas,Saída Antecipada,"Saiu às 15:10h, filho passando mal",2024-10-01,15:30:40,Claudia Antunes
 Pasta,VES,João Paulo Pamio ,Falta,Atestado médico (Covid),2024-10-01,19:28:15,Rogerio Inacio
 Recheio,VES,Beatriz Galhano Gomes,Falta,Atestado médico,2024-10-01,19:30:18,Rogerio Inacio
 Recheio,VES,Maksuel Morais de Freitas,Falta,Aniversario da sua filha.,2024-10-01,19:31:50,Rogerio Inacio
@@ -17,13 +16,12 @@ Embalagem,MAT,Neide do Carmo Paula,Afastamento,,2024-10-02,11:20:43,Claudia Antu
 Embalagem,MAT,Sandra Natalina de Melo,Falta,Não avisou,2024-10-02,11:21:11,Claudia Antunes
 Panificação,MAT,Renan de Oliveira Costa,Falta,Não avisou,2024-10-02,11:22:06,Claudia Antunes
 Recheio,MAT,Taina Ribeiro da Silva,Afastamento,,2024-10-02,11:23:44,Claudia Antunes
-Panificação,MAT,	Rogerio Pereira,Saída Antecipada,"Saiu as 14:30h, consulta médica",2024-10-02,14:22:05,Claudia Antunes
+Panificação,MAT,Rogerio Pereira,Saída Antecipada,"Saiu as 14:30h, consulta médica",2024-10-02,14:22:05,Claudia Antunes
 Recheio,MAT,Sara Maria de Souza,Saída Antecipada,"Saiu as 14:30h, consulta médica",2024-10-02,14:23:58,Claudia Antunes
 Panificação,MAT,Leandro Augusto Rosa,Falta,Não avisou,2024-10-02,16:11:38,Claudia Antunes
 Panificação,MAT,Pedro Henrique M Ferreira,Atraso,Foi fazer exame periódico iniciou as atividades as 09:18h ,2024-10-02,16:16:01,Claudia Antunes
 Panificação,MAT,Samara de Oliveira	,Saída Antecipada,Saiu as 11:00h levar filho ao médico,2024-10-02,16:18:28,Claudia Antunes
-Panificação,MAT,Leonardo Teodoro de Lima,Saída Antecipada,"Dentista, saiu às 15:00															
-",2024-10-02,16:20:57,Claudia Antunes
+Panificação,MAT,Leonardo Teodoro de Lima,Saída Antecipada,"Dentista, saiu às 15:00",2024-10-02,16:20:57,Claudia Antunes
 Recheio,VES,Beatriz Galhano Gomes,Afastamento,Atestado médico,2024-10-02,23:14:23,Rogerio Inacio
 Pasta,VES,João Paulo Pámio,Falta,Atestado médico,2024-10-02,23:15:04,Rogerio Inacio
 Panificação,VES,Ronaldo Henrique Soares Cruz,Falta,atestado médico de um dia,2024-10-02,23:15:50,Rogerio Inacio
@@ -46,12 +44,59 @@ Recheio,NOT,RENATA ATANAZIO ,Afastamento,LINCENÇA MATERNIDADE ,2024-10-04,03:50
 Embalagem,MAT,Neide do Carmo Paula,Afastamento,,2024-10-04,15:53:24,Claudia Antunes
 Embalagem,MAT,Sandra Natalina de Melo,Falta,Esta com conjuntivite,2024-10-04,15:56:58,Claudia Antunes
 Panificação,MAT,Leandro Augusto Rosa,Falta,Não avisou,2024-10-04,15:58:47,Claudia Antunes
-Embalagem,MAT,	Claudia Cristina de Morais,Afastamento,,2024-10-04,16:00:54,Claudia Antunes
-Recheio,MAT,	Tacila Silva Gabriel,Afastamento,,2024-10-04,16:01:54,Claudia Antunes
-Recheio,MAT,	Taina Ribeiro da Silva,Afastamento,,2024-10-04,16:02:54,Claudia Antunes
-Panificação,MAT,Douglas Felipe Ramos												,Afastamento,"Ida no Banco, saiu às 13:30															
-",2024-10-04,16:04:29,Claudia Antunes
-Recheio,MAT,Loys Lenne Alves Wasconcelos												,Saída Antecipada,"Medico, saiu às 12:03															
-",2024-10-04,16:05:01,Claudia Antunes
+Embalagem,MAT,Claudia Cristina de Morais,Afastamento,,2024-10-04,16:00:54,Claudia Antunes
+Recheio,MAT,Tacila Silva Gabriel,Afastamento,,2024-10-04,16:01:54,Claudia Antunes
+Recheio,MAT,Taina Ribeiro da Silva,Afastamento,,2024-10-04,16:02:54,Claudia Antunes
+Panificação,MAT,Douglas Felipe Ramos,Afastamento,"Ida no Banco, saiu às 13:30",2024-10-04,16:04:29,Claudia Antunes
+Recheio,MAT,Loys Lenne Alves Wasconcelos,Saída Antecipada,"Medico, saiu às 12:03",2024-10-04,16:05:01,Claudia Antunes
 Recheio,VES,Beatriz Galhano Gomes,Falta,Atestado médico,2024-10-04,22:44:58,Rogerio Inacio
-Embalagem,VES,Siliani Ap I Pereira ,Falta,Acompanhando a irmã no médico,2024-10-04,22:47:29,Rogerio Inacio
+Embalagem,VES,Siliani Ap I Pereira,Falta,Acompanhando a irmã no médico,2024-10-04,22:47:29,Rogerio Inacio
+Pasta,NOT,Fernando H. Fernandes,Falta,virose ,2024-10-07,07:10:39,Everton de Oliveira
+Panificação,NOT,Ricardo Perreira,Falta,Não estava bem comunicou via Whastapp,2024-10-07,07:11:04,Everton de Oliveira
+Recheio,NOT,LAUREN BIANCA,Falta,15 DIAS DE ATESTADO ,2024-10-07,07:13:29,Everton de Oliveira
+Recheio,NOT,Giovana Fanhoni Garcia,Afastamento,30 DIAS DE AFASTAMENTO ,2024-10-07,07:14:35,Everton de Oliveira
+Recheio,NOT,ANA CAROLINA TAVARES,Saída Antecipada,AMAMNETAÇÃO SAIDA AS 7:00HRS ,2024-10-07,07:16:02,Everton de Oliveira
+Recheio,NOT,VANESSA AP BATISTA,Saída Antecipada,AMAMNETAÇÃO SAIDA AS 7:00HRS ,2024-10-07,07:16:30,Everton de Oliveira
+Recheio,NOT,RENATA RIBEIRO,Afastamento,LINCENÇA MATERNIDADE ,2024-10-07,07:16:52,Everton de Oliveira
+Recheio,MAT,JULIANA GONSALVES,Falta,LINCENÇA MATERNIDADE ,2024-10-07,07:17:14,Everton de Oliveira
+Panificação,NOT,LUIZ H RIBEIRO,Falta,NÃO AVISOU ,2024-10-07,07:18:32,Everton de Oliveira
+Embalagem,MAT,Luana Aparecida Silva,Falta,'Passando mal foi procurar atendimento médico,2024-10-07,15:22:25,Claudia Antunes
+Embalagem,MAT,Sara Cristina da Silva Souza,Falta,'Não avisou,2024-10-07,15:24:07,Claudia Antunes
+Recheio,MAT,Claudia Cristina de Moraes,Afastamento,'Afastado até 14/10/2024,2024-10-07,15:24:50,Claudia Antunes
+Panificação,MAT,Leandro Augusto Rosa,Falta,Não avisou,2024-10-07,15:25:36,Claudia Antunes
+Embalagem,MAT,Sandra Natalina de Melo,Falta,'Está com conjuntivite ,2024-10-07,15:26:07,Claudia Antunes
+Recheio,MAT,Loys Lenne Alves Wasconcelos,Falta,"'Validar atestado, chegou ao trabalho às 10:11hs",2024-10-07,15:27:01,Claudia Antunes
+Panificação,MAT,Ana Paula da Silva Lima,Falta,'Liberada para procurar atendimento  às 08:50hs,2024-10-07,15:28:09,Claudia Antunes
+Panificação,MAT,Vinicius Caua Cambuhy,Falta,'Não avisou,2024-10-07,15:28:39,Claudia Antunes
+Recheio,MAT,Camila Maia da Silva,Falta,'Passando mal foi procurar atendimento médico,2024-10-07,15:29:15,Claudia Antunes
+Panificação,MAT,Gabriel Lopes Gozzo,Falta,"'Foi ao banco às 13:00, não retornou até final do turno.",2024-10-07,15:29:38,Claudia Antunes
+Recheio,MAT,Claudia Antunes,Saída Antecipada,"'Foi ao banco às 13:00, retornou às 15:15.",2024-10-07,15:30:58,Claudia Antunes
+Recheio,VES,Ana Paula Nicolau de Freitas,Falta,Avisou que seu filho não estava bem,2024-10-07,23:35:59,Rogerio Inacio
+Recheio,VES,Angélica de Oliveira,Falta,Atestado médico,2024-10-07,23:36:51,Rogerio Inacio
+Recheio,VES,Jocasta de Oliveira S Barbosa,Falta,Foi ao médico,2024-10-07,23:37:36,Rogerio Inacio
+Panificação,VES,Luiz Antônio Ricardo Junior,Falta,Falecimento do seu pai,2024-10-07,23:38:24,Rogerio Inacio
+Empacotamento,MAT,Claudia Cristina de Moraes,Afastamento,,2024-10-08,15:12:42,Claudia Antunes
+Recheio,MAT,Leandro Augusto Rosa,Falta,Não avisou,2024-10-08,15:14:18,Claudia Antunes
+Recheio,MAT,'Ana Paula da Silva Lima,Afastamento,,2024-10-08,15:15:14,Claudia Antunes
+Panificação,MAT,Vinicius Caua Cambuhy,Saída Antecipada,"Dispensada pelo SESMT as 13:30h para procurar atendimento, passando mal",2024-10-08,15:19:00,Claudia Antunes
+Recheio,MAT,Fernanda Cristina Jacob,Saída Antecipada,"Saiu as 12:06h, filho passando mal",2024-10-08,15:19:25,Claudia Antunes
+Recheio,MAT,Camila Maia da Silva,Atraso,"Atraso 08:28h, validar atestado",2024-10-08,15:19:54,Claudia Antunes
+Recheio,MAT,Daiane de Fatima Modesto,Afastamento,"Saiu as 12:00h, consulta médica",2024-10-08,15:21:18,Claudia Antunes
+Embalagem,MAT,Bruna Arlete Sales Bandeira,Saída Antecipada,"Dispensada pelo SESMT as 13:30h para procurar atendimento, passando mal",2024-10-08,15:21:35,Claudia Antunes
+Recheio,MAT,Francisco Martins Aires,Saída Antecipada,"Saiu as 13:52, foi ao banco",2024-10-08,15:22:02,Claudia Antunes
+Recheio,VES,Ana Paula Nicolau de Freitas,Falta,Não avisou a liderança,2024-10-11,23:14:07,Rogerio Inacio
+Panificação,NOT,LUIZ H RIBEIRO ,Falta,NAO AVISOU ,2024-10-14,03:48:56,Everton de Oliveira
+Embalagem,NOT,SUELLEN AP LIMA BRITO ,Falta,NÃO AVISOU ,2024-10-14,03:49:26,Everton de Oliveira
+Embalagem,NOT,ANA ALICE DOS SANTOS ,Falta,NÃO AVISOU ,2024-10-14,03:49:41,Everton de Oliveira
+Embalagem,NOT,MARCELO AGUSTO FREITAS ,Falta,NÃO AVISOU ,2024-10-14,03:51:06,Everton de Oliveira
+Recheio,NOT,RENATA ATANAZIO RIBEIRO ,Falta,,2024-10-14,03:51:31,Everton de Oliveira
+Embalagem,NOT,FRANCIELE CELESTINOI PINTO ,Atraso,ATRASO ,2024-10-14,03:53:44,Everton de Oliveira
+Recheio,VES,Wandynei Silva de Souza,Falta,Foi ao médico,2024-10-14,23:07:48,Rogerio Inacio
+Recheio,VES,Maria D de F dos Santos,Falta,Não avisou a liderança,2024-10-14,23:09:35,Rogerio Inacio
+Embalagem,VES,Ianca Beatriz Pereira da Silva,Falta,Foi ao médico,2024-10-14,23:10:12,Rogerio Inacio
+Forno,VES,Felipe Sacoman de Souza,Falta,Foi procurar atendimento médico,2024-10-14,23:10:52,Rogerio Inacio
+Embalagem,MAT,Claudia Cristina de Moraes												Claudia Cristina de Moraes												,Falta,Não avisou,2024-10-17,13:07:00,Claudia Antunes
+Panificação,MAT,Ana Paula da Silva Lima												,Afastamento,,2024-10-17,13:07:34,Claudia Antunes
+Recheio,MAT,Flavia Maria Cordeiro												,Falta,Não avisou,2024-10-17,13:08:05,Claudia Antunes
+Embalagem,MAT,Sandra Natalina de Melo												,Afastamento,,2024-10-17,13:08:50,Claudia Antunes
+Panificação,MAT,Bruno Tomaz,Pessoas Remanejadas,,2024-10-30,13:57:28,Bruno Tomaz

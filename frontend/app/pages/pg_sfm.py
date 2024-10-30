@@ -1,7 +1,5 @@
 """Página de indicadores de eficiência, performance e reparo."""
 
-import asyncio
-
 import altair as alt
 import pandas as pd
 import streamlit as st
@@ -10,8 +8,6 @@ import streamlit as st
 import streamlit_antd_components as stc
 
 # pylint: disable=import-error
-from app.api.requests_ import fetch_api_data
-from app.api.urls import APIUrl
 from app.components import sfm_gauge as sfm_gg
 from app.components import sfm_gauge_opt2 as sfm_gg2
 from app.components.sfm_bar_eff import BarChartEff
@@ -27,54 +23,6 @@ create_bar_chart_eff = BarChartEff().create_bar_chart_eff
 # ================================== Visualizações - Sub-páginas ================================= #
 SUB_OPT_1 = "Principal"
 SUB_OPT_2 = "Análise Mensal"
-
-# ================================================================================================ #
-#                                         REQUISIÇÃO DE API                                        #
-# ================================================================================================ #
-
-
-async def get_data(url: str, start: str | None = None, end: str | None = None) -> pd.DataFrame:
-    """Obtém os dados da API."""
-    url = f"{url}?start={start}&end={end}" if start and end else url
-    data = await fetch_api_data(url)
-    return data
-
-
-async def get_all_data() -> tuple:
-    """
-    Obtém os dados da API.
-
-    Retorna:
-    - eff (pd.DataFrame): Dados de eficiência.
-    - perf (pd.DataFrame): Dados de performance.
-    - rep (pd.DataFrame): Dados de reparo.
-    - ind (pd.DataFrame): Dados históricos dos indicadores.
-    - info_ihm (pd.DataFrame): Dados da IHM e da máquina.
-
-    """
-    urls = [
-        APIUrl.URL_EFF.value,
-        APIUrl.URL_PERF.value,
-        APIUrl.URL_REP.value,
-        APIUrl.URL_HIST_IND.value,
-        APIUrl.URL_INFO_IHM.value,
-    ]
-    tasks = [get_data(url) for url in urls]
-    results = await asyncio.gather(*tasks)
-    eff = results[0]
-    perf = results[1]
-    rep = results[2]
-    ind = results[3]
-    ihm = results[4]
-    return eff, perf, rep, ind, ihm
-
-
-@st.cache_data(show_spinner="Obtendo dados", ttl=600)
-def get_df():
-    """Obtém os dados da API."""
-    eff, perf, rep, ind, ihm = asyncio.run(get_all_data())
-    return eff, perf, rep, ind, ihm
-
 
 # ================================================================================================ #
 #                                            MENU WIDGET                                           #
@@ -132,7 +80,28 @@ if selected_page == SUB_OPT_2:
 # ================================================================================================ #
 #                                            DATAFRAMES                                            #
 # ================================================================================================ #
-eficiencia, performance, reparo, history_ind, stops = get_df()
+history_ind = st.session_state.hist_ind
+eficiencia = st.session_state.eficiência
+performance = st.session_state.performance
+reparo = st.session_state.reparos
+stops = st.session_state.info_ihm
+
+# Ajustar as datas para datetime
+eficiencia["data_registro"] = pd.to_datetime(eficiencia["data_registro"])
+performance["data_registro"] = pd.to_datetime(performance["data_registro"])
+reparo["data_registro"] = pd.to_datetime(reparo["data_registro"])
+stops["data_registro"] = pd.to_datetime(stops["data_registro"])
+
+# Filtrar para manter apenas dados do mês corrente
+eficiencia = eficiencia[
+    eficiencia["data_registro"].dt.month == eficiencia["data_registro"].dt.month.max()
+]
+performance = performance[
+    performance["data_registro"].dt.month == performance["data_registro"].dt.month.max()
+]
+reparo = reparo[reparo["data_registro"].dt.month == reparo["data_registro"].dt.month.max()]
+stops = stops[stops["data_registro"].dt.month == stops["data_registro"].dt.month.max()]
+
 
 # ==================================== Ajustes Dos Indicadores =================================== #
 df_eff = ind_play.get_indicator(eficiencia, IndicatorType.EFFICIENCY, turn, line_turn, fabrica)
