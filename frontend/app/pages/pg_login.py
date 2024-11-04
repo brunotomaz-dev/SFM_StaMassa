@@ -413,17 +413,19 @@ estoque_cam_fria = estoque_cam_fria.style.format(thousands=".", decimal=",", pre
 # ====================================================================================== Presenças #
 if presence_df.empty:
     presence_df = pd.DataFrame(columns=SETORES + ["Data", "Hora", "Turno", "Usuario"])
+else:
+    presence_df["Data"] = pd.to_datetime(presence_df["Data"]).dt.date
+    presence_df = presence_df[presence_df["Data"] == today]
+    # Acrescentar uma coluna com o total de presentes somando as colunas dos setores
+    presence_df["Total"] = presence_df[SETORES].sum(axis=1)
+    # Agrupar por data
+    presence_df = presence_df.groupby("Data").sum().drop(columns=["Hora", "Turno", "Usuario"])
 
-# Acrescentar uma coluna com o total de presentes somando as colunas dos setores
-presence_df["Total"] = presence_df[SETORES].sum(axis=1)
-# Agrupar por data
-presence_df = presence_df.groupby("Data").sum().drop(columns=["Hora", "Turno", "Usuario"])
+    # Criar variável com total de presentes
+    presentes_total = 0 if presence_df.empty else presence_df.Total.sum()
 
-# Criar variável com total de presentes
-presentes_total = 0 if presence_df.empty else presence_df.Total.sum()
-
-# Criar variável com total de produção
-PRODUCTION_TOTAL = 0 if prod_total.empty else int(prod_total["Produção"].iloc[0])
+    # Criar variável com total de produção
+    PRODUCTION_TOTAL = 0 if prod_total.empty else int(prod_total["Produção"].iloc[0])
 
 # ================================================================================================ #
 if absent_df.empty:

@@ -306,16 +306,17 @@ def get_navigation(user_role):
         all_lines_page,
     ]
     paginas_coordenacao = paginas_lider_supervisor + [all_lines_hist_page, management_page]
-    paginas_coordenacao_pcp = paginas_coordenacao + [pcp_page]
+    # paginas_coordenacao_pcp = paginas_coordenacao + [pcp_page]
     paginas_pcp = paginas_basicas + [pcp_page]
-    paginas_dev = paginas_coordenacao_pcp
+    paginas_dev = paginas_coordenacao
 
     # Mapeamento de roles para listas de páginas
     role_pages = {
         "dev": paginas_dev,
         "pcp": paginas_pcp,
         "coordenador": paginas_coordenacao,
-        "coordenador-pcp": paginas_coordenacao_pcp,
+        # "coordenador-pcp": paginas_coordenacao_pcp,
+        "coordenador-pcp": paginas_coordenacao,
         "gerente": paginas_coordenacao,
         "diretor": paginas_coordenacao,
         "lider": paginas_lider_supervisor,

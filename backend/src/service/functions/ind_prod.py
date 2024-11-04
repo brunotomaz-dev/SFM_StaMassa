@@ -120,11 +120,11 @@ class IndProd:
             "data_registro",
             "hora_registro",
             "tempo",
-            "total_produzido",
-            "producao_esperada",
-            "tempo_esperado",
             "desconto",
             "excedente",
+            "tempo_esperado",
+            "total_produzido",
+            "producao_esperada",
             indicator.value,
         ]
 
@@ -136,9 +136,9 @@ class IndProd:
             "data_registro",
             "hora_registro",
             "tempo",
-            "tempo_esperado",
             "desconto",
             "excedente",
+            "tempo_esperado",
             indicator.value,
         ]
 
