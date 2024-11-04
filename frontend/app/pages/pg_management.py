@@ -65,7 +65,7 @@ date_choice = st.sidebar.date_input(
 #                                           Dataframes
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 info_ihm = info_data.copy()
-production = st.session_state.produção
+production = st.session_state.produção.copy()
 
 # Ajustar a data de registro
 info_ihm["data_registro"] = pd.to_datetime(info_ihm["data_registro"])
@@ -141,7 +141,7 @@ def df_echart_adjustment(dataframe: pd.DataFrame) -> tuple:
         index="linha", columns="motivo", values="tempo", fill_value=0, observed=False
     ).reset_index()
 
-    # Meltar o dataframe
+    # Voltar o dataframe para o formato original
     df = df.melt(id_vars="linha", var_name="motivo", value_name="tempo")
 
     programado = df[df["motivo"].isin(["Refeição", "Limpeza", "Parada Programada"])].copy()
@@ -376,17 +376,29 @@ with st.expander("Tabelas"):
     production.total_produzido = production.total_produzido.clip(lower=0)
     production.total_produzido = production.total_produzido
 
+    # Renomear as colunas de data e produção
+    production = production.rename(
+        columns={
+            "data_registro": "Data",
+            "turno": "Turno",
+            "produto": "Produto",
+            "total_produzido": "Produção",
+            "fabrica": "Fábrica",
+            "linha": "Linha",
+        }
+    )
+
     # Agrupar os dados por data e turno e produto
     df_production_turn = (
-        production.groupby(["data_registro", "turno", "produto"], observed=False)
-        .agg({"total_produzido": "sum"})
+        production.groupby(["Data", "Turno", "Produto"], observed=False)
+        .agg({"Produção": "sum"})
         .reset_index()
     )
 
     # Agrupar os dados por dia e produto
     df_production_day = (
-        production.groupby(["data_registro", "produto"], observed=False)
-        .agg({"total_produzido": "sum"})
+        production.groupby(["Data", "Produto"], observed=False)
+        .agg({"Produção": "sum"})
         .reset_index()
     )
 
@@ -397,7 +409,7 @@ with st.expander("Tabelas"):
 
     # Tabela de Produção
     prod_col, prod_turn_col, prod_day_col = st.columns([1.4, 1.2, 1.07])
-    prod_col.write("##### Produção por máquina")
+    prod_col.write("##### Produção por linha")
     prod_col.dataframe(production, hide_index=True, use_container_width=True)
     prod_turn_col.write("##### Produção por turno")
     prod_turn_col.dataframe(df_production_turn, hide_index=True, use_container_width=True)

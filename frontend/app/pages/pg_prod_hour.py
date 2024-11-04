@@ -47,10 +47,12 @@ def get_prod_data() -> None:
     Atualiza os dados de produção por hora de todas as linhas a cada 60 segundos.
     Os dados são armazenados na variável de estado 'maq_info_2_days'.
     """
-
+    container_p = st.empty()
+    container_p.progress(5, "Atualizando dados...")
     data = asyncio.run(get_all_data())
-
+    container_p.progress(100)
     st.session_state["maq_info_2_days"] = data
+    container_p.empty()
 
 
 if "maq_info_2_days" not in st.session_state:

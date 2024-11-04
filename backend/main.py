@@ -4,6 +4,7 @@ Criado em: 09/08/2024
 Criado por: Bruno Tomaz
 """
 
+import uvicorn
 from fastapi import FastAPI
 from src.helpers.scheduler_tasks import start_scheduler
 
@@ -47,3 +48,6 @@ def read_root():
 
 
 start_scheduler()
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000, workers=4)

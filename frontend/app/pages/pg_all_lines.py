@@ -248,6 +248,9 @@ with r1_col2:
         )
         # Ordena o dataframe pelo tempo
         data_filtered = data_filtered.sort_values(by="tempo")
+        data_filtered["percentual"] = (data_filtered.tempo / data_filtered.tempo.sum() * 100).round(
+            2
+        )
 
         alt_fig = (
             alt.Chart(data_filtered)
@@ -259,6 +262,7 @@ with r1_col2:
                     alt.Tooltip("problema", title="Problema"),
                     alt.Tooltip("causa", title="Causa"),
                     alt.Tooltip("tempo", title="Tempo"),
+                    alt.Tooltip("percentual", title="Percentual"),
                 ],
             )
         )

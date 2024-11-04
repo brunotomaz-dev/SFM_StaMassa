@@ -276,7 +276,6 @@ with col_2.container():
 
         # Calcular o percentual
         pareto_df["percentual"] = (pareto_df.tempo / pareto_df.tempo.sum() * 100).round(2)
-        pareto_df["percentual_acumulado"] = pareto_df.percentual.cumsum().round(2)
 
         # Ordenar pelo percentual
         pareto_df = pareto_df.sort_values(by="percentual", ascending=False)
@@ -286,13 +285,12 @@ with col_2.container():
             alt.Chart(pareto_df)
             .mark_bar(orient="horizontal", color="darkgray")
             .encode(
-                y=alt.Y("motivo:N", title="Motivo", sort="x", axis=alt.Axis()),
-                x=alt.X("percentual_acumulado:Q", title="Percentual Acumulado (%)"),
+                y=alt.Y("motivo:N", title="Motivo", sort="-x", axis=alt.Axis()),
+                x=alt.X("percentual:Q", title="Percentual entre paradas (%)"),
                 tooltip=[
                     alt.Tooltip("motivo:N", title="Motivo"),
                     alt.Tooltip("tempo:Q", title="Tempo (min)"),
                     alt.Tooltip("percentual:Q", title="Percentual (%)"),
-                    alt.Tooltip("percentual_acumulado:Q", title="Percentual Acumulado (%)"),
                 ],
             )
         )
@@ -404,3 +402,45 @@ with st.container():
     )
 
     st.altair_chart(timeline_fig, use_container_width=True)
+
+# ========================================================================================= Tabela #
+with st.expander("Tabelas dos indicadores"):
+    # Aplicar os filtros
+    eficiencia = eficiencia[eficiencia.linha == LINE_PICKED]
+    performance = performance[performance.linha == LINE_PICKED]
+    reparos = reparos[reparos.linha == LINE_PICKED]
+
+    # Ajustar as tabelas
+    eficiencia.eficiencia = eficiencia.eficiencia * 100
+    performance.performance = performance.performance * 100
+    reparos.reparo = reparos.reparo * 100
+    eficiencia.hora_registro = pd.to_datetime(
+        eficiencia.hora_registro, format="%H:%M:%S.%f"
+    ).dt.time
+    performance.hora_registro = pd.to_datetime(
+        performance.hora_registro, format="%H:%M:%S.%f"
+    ).dt.time
+    reparos.hora_registro = pd.to_datetime(reparos.hora_registro, format="%H:%M:%S.%f").dt.time
+    eficiencia.data_registro = pd.to_datetime(eficiencia.data_registro).dt.date
+    performance.data_registro = pd.to_datetime(performance.data_registro).dt.date
+    reparos.data_registro = pd.to_datetime(reparos.data_registro).dt.date
+
+    # Ordenar os turnos na order: NOT, MAT, VES
+    eficiencia.turno = pd.Categorical(
+        eficiencia.turno, categories=["NOT", "MAT", "VES"], ordered=True
+    )
+    performance.turno = pd.Categorical(
+        performance.turno, categories=["NOT", "MAT", "VES"], ordered=True
+    )
+    reparos.turno = pd.Categorical(reparos.turno, categories=["NOT", "MAT", "VES"], ordered=True)
+    eficiencia = eficiencia.sort_values(by="turno")
+    performance = performance.sort_values(by="turno")
+    reparos = reparos.sort_values(by="turno")
+
+    eficiencia = eficiencia.style.format(thousands=".", decimal=",", precision=1)
+    performance = performance.style.format(thousands=".", decimal=",", precision=1)
+    reparos = reparos.style.format(thousands=".", decimal=",", precision=1)
+
+    st.dataframe(eficiencia, use_container_width=True, hide_index=True)
+    st.dataframe(performance, use_container_width=True, hide_index=True)
+    st.dataframe(reparos, use_container_width=True, hide_index=True)
