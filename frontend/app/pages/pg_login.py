@@ -416,6 +416,19 @@ if presence_df.empty:
 else:
     presence_df["Data"] = pd.to_datetime(presence_df["Data"]).dt.date
     presence_df = presence_df[presence_df["Data"] == today]
+
+    # Supervisor / Turno
+    if ROLE == "supervisor":
+        # cspell: words Rogerio Inacio
+        sup_turn = {
+            "Claudia Antunes": "MAT",
+            "Rogerio Inacio": "VES",
+            "Everton de Oliveira": "NOT",
+        }[USER_NAME]
+
+        # Caso role = supervisor mostrar dados do turno do supervisor
+        presence_df = presence_df[presence_df["Turno"] == sup_turn]
+
     # Acrescentar uma coluna com o total de presentes somando as colunas dos setores
     presence_df["Total"] = presence_df[SETORES].sum(axis=1)
     # Agrupar por data
