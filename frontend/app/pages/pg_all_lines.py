@@ -78,10 +78,10 @@ st.markdown(
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                          Nav Widgets
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-df_eff = st.session_state.eficiência
-df_maq_info_original = st.session_state.info_ihm
-df_prod = st.session_state.produção
-df_info = st.session_state.maquina_info_today
+df_eff: pd.DataFrame = st.session_state.eficiência
+df_maq_info_original: pd.DataFrame = st.session_state.info_ihm
+df_prod: pd.DataFrame = st.session_state.produção
+df_info: pd.DataFrame = st.session_state.maquina_info_today
 
 
 # Garantir que a data é um pandas Timestamp só com a data
@@ -181,10 +181,17 @@ with r1_col1:
 
         if status != "Rodando":
             with st.container():
-                df_maq_info_status.loc[df_maq_info_status.motivo == "Limpeza", "causa"] = "Limpeza"
+                df_maq_info_status.causa = df_maq_info_status.causa.mask(
+                    df_maq_info_status.motivo == "Limpeza", "Limpeza"
+                )
                 causa = df_maq_info_status.causa.iloc[-1]
                 causa = causa if causa else "Não informado"
-                st.markdown(f"""<div class="card2">{causa}</div>""", unsafe_allow_html=True)
+                color_back = COLOR_DICT[df_maq_info_status["motivo"].iloc[-1]]
+                st.markdown(
+                    f"""<div class="card2" style="background-color: {color_back}; 
+                color: {ColorsSTM.LIGHT_GREY.value};">{causa}</div>""",
+                    unsafe_allow_html=True,
+                )
 
             with st.container():
                 # Hora da Parada

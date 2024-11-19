@@ -46,6 +46,7 @@ async def run_in_executor(func, *args):
     return await loop.run_in_executor(executor, func, *args)
 
 
+# FIXME - Adicionar lock para evitar chamada duplicada
 # Iniciar o agendador
 def start_scheduler() -> None:
     """Inicia o agendador de tarefas.
