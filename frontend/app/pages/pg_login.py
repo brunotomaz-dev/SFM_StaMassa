@@ -22,7 +22,14 @@ today, this_turn = get_date.get_this_turn()
 
 ROLE: str = st.session_state["role"]
 USER_NAME: str = st.session_state["name"]
-SETORES: list[str] = ["Panificação", "Forno", "Pasta", "Recheio", "Embalagem", "Pães Diversos"]
+SETORES: list[str] = [
+    "Panificação",
+    "Forno",
+    "Pasta",
+    "Recheio",
+    "Embalagem",
+    "Pães Diversos",
+]
 FALTAS_TIPOS: list[str] = [
     "Falta",
     "Atraso",
@@ -83,7 +90,7 @@ eficiencia = st.session_state.eficiência
 performance = st.session_state.performance
 reparo = st.session_state.reparos
 info_ihm = st.session_state.info_ihm
-
+cart_in_greenhouse = st.session_state.cart_entering_greenhouse
 production = st.session_state.produção
 estoque_cam_fria = st.session_state.caixas_estoque
 
@@ -105,7 +112,15 @@ if st.session_state["authentication_status"]:
 
 # ================================================================================================ #
 #                                               MODAL                                              #
-# ================================================================================================
+# ================================================================================================ #
+SUP_TURN = None
+if USER_NAME and ROLE == "supervisor":
+    # cspell: words Rogerio Inacio
+    SUP_TURN = {
+        "Claudia Antunes": "MAT",
+        "Rogerio Inacio": "VES",
+        "Everton de Oliveira": "NOT",
+    }[USER_NAME]
 
 
 @st.dialog("Registros de Absenteísmo", width="large")
@@ -141,16 +156,9 @@ def show_absent(
     )
 
     # Supervisor / Turno
-    if ROLE == "supervisor":
-        # cspell: words Rogerio Inacio
-        sup_turn = {
-            "Claudia Antunes": "MAT",
-            "Rogerio Inacio": "VES",
-            "Everton de Oliveira": "NOT",
-        }[USER_NAME]
-
+    if ROLE == "supervisor" and SUP_TURN:
         # Caso role = supervisor mostrar dados do turno do supervisor
-        filtered_df = filtered_df[filtered_df["Turno"] == sup_turn]
+        filtered_df = filtered_df[filtered_df["Turno"] == SUP_TURN]
 
     # Exibir os registros filtrados
     st.write("#### Registros Filtrados")
@@ -363,6 +371,42 @@ df_production = pd.concat([df_production, prod_total])
 # Alterar o estilo para números no formato brasileiro
 df_production = df_production.style.format(thousands=".", decimal=",", precision=0)
 
+# ====================================================================================== Carrinhos #
+# Dataframe dos carrinhos
+df_cart: pd.DataFrame = cart_in_greenhouse.copy()
+
+# Filtrar pela data de hoje
+df_cart["Data_apontamento"] = pd.to_datetime(df_cart["Data_apontamento"], format="%Y%m%d").dt.date
+df_cart = df_cart[df_cart["Data_apontamento"] == today]
+
+# Renomear colunas
+df_cart.columns = ["Data", "Turno", "Carrinhos"]
+
+# Substituir os valores de turno
+df_cart["Turno"] = df_cart["Turno"].replace(
+    {"MAT": "Matutino", "VES": "Vespertino", "NOT": "Noturno"}
+)
+
+# Adicionar um 'turno' Total com a soma dos carrinhos
+df_cart.loc["TOTAL"] = ["", "TOTAL", df_cart["Carrinhos"].sum()]
+
+# Ajustar a ordem do turno categorizando
+df_cart["Turno"] = pd.Categorical(
+    df_cart["Turno"],
+    categories=["Noturno", "Matutino", "Vespertino", "TOTAL"],
+    ordered=True,
+)
+
+# Remove a coluna da data
+df_cart = df_cart.drop(columns=["Data"])
+
+# Ordenar por turno
+df_cart = df_cart.sort_values(by="Turno")
+
+# Tornar o turno o índice
+df_cart = df_cart.set_index("Turno")
+
+
 # ================================================================================= Linhas Rodando #
 # Ajustar data e filtrar
 info_ihm.data_registro = pd.to_datetime(info_ihm.data_registro).dt.date
@@ -419,15 +463,8 @@ else:
 
     # Supervisor / Turno
     if ROLE == "supervisor":
-        # cspell: words Rogerio Inacio
-        sup_turn = {
-            "Claudia Antunes": "MAT",
-            "Rogerio Inacio": "VES",
-            "Everton de Oliveira": "NOT",
-        }[USER_NAME]
-
         # Caso role = supervisor mostrar dados do turno do supervisor
-        presence_df = presence_df[presence_df["Turno"] == sup_turn]
+        presence_df = presence_df[presence_df["Turno"] == SUP_TURN]
 
     # Acrescentar uma coluna com o total de presentes somando as colunas dos setores
     presence_df["Total"] = presence_df[SETORES].sum(axis=1)
@@ -505,6 +542,12 @@ with col_prod:
             st.table(df_production)
 
         render_table()
+
+    with st.container(border=True):
+        # ============================================================================== Carrinhos #
+        st.subheader("Carrinhos Produzidos")
+        st.table(df_cart)
+
 
 with col_lines.container(border=True):
     # ================================================================================= Linhas #

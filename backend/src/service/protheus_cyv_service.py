@@ -62,6 +62,28 @@ class ProtheusCYVService:
 
         return data
 
+    def get_cart_entering_greenhouse(self) -> pd.DataFrame:
+        """
+        Retorna um DataFrame com os dados de entrada de carrinhos na estufa.
+
+        A coluna 'Turno' é criada com base na hora de apontamento.
+
+        Os dados s o retornados ordenados por data de apontamento em ordem decrescente
+        e hora de apontamento em ordem crescente.
+
+        :return: pd.DataFrame
+        """
+        data = self.__protheus_cyv_model.get_cart_entering_greenhouse()
+        if data is not None or not data.empty:
+            # Agrupar por data e turno e somar a quantidade de carrinhos
+            data = (
+                data.groupby(["Data_apontamento", "Turno"]).agg({"Carrinho": "count"}).reset_index()
+            )
+        else:
+            raise ValueError("No data found.")
+
+        return data
+
     @staticmethod
     def __massa_sum(df: pd.DataFrame) -> pd.DataFrame:
         """

@@ -94,6 +94,7 @@ def api_session_update() -> None:
         "info_ihm",
         "hist_ind",
         "maquina_info_today",
+        "cart_entering_greenhouse",
     ]
 
     # Corre as chaves e armazena os resultados se existirem
@@ -121,6 +122,7 @@ keys_to_check = [
     "info_ihm",
     "hist_ind",
     "maquina_info_today",
+    "cart_entering_greenhouse",
 ]
 
 # Faz a verificação das chaves, caso não existam, faz a requisição

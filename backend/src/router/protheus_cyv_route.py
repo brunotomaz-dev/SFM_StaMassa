@@ -117,3 +117,22 @@ def get_protheus_cyv_pasta_week() -> dict:
             status_code=500,
             detail=[{"loc": ["query", "start"], "msg": str(e), "type": "server_error"}],
         ) from e
+
+
+@protheus_cyv_router.get(
+    "/cart_entering_greenhouse",
+    summary="Retorna os dados de entrada de carrinhos na estufa.",
+    responses={500: description_500, 404: description_404},
+)
+def get_protheus_cyv_cart_entering_greenhouse() -> dict:
+    """
+    Retorna os dados de entrada de carrinhos na estufa coletados pelo Protheus.
+    """
+
+    try:
+        return protheus_cyv_controller.get_cart_entering_greenhouse()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=[{"loc": ["query", "start"], "msg": str(e), "type": "server_error"}],
+        ) from e

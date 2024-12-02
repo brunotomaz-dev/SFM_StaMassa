@@ -123,3 +123,53 @@ class ProtheusCYVModel:
         data = self.__totvsdb.get_data(query)
 
         return data
+
+    def get_cart_entering_greenhouse(self) -> pd.DataFrame:
+        """
+        Retorna um DataFrame com os dados de entrada de carrinhos na estufa.
+
+        A coluna 'Turno' é criada com base na hora de apontamento.
+
+        Os dados s o retornados ordenados por data de apontamento em ordem decrescente
+        e hora de apontamento em ordem crescente.
+
+        :return: pd.DataFrame
+        """
+        # Recupera a data de hoje
+        today = pd.Timestamp.today()
+
+        # Recupera o primeiro dia do mês
+        first_day_month = today.replace(day=1).strftime("%Y%m%d")
+
+        select_ = """
+            SELECT
+            CYV000.CYV_CCCA01 AS Carrinho,
+            CYV000.CYV_DTRPBG AS Data_apontamento,
+            CYV000.CYV_HRRPBG AS Hora_apontamento,
+            CYV000.CYV_CDMQ AS Codigo_maq,
+            CASE
+                WHEN CYV000.CYV_HRRPBG >= '00:00:00' AND CYV000.CYV_HRRPBG < '08:00:00' THEN 'NOT'
+                WHEN CYV000.CYV_HRRPBG >= '08:00:00' AND CYV000.CYV_HRRPBG < '16:00:00' THEN 'MAT'
+                WHEN CYV000.CYV_HRRPBG >= '16:00:00' AND CYV000.CYV_HRRPBG <= '23:59:59' THEN 'VES'
+            END AS Turno
+            """
+
+        from_ = "FROM CYV000 (NOLOCK)"
+
+        where_ = f"""
+            WHERE
+            CYV_FILIAL='0101' AND
+            CYV_DTRPBG >= '{first_day_month}' AND
+            CYV000.CYV_CDMQ like 'ESF%' AND
+            CYV000.D_E_L_E_T_<>'*'
+            """
+
+        order_by_ = "ORDER BY Data_apontamento DESC, Hora_apontamento ASC"
+
+        # Cria a query
+        query = f"{select_} {from_} {where_} {order_by_}"
+
+        # Executa a query
+        data = self.__totvsdb.get_data(query)
+
+        return data
