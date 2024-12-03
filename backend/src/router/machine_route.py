@@ -134,3 +134,28 @@ def get_maquina_qualidade(
             status_code=500,
             detail=[{"loc": ["query", "start"], "msg": str(e), "type": "server_error"}],
         ) from e
+
+
+@machine_router.get(
+    "/production",
+    summary="Retorna os dados de produção da data especificada.",
+    responses={
+        404: {"description": "Data not found", **description_404},
+        500: {"description": "Internal Server Error", **description_500},
+    },
+)
+def get_production(
+    day: str = Query(..., description="Data de início no formato %Y-%m-%d")
+) -> JSONResponse:
+    """Retorna os dados de produção da data especificada.
+
+    Returns:
+    JSONResponse: Dados de produção da data especificada.
+    """
+    try:
+        return maquina_info_controller.get_production_data_by_day(day)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=[{"loc": ["query", "start"], "msg": str(e), "type": "server_error"}],
+        ) from e
