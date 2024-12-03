@@ -90,6 +90,7 @@ class MaquinaInfoService:
                 "data_registro",
                 "turno",
                 "total_produzido",
+                "produto",
             ]
         ]
 
