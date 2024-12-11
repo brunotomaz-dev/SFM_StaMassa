@@ -358,13 +358,14 @@ with col_hist.container(border=True):
                 alt.Tooltip("mean_tempo:Q", title="Tempo Médio (min)", format=".0f"),
             ],
         )
-        .properties(height=400, padding={"left": 10, "right": 10, "top": 5, "bottom": 0})
+        .properties(height=483, padding={"left": 10, "right": 10, "top": 5, "bottom": 0})
     )
 
     st.altair_chart(histogram_fig, use_container_width=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ CHART ICICLE ━━ #
 with col_icicle.container(border=True):
+
     # Definir o df
     icicle_df = info_ihm.copy()
 
@@ -384,17 +385,47 @@ with col_icicle.container(border=True):
     icicle_df.problema = icicle_df.problema.fillna("")
     icicle_df.causa = icicle_df.causa.fillna("Sem causa informada")
 
-    # Figura
-    ice_fig = px.icicle(
-        icicle_df,
-        path=[
-            px.Constant("Paradas por motivo"),
+    opt_choice = st.radio(
+        "Opções de Ajuste", ["Motivo", "Equipamento", "Linha", "Problema"], horizontal=True
+    )
+
+    options_path = {
+        "Motivo": [
             "motivo",
             "turno",
             "equipamento",
             "problema",
             "causa",
         ],
+        "Equipamento": [
+            "equipamento",
+            "turno",
+            "motivo",
+            "problema",
+            "causa",
+        ],
+        "Linha": [
+            "linha",
+            "turno",
+            "problema",
+            "causa",
+            "motivo",
+            "equipamento",
+        ],
+        "Problema": [
+            "problema",
+            "turno",
+            "causa",
+            "linha",
+            "motivo",
+            "equipamento",
+        ],
+    }
+
+    # Figura
+    ice_fig = px.icicle(
+        icicle_df,
+        path=[px.Constant(f"Paradas por {opt_choice}"), *options_path[opt_choice]],
         values="tempo",
         color="motivo",
         color_discrete_map=COLOR_DICT,
@@ -402,7 +433,10 @@ with col_icicle.container(border=True):
     )
 
     # Atualizar layout para remover hover
-    ice_fig.update_traces(hovertemplate=None)
+    # ice_fig.update_traces(hovertemplate=None)
+
+    # Personalizar o hovertemplate
+    ice_fig.update_traces(hovertemplate="<b>%{label}</b><br>Tempo: %{value} min<extra></extra>")
 
     # Atualizar layout
     ice_fig.update_layout(

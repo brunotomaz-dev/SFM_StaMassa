@@ -122,7 +122,7 @@ st-annotated-text==4.0.1
 st-theme==1.2.3
 stack-data==0.6.3
 starlette==0.37.2
-streamlit==1.37.1
+streamlit==1.41.0
 streamlit-antd-components==0.3.2
 streamlit-authenticator==0.3.3
 streamlit-autorefresh==1.0.1
