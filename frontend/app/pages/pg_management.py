@@ -56,10 +56,48 @@ day_last = pd.to_datetime(info_data["data_registro"].max())
 # Data do início e fim baseada no hoje.
 yesterday = day_last - pd.Timedelta(days=1)
 
+form_col, _ = st.columns([0.6, 0.4])
+# Form para evitar reload imediato
+# with form_col.form(key="form_management"):
+date_col, turn_col, line_col, fab_col = st.columns([0.15, 0.15, 0.60, 0.10])
 # Seleção de data
-date_choice = st.sidebar.date_input(
-    "Escolha a data", value=None, min_value=day_one, max_value=yesterday, format="DD/MM/YYYY"
+date_choice_1, date_choice_2 = date_col.date_input(
+    "Escolha a data",
+    value=(FIRST_DAY, yesterday),
+    min_value=day_one,
+    max_value=yesterday,
+    format="DD/MM/YYYY",
 )
+
+turn_choice = turn_col.selectbox(
+    "Escolha o turno",
+    options=[" ", "Matutino", "Vespertino", "Noturno"],
+)
+
+turn_filter = {
+    " ": None,
+    "Matutino": "MAT",
+    "Vespertino": "VES",
+    "Noturno": "NOT",
+}[turn_choice]
+
+fab_choice = fab_col.selectbox(
+    "Escolha a fábrica",
+    options=[" ", *info_data["fabrica"].unique()],
+)
+
+# Filtra pela fábrica
+if fab_choice != " ":
+    info_data = info_data[info_data["fabrica"] == fab_choice]
+
+line_choice = line_col.multiselect(
+    "Escolha as linhas",
+    options=info_data["linha"].unique(),
+    default=info_data["linha"].unique(),
+)
+# Atualizar
+# st.form_submit_button("Atualizar")
+
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                           Dataframes
@@ -72,20 +110,28 @@ info_ihm["data_registro"] = pd.to_datetime(info_ihm["data_registro"])
 production["data_registro"] = pd.to_datetime(production["data_registro"])
 
 # Se necessário, filtrar pela data, se não mantêm apenas os dados do mês atual
-info_ihm = (
-    info_ihm[info_ihm["data_registro"].dt.date == date_choice]
-    if date_choice
-    else info_ihm[info_ihm["data_registro"].dt.month == info_ihm["data_registro"].dt.month.max()]
-)
+info_ihm = info_ihm[
+    (info_ihm["data_registro"].dt.date >= date_choice_1)
+    & (info_ihm["data_registro"].dt.date <= date_choice_2)
+]
+
+# Filtrar pelo turno
+if turn_filter:
+    info_ihm = info_ihm[info_ihm["turno"] == turn_filter]
+    production = production[production["turno"] == turn_filter]
+
+
+# Filtrar as linhas escolhidas
+info_ihm = info_ihm[info_ihm["linha"].isin(line_choice)]
 
 # Filtrar pela data escolhida
-production = (
-    production[production["data_registro"].dt.date == date_choice]
-    if date_choice
-    else production[
-        production["data_registro"].dt.month == production["data_registro"].dt.month.max()
-    ]
-)
+production = production[
+    (production["data_registro"].dt.date >= date_choice_1)
+    & (production["data_registro"].dt.date <= date_choice_2)
+]
+
+# Filtrar as linhas escolhidas
+production = production[production["linha"].isin(line_choice)]
 
 # Manter apenas a data
 info_ihm["data_registro"] = info_ihm["data_registro"].dt.date
@@ -246,6 +292,9 @@ with st.container(border=True):
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ GRÁFICO DE BARRAS ━━ #
 with st.container(border=True):
+    # Converter a coluna hora_registro para string no formato %H:%M:%S
+    bar_df["hora_registro"] = bar_df["hora_registro"].apply(lambda x: x.strftime("%H:%M"))
+
     bar_fig = (
         alt.Chart(bar_df)
         .mark_bar()
@@ -259,7 +308,7 @@ with st.container(border=True):
             ),
             tooltip=[
                 alt.Tooltip("data_registro:T", title="Data de Registro"),
-                alt.Tooltip("hora_registro:T", title="Hora de Registro", format="%H:%M"),
+                alt.Tooltip("hora_registro:N", title="Hora de Registro"),
                 alt.Tooltip("motivo:N", title="Motivo"),
                 alt.Tooltip("tempo:Q", title="Tempo (min)"),
             ],
@@ -419,4 +468,4 @@ with st.expander("Tabelas"):
 
 # ================================================================================== Plano De Ação #
 st.divider()
-action_plan(date_choice)
+action_plan(date_choice_1, date_choice_2)
