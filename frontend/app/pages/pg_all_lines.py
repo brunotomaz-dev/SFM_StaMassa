@@ -294,8 +294,8 @@ with r1_col2:
 
     # Converter a coluna hora_registro para datetime
     df_info.hora_registro = pd.to_datetime(df_info.hora_registro, format="%H:%M:%S")
-    df_info_stops = df_info[df_info.status == "true"]  # NOTE Ajuste para uso com Django
-    # df_info_stops = df_info[df_info.status == "rodando"]
+    # df_info_stops = df_info[df_info.status == "true"]  # NOTE Ajuste para uso com Django
+    df_info_stops = df_info[df_info.status == "rodando"]
     media_ciclos = round(df_info_stops.ciclo_1_min.mean(), 2) if len(df_info_stops) > 0 else 0
     # Figura principal com os ciclos
     alt_fig_2 = (
