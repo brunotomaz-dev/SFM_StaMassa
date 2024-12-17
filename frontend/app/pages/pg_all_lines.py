@@ -78,7 +78,7 @@ st.markdown(
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                          Nav Widgets
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-df_eff: pd.DataFrame = st.session_state.eficiência
+df_eff: pd.DataFrame = st.session_state.eficiencia
 df_maq_info_original: pd.DataFrame = st.session_state.info_ihm
 df_prod: pd.DataFrame = st.session_state.produção
 df_info: pd.DataFrame = st.session_state.maquina_info_today
@@ -142,7 +142,8 @@ df_maq_info_original = df_maq_info_original[(df_maq_info_original.linha == line)
 )
 df_eff = df_eff[(df_eff.linha == line)].reset_index(drop=True)
 df_prod = df_prod[(df_prod.linha == line)].reset_index(drop=True)
-df_info = df_info[(df_info.linha == line)].reset_index(drop=True)
+maq_id = df_prod.maquina_id[0]
+df_info = df_info[(df_info.maquina_id == maq_id)].reset_index(drop=True)
 
 # Se a coluna eficiencia estiver vazia, colocar zero
 df_eff.eficiencia = df_eff.eficiencia.fillna(0)
@@ -186,10 +187,12 @@ with r1_col1:
                 )
                 causa = df_maq_info_status.causa.iloc[-1]
                 causa = causa if causa else "Não informado"
-                color_back = COLOR_DICT[df_maq_info_status["motivo"].iloc[-1]]
+                motivo = df_maq_info_status.motivo.iloc[-1]
+                motivo = motivo if motivo else "Não apontado"
+                color_back = COLOR_DICT[motivo]
                 st.markdown(
-                    f"""<div class="card2" style="background-color: {color_back}; 
-                color: {ColorsSTM.LIGHT_GREY.value};">{causa}</div>""",
+                    f"""<div class="card2" style="background-color: {color_back};
+                    color: {ColorsSTM.LIGHT_GREY.value};">{causa}</div>""",
                     unsafe_allow_html=True,
                 )
 
@@ -199,7 +202,7 @@ with r1_col1:
                 # Hora atual
                 hora_final = datetime.now()
                 # Ajustar para pd.Datetime
-                hora_inicial = pd.to_datetime(hora_inicial)
+                hora_inicial = pd.to_datetime(hora_inicial).tz_localize(None)
                 # Converter para pd.Datetime
                 hora_final = pd.to_datetime(hora_final)
                 # Calcular o tempo de parada em minutos
@@ -240,6 +243,13 @@ with r1_col2:
         # ─────────────────────────────────────────────────────────────────────── Pareto Chart ── #
         # Separa apenas as paradas
         data_filtered = df_maq_info.copy()
+
+        # Converter 'data_hora' para datetime tz-naive
+        df_maq_info["data_hora"] = pd.to_datetime(df_maq_info["data_hora"]).dt.tz_localize(None)
+        df_maq_info["data_hora_final"] = pd.to_datetime(
+            df_maq_info["data_hora_final"]
+        ).dt.tz_localize(None)
+
         # Calcula o tempo de parada
         tempo_last_stop = round((now - pd.to_datetime(df_maq_info.iloc[-1].data_hora)).seconds / 60)
         # Insere este tempo na coluna tempo da última linha da tabela data_filtered
@@ -277,7 +287,14 @@ with r1_col2:
             st.altair_chart(alt_fig, use_container_width=True)
 
     # ─────────────────────────────────────────────────────────────────────────── Ciclos Chart ── #
+    # Remover os milissegundos da hora de registro, se houver
+    df_info.hora_registro = df_info.hora_registro.apply(
+        lambda x: x.split(".")[0] if "." in x else x
+    )
+
+    # Converter a coluna hora_registro para datetime
     df_info.hora_registro = pd.to_datetime(df_info.hora_registro, format="%H:%M:%S")
+    # df_info_stops = df_info[df_info.status == "true"]  #NOTE Ajuste para uso com Django
     df_info_stops = df_info[df_info.status == "rodando"]
     media_ciclos = round(df_info_stops.ciclo_1_min.mean(), 2) if len(df_info_stops) > 0 else 0
     # Figura principal com os ciclos

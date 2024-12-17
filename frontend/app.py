@@ -4,11 +4,13 @@ import asyncio
 import time
 from datetime import datetime, timedelta
 
+import pandas as pd
 import streamlit as st
 import streamlit_authenticator as stauth
 import yaml
 
 # pylint: disable=E0401
+from app.api.api_request import api_get, api_get_token
 from app.api.fetch_api import update_api
 from streamlit_authenticator.utilities import (
     CredentialsError,
@@ -29,6 +31,17 @@ st.set_page_config(
 with open("style.css") as css:
     st.markdown(f"<style>{css.read()}</style>", unsafe_allow_html=True)
 
+st.markdown(
+    """
+    <style>
+    .stMainBlockContainer {
+        padding: 1rem 1.5rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                       Inicializar State
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -46,11 +59,70 @@ if "api_running" not in st.session_state:
     st.session_state["api_running"] = False
 if "last_api_call" not in st.session_state:
     st.session_state["last_api_call"] = datetime.min
+if "api_token" not in st.session_state:
+    st.session_state["api_token"] = None
 
 
 # ================================================================================================ #
 #                                         REQUISIÇÃO DE API                                        #
 # ================================================================================================ #
+def update_api_dj(url: str, params: str = None):
+    """
+    Faz uma requisição GET para a API Django.
+
+    Args:
+        url (str): URL da API.
+        params (str, optional): Parâmetros da requisição. Defaults to None.
+    """
+    token = st.session_state.api_token
+
+    return api_get(url, token=token["access"], params=params)
+
+
+def get_for_django(progresso):
+    """
+    Coleta dados das APIs Django e atualiza o estado da sessão.
+
+    Args:
+        progresso: Um objeto streamlit.empty para exibir o progresso da operação.
+
+    """
+
+    # Gera o token
+    st.session_state.api_token = api_get_token("bruno.tomaz", "Br120800")
+
+    # Atualiza o progresso
+    progresso.progress(5, "Token ok...")
+
+    # Variável com data de hoje no formato yyyy-mm-dd
+    now = datetime.now()
+    now_ = now.strftime("%Y-%m-%d")
+
+    req_info_ihm = update_api_dj("http://localhost:8000/api/info_ihm/")
+    req_qual_prod = update_api_dj("http://localhost:8000/api/qual_prod/")
+    req_maquina_info = update_api_dj(
+        "http://localhost:8000/api/maquinainfo/",
+        params=f"data_registro={now_}",
+    )
+    result_django = [
+        pd.DataFrame(req_info_ihm),
+        pd.DataFrame(req_qual_prod),
+        pd.DataFrame(req_maquina_info),
+    ]
+
+    progresso.progress(25, "Dados do Django ok...")
+
+    keys_django = [
+        "info_ihm",
+        "produção",
+        "maquina_info_today",
+    ]
+
+    for key, res in zip(keys_django, result_django):
+        prog = 50 + 25 * (keys_django.index(key) + 1) / len(keys_django)
+        progresso.progress(int(prog), "Atualizando dados django...")
+        if not res.empty:
+            st.session_state[key] = res
 
 
 @st.fragment(run_every=60)
@@ -76,19 +148,19 @@ def api_session_update() -> None:
     # Seta o estado de 'last_api_call' para a data e hora atual
     st.session_state["last_api_call"] = now
 
-    # Atualiza o progresso
-    progress.progress(25, "Atualizando dados...")
+    # get_for_django(progress)  #NOTE Para testes django
 
     # Faz a requisição da API
     result = asyncio.run(update_api())
 
     # Atualiza o progresso
-    progress.progress(50, "Atualizando dados...")
+    progress.progress(50, "Dados do Fastapi ok...")
+
     # Chaves da API/State
     keys = [
         "produção",
         "caixas_estoque",
-        "eficiência",
+        "eficiencia",
         "performance",
         "reparos",
         "info_ihm",
@@ -99,8 +171,8 @@ def api_session_update() -> None:
 
     # Corre as chaves e armazena os resultados se existirem
     for key, res in zip(keys, result):
-        prog = 50 + 50 * (keys.index(key) + 1) / len(keys)
-        progress.progress(int(prog), "Atualizando dados...")
+        prog = 50 + 25 * (keys.index(key) + 1) / len(keys)
+        progress.progress(int(prog), "Atualizando dados fastapi...")
         if not res.empty:
             st.session_state[key] = res
 
@@ -116,7 +188,7 @@ def api_session_update() -> None:
 keys_to_check = [
     "produção",
     "caixas_estoque",
-    "eficiência",
+    "eficiencia",
     "performance",
     "reparos",
     "info_ihm",

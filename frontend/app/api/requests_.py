@@ -20,6 +20,8 @@ async def fetch_api_data(url: str) -> pd.DataFrame:
                 return df
             else:
                 st.error("Erro ao obter os dados da API.")
+                st.info(f"Status code: {response.status} - {response.reason} - {response.url}")
+
                 return pd.DataFrame()
 
 

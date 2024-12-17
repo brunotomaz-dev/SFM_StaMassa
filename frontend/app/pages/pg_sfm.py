@@ -81,7 +81,7 @@ if selected_page == SUB_OPT_2:
 #                                            DATAFRAMES                                            #
 # ================================================================================================ #
 history_ind = st.session_state.hist_ind
-eficiencia = st.session_state.eficiência
+eficiencia = st.session_state.eficiencia
 performance = st.session_state.performance
 reparo = st.session_state.reparos
 stops = st.session_state.info_ihm

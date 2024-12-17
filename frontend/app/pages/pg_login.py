@@ -86,7 +86,7 @@ if "registro_presença" not in st.session_state:
     st.session_state["registro_presença"] = False
 
 
-eficiencia = st.session_state.eficiência
+eficiencia = st.session_state.eficiencia
 performance = st.session_state.performance
 reparo = st.session_state.reparos
 info_ihm = st.session_state.info_ihm

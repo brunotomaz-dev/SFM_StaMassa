@@ -1,6 +1,5 @@
 """ Módulo que contém a página de gestão. """
 
-import altair as alt
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -48,22 +47,20 @@ st.sidebar.title("Configurações")
 info_data = st.session_state.info_ihm
 
 # Data inicial do dataframe
-day_one = pd.to_datetime(info_data["data_registro"].min())
+day_one = pd.to_datetime(info_data["data_registro"].min()).date()
 
 # Data final do dataframe
-day_last = pd.to_datetime(info_data["data_registro"].max())
+day_last = pd.to_datetime(info_data["data_registro"].max()).date()
 
 # Data do início e fim baseada no hoje.
 yesterday = day_last - pd.Timedelta(days=1)
 
-form_col, _ = st.columns([0.6, 0.4])
-# Form para evitar reload imediato
-# with form_col.form(key="form_management"):
 date_col, turn_col, line_col, fab_col = st.columns([0.15, 0.15, 0.60, 0.10])
+
 # Seleção de data
 date_choice_1, date_choice_2 = date_col.date_input(
     "Escolha a data",
-    value=(FIRST_DAY, yesterday),
+    value=(max(FIRST_DAY.date(), day_one), min(yesterday, day_last)),
     min_value=day_one,
     max_value=yesterday,
     format="DD/MM/YYYY",
@@ -95,15 +92,12 @@ line_choice = line_col.multiselect(
     options=info_data["linha"].unique(),
     default=info_data["linha"].unique(),
 )
-# Atualizar
-# st.form_submit_button("Atualizar")
-
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                           Dataframes
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-info_ihm = info_data.copy()
-production = st.session_state.produção.copy()
+info_ihm: pd.DataFrame = info_data.copy()
+production: pd.DataFrame = st.session_state.produção.copy()
 
 # Ajustar a data de registro
 info_ihm["data_registro"] = pd.to_datetime(info_ihm["data_registro"])
@@ -139,7 +133,7 @@ production.data_registro = production.data_registro.dt.date
 
 
 @st.cache_data()
-def df_info_adjustment(dataframe: pd.DataFrame) -> pd.DataFrame:
+def df_info_adjustment(dataframe: pd.DataFrame, group: bool = False) -> pd.DataFrame:
     """Função para ajustar os dados da tabela de informações."""
     df = dataframe.copy()
 
@@ -154,24 +148,31 @@ def df_info_adjustment(dataframe: pd.DataFrame) -> pd.DataFrame:
     df["data_registro_ihm"] = pd.to_datetime(df["data_registro_ihm"]).dt.date
 
     # Ajustar o horário para o formato correto
-    df["hora_registro"] = pd.to_datetime(df["hora_registro"], format="%H:%M:%S.%f").dt.time
-    df["hora_registro_ihm"] = pd.to_datetime(df["hora_registro_ihm"], format="%H:%M:%S.%f").dt.time
+    df["hora_registro"] = df["hora_registro"].astype(str).str.extract(r"(\d{2}:\d{2}:\d{2})")[0]
+    df["hora_registro"] = pd.to_datetime(df["hora_registro"], format="%H:%M:%S").dt.time
+    df["hora_registro_ihm"] = (
+        df["hora_registro_ihm"].astype(str).str.extract(r"(\d{2}:\d{2}:\d{2})")[0]
+    )
+    df["hora_registro_ihm"] = pd.to_datetime(df["hora_registro_ihm"], format="%H:%M:%S").dt.time
 
     # Adicionar Refeição como motivo onde a causa é Refeição e o motivo for Parada Programada
     mask = (df["motivo"] == "Parada Programada") & (df["causa"] == "Refeição")
     df["motivo"] = np.where(mask, "Refeição", df["motivo"])
 
-    # Agrupar os dados
-    df_grouped = (
-        df.groupby(["linha", "data_registro", "turno", "motivo"], observed=False)
-        .agg({"tempo": "sum", "hora_registro": "first"})
-        .reset_index()
-    )
+    if group:
+        # Agrupar os dados
+        df_grouped = (
+            df.groupby(["linha", "data_registro", "turno", "motivo"], observed=False)
+            .agg({"tempo": "sum", "hora_registro": "first"})
+            .reset_index()
+        )
 
-    # Ordenar pela linha e motivo
-    df_grouped = df_grouped.sort_values(by=["linha", "motivo"]).reset_index(drop=True)
+        # Ordenar pela linha e motivo
+        df_grouped = df_grouped.sort_values(by=["linha", "motivo"]).reset_index(drop=True)
 
-    return df_grouped
+        return df_grouped
+
+    return df
 
 
 @st.cache_data()
@@ -199,7 +200,9 @@ def df_echart_adjustment(dataframe: pd.DataFrame) -> tuple:
     return df, programado, n_programado, completo
 
 
-bar_df = df_info_adjustment(info_ihm)
+bar_df = df_info_adjustment(info_ihm, group=True)
+bar_full_df = df_info_adjustment(info_ihm)
+
 echart_df, programado_df, n_programado_df, geral_n_programado_df = df_echart_adjustment(bar_df)
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -267,14 +270,17 @@ with st.container(border=True):
 
     # Criação das Opções do Echart
     options = {
+        "title": {"text": "Gráfico Ocorrências", "left": "center"},
         "tooltip": {
-            "trigger": "axis",
+            "trigger": "item",
             "axisPointer": {"type": "shadow"},
             "confine": True,
         },
         "legend": {
             "data": [*bar_df.motivo.unique().tolist(), "Paradas Não Programadas"],
+            "bottom": "0%",
         },
+        "grid": {"left": "3%", "right": "4%", "bottom": "20%", "top": "10%", "containLabel": True},
         "xAxis": {
             "type": "category",
             "data": bar_df.linha.unique().tolist(),
@@ -284,7 +290,6 @@ with st.container(border=True):
         },
         "yAxis": {"type": "value", "name": "Tempo (min)", "nameLocation": "center", "nameGap": 50},
         "series": series,
-        "grid": {"left": "3%", "right": "4%", "bottom": "3%", "top": "20%", "containLabel": True},
     }
 
     # Plot do Gráfico
@@ -295,76 +300,388 @@ with st.container(border=True):
     # Converter a coluna hora_registro para string no formato %H:%M:%S
     bar_df["hora_registro"] = bar_df["hora_registro"].apply(lambda x: x.strftime("%H:%M"))
 
-    bar_fig = (
-        alt.Chart(bar_df)
-        .mark_bar()
-        .encode(
-            x=alt.X("linha:N", title="Linhas"),
-            y=alt.Y("tempo:Q", title="Tempo (min)", stack="normalize"),
-            color=alt.Color(
-                "motivo:N",
-                scale=alt.Scale(domain=list(COLOR_DICT.keys()), range=list(COLOR_DICT.values())),
-                legend=None,
-            ),
-            tooltip=[
-                alt.Tooltip("data_registro:T", title="Data de Registro"),
-                alt.Tooltip("hora_registro:N", title="Hora de Registro"),
-                alt.Tooltip("motivo:N", title="Motivo"),
-                alt.Tooltip("tempo:Q", title="Tempo (min)"),
-            ],
+    # ===================================================================================== Plotly #
+    # Criar gráfico de barras com Plotly
+    # bar_fig = px.bar(
+    #     bar_df,
+    #     x="linha",
+    #     y="tempo",
+    #     color="motivo",
+    #     color_discrete_map=COLOR_DICT,
+    #     custom_data=["data_registro", "hora_registro", "motivo", "tempo"],
+    #     height=400,
+    # )
+
+    # # Configurar layout
+    # bar_fig.update_layout(
+    #     barmode="relative",
+    #     showlegend=True,
+    #     legend=dict(
+    #         orientation="h",
+    #         yanchor="bottom",
+    #         y=1.02,
+    #         xanchor="left",
+    #         x=0,
+    #         title="Motivos",
+    #     ),
+    #     margin=dict(t=50, l=10, r=10, b=10),
+    #     yaxis_title="Tempo (min)",
+    #     xaxis_title="Linhas",
+    # )
+
+    # # Configurar hover template
+    # bar_fig.update_traces(
+    #     hovertemplate="<b>Data:</b> %{customdata[0]}<br>"
+    #     + "<b>Hora:</b> %{customdata[1]}<br>"
+    #     + "<b>Motivo:</b> %{customdata[2]}<br>"
+    #     + "<b>Tempo:</b> %{customdata[3]} min<extra></extra>"
+    # )
+
+    # # Exibir gráfico
+    # st.plotly_chart(bar_fig, use_container_width=True)
+
+    # ===================================================================================== Echart #
+    lines = bar_df["linha"].unique().tolist()
+    motivos = bar_df["motivo"].unique().tolist()
+
+    # Criar series para cada motivo com valores convertidos
+    series_data = []
+    for motivo in motivos:
+        data = []
+        for line in lines:
+            tempo = float(
+                bar_df[(bar_df["linha"] == line) & (bar_df["motivo"] == motivo)]["tempo"].sum()
+            )
+            data.append(tempo)
+
+        series_data.append(
+            {
+                "name": motivo,
+                "type": "bar",
+                "stack": "total",
+                "data": data,
+                "itemStyle": {"color": COLOR_DICT.get(motivo, "#000000")},
+            }
         )
-        .properties(padding={"left": 10, "right": 10, "top": 5, "bottom": 0})
+
+    # Configurar opções do gráfico
+    options = {
+        "title": {"text": "Gráfico Yamazumi", "left": "center"},
+        "tooltip": {
+            "trigger": "item",
+            "axisPointer": {"type": "shadow"},
+            "confine": True,
+        },
+        "legend": {"orient": "horizontal", "bottom": "0%", "data": motivos},
+        "grid": {"left": "3%", "right": "4%", "bottom": "15%", "top": "10%", "containLabel": True},
+        "xAxis": {
+            "type": "category",
+            "data": lines,
+            "name": "Linhas",
+            "nameLocation": "center",
+            "nameGap": 20,
+        },
+        "yAxis": {"type": "value", "name": "Tempo (min)", "nameLocation": "center", "nameGap": 50},
+        "series": series_data,
+    }
+
+    # Renderizar gráfico
+    st_echarts(
+        options=options,
+        height="400px",
     )
 
-    st.altair_chart(bar_fig, use_container_width=True)
+# ====================================================================================== Bar Chart #
+stops = bar_full_df.copy()
+# Soma o tempo total do período
+tempo_total = stops.tempo.sum()
+# Remove o que não é necessário
+stops = stops[~stops.motivo.isin(["Rodando", "Parada Programada", "Não apontado", "Refeição"])]
+# Agrupa por motivo de parada
+top_stops = (
+    stops.groupby("motivo", observed=False)
+    .tempo.sum()
+    .reset_index()
+    .sort_values(by="tempo", ascending=False)
+)
+# Encontra o principal motivo
+primary_motive = top_stops["motivo"].iloc[0]
+secondary_motive = top_stops["motivo"].iloc[1]
+third_motive = top_stops["motivo"].iloc[2]
+# Dataframe com apenas o principal motivo
+top_problems = stops[stops["motivo"] == primary_motive]
+secondary_problems = stops[stops["motivo"] == secondary_motive]
+third_problems = stops[stops["motivo"] == third_motive]
 
-# Colunas de Histograma e Icicle
-col_hist, col_icicle = st.columns([1, 2])
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ HISTOGRAM ━━ #
-with col_hist.container(border=True):
-    histogram_df = bar_df.copy()
-    # Remover o motivo rodando e parada programada
-    histogram_df = histogram_df[
-        ~histogram_df.motivo.isin(["Rodando", "Parada Programada", "Não apontado"])
-    ]
 
-    # Agrupar os dados por motivo para calcular o tempo médio e somar o tempo
-    histogram_df = (
-        histogram_df.groupby("motivo", observed=False)
-        .agg(
-            count_motivo=("motivo", "size"),
-            sum_tempo=("tempo", "sum"),
-            mean_tempo=("tempo", "mean"),
+# Agrupa pela causa
+def group_by_causa(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Agrupa os dados por causa e problema, somando o tempo.
+
+    Args:
+        df (pd.DataFrame): DataFrame de entrada.
+
+    Returns:
+        pd.DataFrame: DataFrame agrupado por causa e problema.
+    """
+    df = df.copy()
+    if df.motivo.unique() == "Manutenção":
+        df.causa = np.where(
+            df.causa.isin(["Realizar análise de falha", "Necessidade de análise"]),
+            df.problema,
+            df.causa,
         )
+    df = (
+        df.groupby("causa", observed=False)
+        .tempo.sum()
         .reset_index()
+        .sort_values(by="tempo", ascending=False)
+    )
+    return df
+
+
+top_problems = group_by_causa(top_problems)
+secondary_problems = group_by_causa(secondary_problems)
+third_problems = group_by_causa(third_problems)
+
+
+def get_percentual(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calcula o percentual de cada valor em relação ao tempo total.
+
+    Args:
+        df (pd.DataFrame): DataFrame de entrada.
+
+    Returns:
+        pd.DataFrame: DataFrame com a coluna percentual adicionada.
+    """
+    df["percentual"] = (df.tempo / tempo_total * 100).round(2)
+    df = df.sort_values(by="percentual", ascending=False)
+    return df
+
+
+top_stops = get_percentual(top_stops)
+top_problems = get_percentual(top_problems)
+secondary_problems = get_percentual(secondary_problems)
+third_problems = get_percentual(third_problems)
+
+top_mot_col, top_cause_col = st.columns(2)
+sec_cause_col, third_cause_col = st.columns(2)
+
+
+# Preparar dados
+
+
+def get_cause_percent_colors(df: pd.DataFrame, motive: str) -> tuple:
+    """
+    Prepara os dados de causa, percentual e cores para o gráfico de barras.
+
+    Args:
+        df (pd.DataFrame): DataFrame com os dados.
+    """
+    df = df.head(5)
+    cause = df["causa"].tolist()
+    percent = df["percentual"].tolist()
+    colors = [COLOR_DICT.get(motive)] * len(cause)
+
+    return cause, percent, colors
+
+
+motivos = top_stops["motivo"].tolist()
+valores = top_stops["percentual"].tolist()
+cores_m = [COLOR_DICT.get(motivo, "#000000") for motivo in motivos]
+top_cause, top_value, top_color = get_cause_percent_colors(top_problems, primary_motive)
+sec_cause, sec_value, sec_color = get_cause_percent_colors(secondary_problems, secondary_motive)
+third_cause, third_value, third_color = get_cause_percent_colors(third_problems, third_motive)
+
+
+def create_line_echart(
+    data_nome: list[str],
+    data_values: list[float],
+    cores: list[str],
+    title: str,
+):
+    """
+    Função para criar um gráfico de linhas com echart.
+
+    Args:
+        data_nome (list[str]): Lista com os nomes dos dados.
+        valores (list[float]): Lista com os valores dos dados.
+        cores (list[str]): Lista com as cores dos dados.
+        title (str): Título do gráfico.
+
+    Returns:
+        None
+    """
+
+    # Configurar opções do gráfico
+    options_echart = {
+        "tooltip": {"trigger": "item", "formatter": "{b}: {c}%", "axisPointer": {"type": "shadow"}},
+        "legend": {"bottom": "0%"},
+        "grid": {"left": "7%", "right": "5%", "bottom": "10S%", "top": "10%", "containLabel": True},
+        "xAxis": {
+            "type": "category",
+            "data": data_nome,
+            "axisLabel": {
+                "rotate": 0,  # Remove rotação
+                "interval": 0,
+                "width": 100,  # Largura máxima antes da quebra
+                "overflow": "break",  # Quebra o texto
+                "lineHeight": 15,  # Altura da linha
+            },
+        },
+        "yAxis": {
+            "type": "value",
+            "name": "Tempo (%)",
+            "nameLocation": "center",
+            "nameGap": 35,
+        },
+        "title": {"text": title, "left": "center"},
+        "series": [
+            {
+                "data": [
+                    {
+                        "value": val,
+                        "itemStyle": {"color": cores[0] if len(cores) == 1 else cor},
+                    }
+                    for val, cor in zip(
+                        data_values,
+                        cores,
+                    )
+                ],
+                "type": "bar",
+                "label": {"show": True, "position": "top", "formatter": "{c}%", "fontSize": 12},
+            }
+        ],
+    }
+
+    st_echarts(
+        options=options_echart,
+        height="400px",
     )
 
-    histogram_fig = (
-        alt.Chart(histogram_df)
-        .mark_bar()
-        .encode(
-            x=alt.X("count_motivo:Q", bin=alt.Bin(maxbins=12), title="Quantidade de Ocorrências"),
-            xOffset="motivo:N",
-            y=alt.Y("sum_tempo:Q", title="Soma do Tempo (min)"),
-            color=alt.Color(
-                "motivo:N",
-                scale=alt.Scale(domain=list(COLOR_DICT.keys()), range=list(COLOR_DICT.values())),
-                legend=None,  # Remover a legenda, se necessário
-            ),
-            tooltip=[
-                alt.Tooltip("motivo:N", title="Motivo"),
-                alt.Tooltip("count_motivo:Q", title="Quantidade de Ocorrências"),
-                alt.Tooltip("sum_tempo:Q", title="Soma do Tempo (min)"),
-                alt.Tooltip("mean_tempo:Q", title="Tempo Médio (min)", format=".0f"),
-            ],
-        )
-        .properties(height=483, padding={"left": 10, "right": 10, "top": 5, "bottom": 0})
+
+# Renderizar gráfico
+with top_mot_col.container(border=True):
+    create_line_echart(motivos, valores, cores_m, "Principais Motivos de Parada")
+with top_cause_col.container(border=True):
+    create_line_echart(
+        top_cause, top_value, top_color, f"Principais Causas de {primary_motive.title()}"
+    )
+with sec_cause_col.container(border=True):
+    create_line_echart(
+        sec_cause,
+        sec_value,
+        sec_color,
+        f"Principais Causas de {secondary_motive.title()}",
+    )
+with third_cause_col.container(border=True):
+    create_line_echart(
+        third_cause,
+        third_value,
+        third_color,
+        f"Principais Causas de {third_motive.title()}",
     )
 
-    st.altair_chart(histogram_fig, use_container_width=True)
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ HISTOGRAM ━━ #
+# Colunas de Histograma e Icicle
+
+histogram_df = bar_df.copy()
+# Remover o motivo rodando e parada programada
+histogram_df = histogram_df[
+    ~histogram_df.motivo.isin(["Rodando", "Parada Programada", "Não apontado"])
+]
+
+# Agrupar os dados por motivo para calcular o tempo médio e somar o tempo
+histogram_df = (
+    histogram_df.groupby("motivo", observed=False)
+    .agg(
+        count_motivo=("motivo", "size"),
+        sum_tempo=("tempo", "sum"),
+        mean_tempo=("tempo", "mean"),
+    )
+    .reset_index()
+)
+
+histogram_df = histogram_df.sort_values(by="count_motivo", ascending=True)
+histogram_df.mean_tempo = histogram_df.mean_tempo.round(0)
+
+
+with st.container(border=True):
+    options = {
+        "title": {
+            "text": "Tempo Total de Paradas x Tempo Médio de Paradas x Quantidade de Paradas",
+            "left": "center",
+        },
+        "tooltip": {
+            "trigger": "axis",
+            "axisPointer": {"type": "cross"},
+            "confine": True,
+        },
+        "legend": {"data": ["Tempo Total", "Tempo Médio"], "top": "7%"},
+        "grid": {"left": "3%", "right": "4%", "bottom": "5%", "top": "10%", "containLabel": True},
+        "xAxis": {
+            "type": "category",
+            "data": histogram_df["count_motivo"].tolist(),
+            "name": "Quantidade de Ocorrências",
+            "nameLocation": "center",
+            "nameGap": 30,
+        },
+        "yAxis": [
+            {
+                "type": "value",
+                "name": "Tempo Total (min)",
+                "position": "left",
+            },
+            {
+                "type": "value",
+                "name": "Tempo Médio (min)",
+                "position": "right",
+            },
+        ],
+        "series": [
+            {
+                "name": "Tempo Total",
+                "type": "bar",
+                "data": [
+                    {
+                        "value": row["sum_tempo"],
+                        "itemStyle": {"color": COLOR_DICT.get(row["motivo"], "#000000")},
+                        "count": row["count_motivo"],
+                    }
+                    for _, row in histogram_df.iterrows()
+                ],
+                "label": {"show": True, "position": "top", "formatter": "{c}"},
+            },
+            {
+                "name": "Tempo Médio",
+                "type": "line",
+                "yAxisIndex": 1,
+                "data": [
+                    {
+                        "value": row["mean_tempo"],
+                        "count": row["count_motivo"],
+                        "itemStyle": {"color": COLOR_DICT.get(row["motivo"], "#000000")},
+                    }
+                    for _, row in histogram_df.iterrows()
+                ],
+                "lineStyle": {
+                    "color": "#fff",
+                    "type": "dashed",
+                    "width": 1,
+                },
+                "label": {"show": False, "position": "top", "formatter": "{c}"},
+            },
+        ],
+    }
+
+    # Renderizar gráfico
+    st_echarts(options=options, height="483px")
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ CHART ICICLE ━━ #
-with col_icicle.container(border=True):
+with st.container(border=True):
 
     # Definir o df
     icicle_df = info_ihm.copy()
@@ -429,7 +746,6 @@ with col_icicle.container(border=True):
         values="tempo",
         color="motivo",
         color_discrete_map=COLOR_DICT,
-        height=407,
     )
 
     # Atualizar layout para remover hover
@@ -440,7 +756,12 @@ with col_icicle.container(border=True):
 
     # Atualizar layout
     ice_fig.update_layout(
-        margin=dict(t=20, b=10, l=10, r=10),
+        margin=dict(t=25, b=10, l=10, r=10),
+        title=dict(
+            text="Gráfico Paradas por Blocos",
+            x=0.5,  # Centraliza o título (0.5 = meio)
+            xanchor="center",  # Ancora o título no centro
+        ),
     )
     # Plot
     st.plotly_chart(ice_fig, use_container_width=True)
@@ -452,9 +773,7 @@ with col_icicle.container(border=True):
 # ================================================================================= Tabelas Gerais #
 with st.expander("Tabelas"):
     # Manter apenas as colunas necessárias
-    production = production[
-        ["data_registro", "fabrica", "linha", "turno", "produto", "total_produzido"]
-    ]
+    production = production[["data_registro", "linha", "turno", "produto", "total_produzido"]]
 
     production.total_produzido = production.total_produzido.clip(lower=0)
     production.total_produzido = production.total_produzido
@@ -466,15 +785,24 @@ with st.expander("Tabelas"):
             "turno": "Turno",
             "produto": "Produto",
             "total_produzido": "Produção",
-            "fabrica": "Fábrica",
             "linha": "Linha",
         }
     )
+
+    # Categorias na ordem desejada
+    turno_order = ["NOT", "MAT", "VES"]
+
+    # Converter "Turno" para categoria com a ordem especificada
+    production["Turno"] = pd.Categorical(production["Turno"], categories=turno_order, ordered=True)
+
+    # Ordenar os valores
+    production = production.sort_values(by=["Data", "Linha", "Turno", "Produto"])
 
     # Agrupar os dados por data e turno e produto
     df_production_turn = (
         production.groupby(["Data", "Turno", "Produto"], observed=False)
         .agg({"Produção": "sum"})
+        .sort_values(by=["Data", "Produto", "Turno"])
         .reset_index()
     )
 
