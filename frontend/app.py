@@ -1,6 +1,7 @@
 """ Arquivo principal da aplicação Streamlit. """
 
 import asyncio
+import logging
 import time
 from datetime import datetime, timedelta
 
@@ -21,6 +22,9 @@ from streamlit_authenticator.utilities import (
 )
 from yaml.loader import SafeLoader
 
+logging.basicConfig(level=logging.INFO)
+
+
 st.set_page_config(
     page_title="Shop Floor Management",
     layout="wide",
@@ -30,17 +34,6 @@ st.set_page_config(
 # pylint: disable=w1514
 with open("style.css") as css:
     st.markdown(f"<style>{css.read()}</style>", unsafe_allow_html=True)
-
-st.markdown(
-    """
-    <style>
-    .stMainBlockContainer {
-        padding: 1rem 1.5rem;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                       Inicializar State
@@ -79,7 +72,7 @@ def update_api_dj(url: str, params: str = None):
     return api_get(url, token=token["access"], params=params)
 
 
-def get_for_django(progresso):
+def get_for_django():
     """
     Coleta dados das APIs Django e atualiza o estado da sessão.
 
@@ -90,9 +83,6 @@ def get_for_django(progresso):
 
     # Gera o token
     st.session_state.api_token = api_get_token("bruno.tomaz", "Br120800")
-
-    # Atualiza o progresso
-    progresso.progress(5, "Token ok...")
 
     # Variável com data de hoje no formato yyyy-mm-dd
     now = datetime.now()
@@ -110,8 +100,6 @@ def get_for_django(progresso):
         pd.DataFrame(req_maquina_info),
     ]
 
-    progresso.progress(25, "Dados do Django ok...")
-
     keys_django = [
         "info_ihm",
         "produção",
@@ -119,8 +107,6 @@ def get_for_django(progresso):
     ]
 
     for key, res in zip(keys_django, result_django):
-        prog = 50 + 25 * (keys_django.index(key) + 1) / len(keys_django)
-        progresso.progress(int(prog), "Atualizando dados django...")
         if not res.empty:
             st.session_state[key] = res
 
@@ -134,7 +120,6 @@ def api_session_update() -> None:
     atualiza o estado de 'last_api_call' para a data e hora atual e faz
     a requisição da API. O resultado é armazenado nas chaves da API/State.
     """
-    progress = st.empty()
     # Encontra a data e hora atual
     now = datetime.now()
 
@@ -142,19 +127,13 @@ def api_session_update() -> None:
     if now - st.session_state.last_api_call < timedelta(seconds=60):
         return
 
-    # Atualiza o progresso
-    progress.progress(value=0, text="Atualizando dados...")
-
     # Seta o estado de 'last_api_call' para a data e hora atual
     st.session_state["last_api_call"] = now
 
-    # get_for_django(progress)  #NOTE Para testes django
+    # get_for_django()  # NOTE Para testes django
 
     # Faz a requisição da API
     result = asyncio.run(update_api())
-
-    # Atualiza o progresso
-    progress.progress(50, "Dados do Fastapi ok...")
 
     # Chaves da API/State
     keys = [
@@ -171,17 +150,8 @@ def api_session_update() -> None:
 
     # Corre as chaves e armazena os resultados se existirem
     for key, res in zip(keys, result):
-        prog = 50 + 25 * (keys.index(key) + 1) / len(keys)
-        progress.progress(int(prog), "Atualizando dados fastapi...")
         if not res.empty:
             st.session_state[key] = res
-
-    # Atualiza o progresso
-    progress.progress(100, "Dados atualizados")
-    time.sleep(2)
-
-    # Remove o progresso
-    progress.empty()
 
 
 # Chaves do State a serem verificadas

@@ -94,7 +94,6 @@ cart_in_greenhouse = st.session_state.cart_entering_greenhouse
 production = st.session_state.produção
 estoque_cam_fria = st.session_state.caixas_estoque
 
-
 # ================================================================================================ #
 #                                             AUTH DATA                                            #
 # ================================================================================================ #
