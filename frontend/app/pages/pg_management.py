@@ -760,7 +760,7 @@ with st.container(border=True):
 
     # Atualizar layout
     ice_fig.update_layout(
-        margin=dict(t=25, b=10, l=10, r=10),
+        margin=dict(t=35, b=10, l=10, r=10),
         title=dict(
             text="Gráfico Paradas por Blocos",
             x=0.5,  # Centraliza o título (0.5 = meio)
