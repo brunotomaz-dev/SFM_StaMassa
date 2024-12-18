@@ -396,7 +396,11 @@ stops = bar_full_df.copy()
 # Soma o tempo total do período
 tempo_total = stops.tempo.sum()
 # Remove o que não é necessário
-stops = stops[~stops.motivo.isin(["Rodando", "Parada Programada", "Não apontado", "Refeição"])]
+stops = stops[
+    ~stops.motivo.isin(
+        ["Rodando", "Parada Programada", "Não apontado", "Refeição", "Saída para Backup"]
+    )
+]
 # Agrupa por motivo de parada
 top_stops = (
     stops.groupby("motivo", observed=False)
@@ -605,7 +609,7 @@ histogram_df = (
     .reset_index()
 )
 
-histogram_df = histogram_df.sort_values(by="count_motivo", ascending=True)
+histogram_df = histogram_df.sort_values(by="count_motivo", ascending=False)
 histogram_df.mean_tempo = histogram_df.mean_tempo.round(0)
 
 
