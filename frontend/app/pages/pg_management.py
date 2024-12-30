@@ -413,9 +413,9 @@ top_stops = (
 top_stops_filtered = top_stops[~top_stops.motivo.isin(["Limpeza"])]
 
 # Encontra o principal motivo
-primary_motive = top_stops["motivo"].iloc[0]
-secondary_motive = top_stops["motivo"].iloc[1]
-third_motive = top_stops["motivo"].iloc[2]
+primary_motive = top_stops_filtered["motivo"].iloc[0]
+secondary_motive = top_stops_filtered["motivo"].iloc[1]
+third_motive = top_stops_filtered["motivo"].iloc[2]
 # Dataframe com apenas o principal motivo
 top_problems = stops[stops["motivo"] == primary_motive]
 secondary_problems = stops[stops["motivo"] == secondary_motive]
