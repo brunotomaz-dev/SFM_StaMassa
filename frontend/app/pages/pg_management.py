@@ -408,6 +408,10 @@ top_stops = (
     .reset_index()
     .sort_values(by="tempo", ascending=False)
 )
+
+# Remove motivos que não preciso da causa
+top_stops_filtered = top_stops[~top_stops.motivo.isin(["Limpeza"])]
+
 # Encontra o principal motivo
 primary_motive = top_stops["motivo"].iloc[0]
 secondary_motive = top_stops["motivo"].iloc[1]
