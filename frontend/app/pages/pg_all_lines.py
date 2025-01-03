@@ -78,10 +78,20 @@ st.markdown(
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                          Nav Widgets
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-df_eff: pd.DataFrame = st.session_state.eficiencia
-df_maq_info_original: pd.DataFrame = st.session_state.info_ihm
-df_prod: pd.DataFrame = st.session_state.produção
-df_info: pd.DataFrame = st.session_state.maquina_info_today
+df_eff: pd.DataFrame = (
+    st.session_state.eficiencia if "eficiencia" in st.session_state else pd.DataFrame()
+)
+df_maq_info_original: pd.DataFrame = (
+    st.session_state.info_ihm if "info_ihm" in st.session_state else pd.DataFrame()
+)
+df_prod: pd.DataFrame = (
+    st.session_state.produção if "produção" in st.session_state else pd.DataFrame()
+)
+df_info: pd.DataFrame = (
+    st.session_state.maquina_info_today
+    if "maquina_info_today" in st.session_state
+    else pd.DataFrame()
+)
 
 
 # Garantir que a data é um pandas Timestamp só com a data

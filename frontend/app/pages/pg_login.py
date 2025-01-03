@@ -85,14 +85,20 @@ if "absenteeism" not in st.session_state:
 if "registro_presença" not in st.session_state:
     st.session_state["registro_presença"] = False
 
-
-eficiencia = st.session_state.eficiencia
-performance = st.session_state.performance
-reparo = st.session_state.reparos
-info_ihm = st.session_state.info_ihm
-cart_in_greenhouse = st.session_state.cart_entering_greenhouse
-production = st.session_state.produção
-estoque_cam_fria = st.session_state.caixas_estoque
+# insere os dados nas variáveis, caso o state exista, se não insere um valor padrão
+eficiencia = st.session_state.eficiencia if "eficiencia" in st.session_state else pd.DataFrame()
+performance = st.session_state.performance if "performance" in st.session_state else pd.DataFrame()
+reparo = st.session_state.reparos if "reparos" in st.session_state else pd.DataFrame()
+info_ihm = st.session_state.info_ihm if "info_ihm" in st.session_state else pd.DataFrame()
+cart_in_greenhouse = (
+    st.session_state.cart_entering_greenhouse
+    if "cart_entering_greenhouse" in st.session_state
+    else pd.DataFrame()
+)
+production = st.session_state.produção if "produção" in st.session_state else pd.DataFrame()
+estoque_cam_fria = (
+    st.session_state.caixas_estoque if "caixas_estoque" in st.session_state else pd.DataFrame()
+)
 
 # ================================================================================================ #
 #                                             AUTH DATA                                            #

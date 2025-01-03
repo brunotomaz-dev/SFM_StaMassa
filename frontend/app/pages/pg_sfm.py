@@ -80,11 +80,11 @@ if selected_page == SUB_OPT_2:
 # ================================================================================================ #
 #                                            DATAFRAMES                                            #
 # ================================================================================================ #
-history_ind = st.session_state.hist_ind
-eficiencia = st.session_state.eficiencia
-performance = st.session_state.performance
-reparo = st.session_state.reparos
-stops = st.session_state.info_ihm
+history_ind = st.session_state.hist_ind if "hist_ind" in st.session_state else pd.DataFrame()
+eficiencia = st.session_state.eficiencia if "eficiencia" in st.session_state else pd.DataFrame()
+performance = st.session_state.performance if "performance" in st.session_state else pd.DataFrame()
+reparo = st.session_state.reparos if "reparos" in st.session_state else pd.DataFrame()
+stops = st.session_state.info_ihm if "info_ihm" in st.session_state else pd.DataFrame()
 
 # Ajustar as datas para datetime
 eficiencia["data_registro"] = pd.to_datetime(eficiencia["data_registro"])

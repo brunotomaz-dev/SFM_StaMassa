@@ -44,7 +44,7 @@ FIRST_DAY, LAST_DAY = get_date.get_this_month()
 st.sidebar.title("Configurações")
 
 # Dados da maquina e IHM
-info_data = st.session_state.info_ihm
+info_data = st.session_state.info_ihm if "info_ihm" in st.session_state else pd.DataFrame()
 
 # Data inicial do dataframe
 day_one = pd.to_datetime(info_data["data_registro"].min()).date()
@@ -96,8 +96,10 @@ line_choice = line_col.multiselect(
 #    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 #                                           Dataframes
 #    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-info_ihm: pd.DataFrame = info_data.copy()
-production: pd.DataFrame = st.session_state.produção.copy()
+info_ihm: pd.DataFrame = info_data.copy() if not info_data.empty else pd.DataFrame()
+production: pd.DataFrame = (
+    st.session_state.produção.copy() if "produção" in st.session_state else pd.DataFrame()
+)
 
 # Ajustar a data de registro
 info_ihm["data_registro"] = pd.to_datetime(info_ihm["data_registro"])
