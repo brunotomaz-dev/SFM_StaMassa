@@ -330,15 +330,21 @@ if ROLE == "dev":
 # ================================================================================================ #
 
 # ==================================================================================== Indicadores #
-# Ajuste dos indicadores
-gg_eff = ind_play.get_indicator(eficiencia, IndicatorType.EFFICIENCY, line_turn="Turno")
-gg_perf = ind_play.get_indicator(performance, IndicatorType.PERFORMANCE, line_turn="Turno")
-gg_rep = ind_play.get_indicator(reparo, IndicatorType.REPAIR, line_turn="Turno")
+gg_eff: pd.DataFrame = pd.DataFrame()
+gg_perf: pd.DataFrame = pd.DataFrame()
+gg_rep: pd.DataFrame = pd.DataFrame()
 
-# Manter apenas os dados de hoje
-gg_eff = gg_eff[pd.to_datetime(gg_eff.data_registro).dt.date == today]
-gg_perf = gg_perf[pd.to_datetime(gg_perf.data_registro).dt.date == today]
-gg_rep = gg_rep[pd.to_datetime(gg_rep.data_registro).dt.date == today]
+if not eficiencia.empty:
+    # Ajuste dos indicadores
+    gg_eff = ind_play.get_indicator(eficiencia, IndicatorType.EFFICIENCY, line_turn="Turno")
+    gg_eff = gg_eff[pd.to_datetime(gg_eff.data_registro).dt.date == today]
+if not performance.empty:
+    gg_perf = ind_play.get_indicator(performance, IndicatorType.PERFORMANCE, line_turn="Turno")
+    gg_perf = gg_perf[pd.to_datetime(gg_perf.data_registro).dt.date == today]
+if not reparo.empty:
+    gg_rep = ind_play.get_indicator(reparo, IndicatorType.REPAIR, line_turn="Turno")
+    gg_rep = gg_rep[pd.to_datetime(gg_rep.data_registro).dt.date == today]
+
 
 if gg_eff["eficiencia"].isnull().all():
     gg_eff["eficiencia"] = gg_eff["eficiencia"].fillna(0)
