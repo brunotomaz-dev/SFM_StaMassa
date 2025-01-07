@@ -5,6 +5,7 @@ CreatedBy: Bruno Tomaz
 """
 
 import asyncio
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 
@@ -26,6 +27,7 @@ from src.helpers.background_functions import (
 # Inicializa o agendador de tarefas
 scheduler = BackgroundScheduler()
 executor = ThreadPoolExecutor(max_workers=10)
+lock = threading.Lock()
 HIGH_PRIORITY_INTERVAL = 1
 LOW_PRIORITY_INTERVAL = 5
 NON_CRITICAL_INTERVAL = 60
@@ -46,6 +48,14 @@ async def run_in_executor(func, *args):
     return await loop.run_in_executor(executor, func, *args)
 
 
+def get_tasks() -> None:
+    """Obtém as tarefas a serem agendadas."""
+    with lock:
+        create_production_data()
+        create_maq_ihm_info_data()
+        create_ind_prod()
+
+
 # Iniciar o agendador
 def start_scheduler() -> None:
     """Inicia o agendador de tarefas.
@@ -61,52 +71,34 @@ def start_scheduler() -> None:
     O agendador irá rodar em segundo plano e as tarefas serão executadas em threads separados
     utilizando o executor de threads.
     """
+    with lock:
 
-    # Cria a tarefa de criação dos dados de produção do mês corrente
-    scheduler.add_job(
-        lambda: asyncio.run(run_in_executor(create_production_data)),
-        "interval",
-        minutes=5,
-        start_date=datetime.now() + timedelta(seconds=5),
-        max_instances=3,
-    )
+        scheduler.add_job(
+            lambda: asyncio.run(run_in_executor(get_tasks)),
+            "interval",
+            minutes=1,
+            start_date=datetime.now() + timedelta(seconds=5),
+            max_instances=1,
+        )
 
-    # Cria a tarefa para criar os dados de maquina IHM e Info do mês corrente
-    scheduler.add_job(
-        lambda: asyncio.run(run_in_executor(create_maq_ihm_info_data)),
-        "interval",
-        minutes=1,
-        start_date=datetime.now() + timedelta(seconds=5),
-        max_instances=3,
-    )
+        # Cria a tarefa para criar o histórico de indicadores
+        scheduler.add_job(
+            lambda: asyncio.run(run_in_executor(create_ind_history)),
+            "interval",
+            hours=1,
+            start_date=datetime.now() + timedelta(seconds=5),
+            max_instances=3,
+        )
 
-    # Cria a tarefa para criar os indicadores de produção
-    scheduler.add_job(
-        lambda: asyncio.run(run_in_executor(create_ind_prod)),
-        "interval",
-        minutes=1,
-        start_date=datetime.now() + timedelta(seconds=5),
-        max_instances=3,
-    )
+        # Cria a tarefa para atualizar o plano de ação
+        scheduler.add_job(
+            lambda: asyncio.run(run_in_executor(update_action_plan)),
+            "cron",
+            hour=0,
+            minute=0,
+            start_date=datetime.now() + timedelta(seconds=5),
+            max_instances=3,
+        )
 
-    # Cria a tarefa para criar o histórico de indicadores
-    scheduler.add_job(
-        lambda: asyncio.run(run_in_executor(create_ind_history)),
-        "interval",
-        hours=1,
-        start_date=datetime.now() + timedelta(seconds=5),
-        max_instances=3,
-    )
-
-    # Cria a tarefa para atualizar o plano de ação
-    scheduler.add_job(
-        lambda: asyncio.run(run_in_executor(update_action_plan)),
-        "cron",
-        hour=0,
-        minute=0,
-        start_date=datetime.now() + timedelta(seconds=5),
-        max_instances=3,
-    )
-
-    # Inicia o agendador
-    scheduler.start()
+        # Inicia o agendador
+        scheduler.start()

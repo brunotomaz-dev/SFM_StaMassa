@@ -43,6 +43,7 @@ async def update_api() -> list[pd.DataFrame]:
         APIUrl.URL_INFO_IHM.value,
         APIUrl.URL_HIST_IND.value,
         f"{APIUrl.URL_MAQ_INFO.value}?start={now_}&end={now_}",
+        APIUrl.URL_CART_GREENHOUSE.value,
     ]
 
     # Execução de tasks

@@ -85,10 +85,13 @@ class ProductionTimes:
         Calcula o tempo esperado de produção.
         """
         df["tempo_esperado"] = df.apply(
-            lambda row: (
-                np.floor(self.__get_elapsed_time(row.turno) - row.desconto)
-                if row.data_registro.date() == pd.to_datetime("today").date()
-                else 480 - row.desconto
+            lambda row: max(
+                1,
+                (
+                    np.floor(self.__get_elapsed_time(row.turno) - row.desconto)
+                    if row.data_registro.date() == pd.to_datetime("today").date()
+                    else 480 - row.desconto
+                ),
             ),
             axis=1,
         )

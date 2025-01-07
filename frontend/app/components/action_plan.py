@@ -180,7 +180,7 @@ def session_state_start(df: pd.DataFrame) -> None:
 # ================================================================================================ #
 
 
-def action_plan(date_choice: str | None) -> None:
+def action_plan(date_choice: str, data_choice_2: str) -> None:
     """Plano de ação."""
     action_plan_df = fetch_action_plan()
 
@@ -190,10 +190,10 @@ def action_plan(date_choice: str | None) -> None:
     # Tabela
     df_action = st.session_state.table_action
 
-    if date_choice:
-        date_choice = pd.Timestamp(date_choice)
-        df_action["Data"] = pd.to_datetime(df_action["Data"])
-        df_action = df_action[df_action["Data"] == date_choice]
+    date_choice = pd.Timestamp(date_choice)
+    data_choice_2 = pd.Timestamp(data_choice_2)
+    df_action["Data"] = pd.to_datetime(df_action["Data"])
+    df_action = df_action[(df_action["Data"] >= date_choice) & (df_action["Data"] <= data_choice_2)]
 
     config = {
         "Data": st.column_config.DateColumn(format="DD/MM/YYYY", default=pd.Timestamp("today")),

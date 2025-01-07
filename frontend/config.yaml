@@ -9,14 +9,14 @@ credentials:
       failed_login_attempts: 0
       logged_in: false
       name: Ademir Nascimento
-      password: Abc@1234
+      password: $2b$12$4jtlmgVRLLvLrZ169zkpLe9wEXOb5e3gKyjMv5XVM6pFIMPPrVGGy
       role: coordenador-pcp
     alexandre.diniz@santamassa.com.br:
       email: alexandre.diniz@santamassa.com.br
       failed_login_attempts: 0
       logged_in: false
       name: Alexandre Diniz
-      password: Abc@1234
+      password: $2b$12$tJaW4PYWFziJ3tzV80eTz.dc6A2C9ig/DnCkjybVtcFaG5BWHk836
       role: coordenador
     bruno.tomaz@santamassa.com.br:
       email: bruno.tomaz@santamassa.com.br
@@ -30,10 +30,11 @@ credentials:
       failed_login_attempts: 0
       logged_in: false
       name: Cid Franciscon
-      password: Abc@1234
+      password: $2b$12$8jIJTGL4w7qA7.4SI7iVNuti4oYq5Nl5GG1XEklj/IfXZS82L7mKq
       role: coordenador
     claudia.antunes@santamassa.com.br:
       email: claudia.antunes@santamassa.com.br
+      failed_login_attempts: 0
       logged_in: false
       name: Claudia Antunes
       password: Abc@1234
@@ -43,13 +44,20 @@ credentials:
       failed_login_attempts: 0
       logged_in: false
       name: Guilherme Bandeira
-      password: Abc@1234
+      password: $2b$12$3/ZY6K6sytljdh0BIkpajOqtaATKkj2TBKUqMiNOub5WPiojsQg6O
       role: gerente
+    lideres.noturno@santamassa.com.br:
+      email: lideres.noturno@santamassa.com.br
+      logged_in: false
+      name: Everton de Oliveira
+      password: $2b$12$6YLCmY083VT8LiBMZTrB2.4XG9TPX1epXfqEbHh0w..Jw0RIgtMha
+      role: supervisor
     rogerio.inacio@santamassa.com.br:
       email: rogerio.inacio@santamassa.com.br
+      failed_login_attempts: 0
       logged_in: false
       name: Rogerio Inacio
-      password: Abc@1234
+      password: $2b$12$hXEUqPTw7cuk2LCuFvG4BOKJNa3ljoH/nBhAfAkbEsQQuoUxeW/pa
       role: supervisor
     lideres.noturno@santamassa.com.br:
       email: lideres.noturno@santamassa.com.br

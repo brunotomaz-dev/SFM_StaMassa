@@ -25,3 +25,11 @@ div * {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     height: 100%;
 }
+
+.stMainBlockContainer {
+  padding: 1.5rem
+}
+
+.block-container {
+  padding: 1.5rem
+}

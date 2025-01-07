@@ -1,10 +1,15 @@
 """Módulo que gerencia as requisições da API."""
 
+import logging
 from io import StringIO
 
 import aiohttp
 import pandas as pd
 import streamlit as st
+
+logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 
 async def fetch_api_data(url: str) -> pd.DataFrame:
@@ -19,7 +24,13 @@ async def fetch_api_data(url: str) -> pd.DataFrame:
                 df = pd.read_json(StringIO(str(data)), orient="split")
                 return df
             else:
-                st.error("Erro ao obter os dados da API.")
+                logger.error(
+                    "Erro ao obter os dados da API. Status code: %s\n Message: %s\n Url: %s",
+                    response.status,
+                    response.reason,
+                    response.url,
+                )
+
                 return pd.DataFrame()
 
 

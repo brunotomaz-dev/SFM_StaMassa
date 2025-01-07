@@ -81,3 +81,20 @@ class ProtheusCYVController:
             )
 
         return JSONResponse(content=data.to_json(date_format="iso", orient="split"))
+
+    def get_cart_entering_greenhouse(self) -> pd.DataFrame:
+        """Retorna os dados de entrada de carrinhos na estufa do DB local.
+
+        Obtém os dados de entrada de carrinhos na estufa do DB local e os retorna como um
+        JSONResponse. Se nenhum dado for encontrado, retorna um erro 404.
+
+        Returns:
+            pd.DataFrame: Dados de entrada de carrinhos na estufa do DB local.
+        """
+        data = self.__protheus_cyv_service.get_cart_entering_greenhouse()
+        if data is None or data.empty:
+            return JSONResponse(
+                status_code=status.HTTP_404_NOT_FOUND, content={"message": "Data not found."}
+            )
+
+        return JSONResponse(content=data.to_json(date_format="iso", orient="split"))

@@ -22,7 +22,14 @@ today, this_turn = get_date.get_this_turn()
 
 ROLE: str = st.session_state["role"]
 USER_NAME: str = st.session_state["name"]
-SETORES: list[str] = ["Panificação", "Forno", "Pasta", "Recheio", "Embalagem", "Pães Diversos"]
+SETORES: list[str] = [
+    "Panificação",
+    "Forno",
+    "Pasta",
+    "Recheio",
+    "Embalagem",
+    "Pães Diversos",
+]
 FALTAS_TIPOS: list[str] = [
     "Falta",
     "Atraso",
@@ -78,15 +85,20 @@ if "absenteeism" not in st.session_state:
 if "registro_presença" not in st.session_state:
     st.session_state["registro_presença"] = False
 
-
-eficiencia = st.session_state.eficiência
-performance = st.session_state.performance
-reparo = st.session_state.reparos
-info_ihm = st.session_state.info_ihm
-
-production = st.session_state.produção
-estoque_cam_fria = st.session_state.caixas_estoque
-
+# insere os dados nas variáveis, caso o state exista, se não insere um valor padrão
+eficiencia = st.session_state.eficiencia if "eficiencia" in st.session_state else pd.DataFrame()
+performance = st.session_state.performance if "performance" in st.session_state else pd.DataFrame()
+reparo = st.session_state.reparos if "reparos" in st.session_state else pd.DataFrame()
+info_ihm = st.session_state.info_ihm if "info_ihm" in st.session_state else pd.DataFrame()
+cart_in_greenhouse = (
+    st.session_state.cart_entering_greenhouse
+    if "cart_entering_greenhouse" in st.session_state
+    else pd.DataFrame()
+)
+production = st.session_state.produção if "produção" in st.session_state else pd.DataFrame()
+estoque_cam_fria = (
+    st.session_state.caixas_estoque if "caixas_estoque" in st.session_state else pd.DataFrame()
+)
 
 # ================================================================================================ #
 #                                             AUTH DATA                                            #
@@ -105,7 +117,15 @@ if st.session_state["authentication_status"]:
 
 # ================================================================================================ #
 #                                               MODAL                                              #
-# ================================================================================================
+# ================================================================================================ #
+SUP_TURN = None
+if USER_NAME and ROLE == "supervisor":
+    # cspell: words Rogerio Inacio
+    SUP_TURN = {
+        "Claudia Antunes": "MAT",
+        "Rogerio Inacio": "VES",
+        "Everton de Oliveira": "NOT",
+    }[USER_NAME]
 
 
 @st.dialog("Registros de Absenteísmo", width="large")
@@ -141,16 +161,9 @@ def show_absent(
     )
 
     # Supervisor / Turno
-    if ROLE == "supervisor":
-        # cspell: words Rogerio Inacio
-        sup_turn = {
-            "Claudia Antunes": "MAT",
-            "Rogerio Inacio": "VES",
-            "Everton de Oliveira": "NOT",
-        }[USER_NAME]
-
+    if ROLE == "supervisor" and SUP_TURN:
         # Caso role = supervisor mostrar dados do turno do supervisor
-        filtered_df = filtered_df[filtered_df["Turno"] == sup_turn]
+        filtered_df = filtered_df[filtered_df["Turno"] == SUP_TURN]
 
     # Exibir os registros filtrados
     st.write("#### Registros Filtrados")
@@ -317,15 +330,21 @@ if ROLE == "dev":
 # ================================================================================================ #
 
 # ==================================================================================== Indicadores #
-# Ajuste dos indicadores
-gg_eff = ind_play.get_indicator(eficiencia, IndicatorType.EFFICIENCY, line_turn="Turno")
-gg_perf = ind_play.get_indicator(performance, IndicatorType.PERFORMANCE, line_turn="Turno")
-gg_rep = ind_play.get_indicator(reparo, IndicatorType.REPAIR, line_turn="Turno")
+gg_eff: pd.DataFrame = pd.DataFrame()
+gg_perf: pd.DataFrame = pd.DataFrame()
+gg_rep: pd.DataFrame = pd.DataFrame()
 
-# Manter apenas os dados de hoje
-gg_eff = gg_eff[pd.to_datetime(gg_eff.data_registro).dt.date == today]
-gg_perf = gg_perf[pd.to_datetime(gg_perf.data_registro).dt.date == today]
-gg_rep = gg_rep[pd.to_datetime(gg_rep.data_registro).dt.date == today]
+if not eficiencia.empty:
+    # Ajuste dos indicadores
+    gg_eff = ind_play.get_indicator(eficiencia, IndicatorType.EFFICIENCY, line_turn="Turno")
+    gg_eff = gg_eff[pd.to_datetime(gg_eff.data_registro).dt.date == today]
+if not performance.empty:
+    gg_perf = ind_play.get_indicator(performance, IndicatorType.PERFORMANCE, line_turn="Turno")
+    gg_perf = gg_perf[pd.to_datetime(gg_perf.data_registro).dt.date == today]
+if not reparo.empty:
+    gg_rep = ind_play.get_indicator(reparo, IndicatorType.REPAIR, line_turn="Turno")
+    gg_rep = gg_rep[pd.to_datetime(gg_rep.data_registro).dt.date == today]
+
 
 if gg_eff["eficiencia"].isnull().all():
     gg_eff["eficiencia"] = gg_eff["eficiencia"].fillna(0)
@@ -362,6 +381,42 @@ df_production = pd.concat([df_production, prod_total])
 
 # Alterar o estilo para números no formato brasileiro
 df_production = df_production.style.format(thousands=".", decimal=",", precision=0)
+
+# ====================================================================================== Carrinhos #
+# Dataframe dos carrinhos
+df_cart: pd.DataFrame = cart_in_greenhouse.copy()
+
+# Filtrar pela data de hoje
+df_cart["Data_apontamento"] = pd.to_datetime(df_cart["Data_apontamento"], format="%Y%m%d").dt.date
+df_cart = df_cart[df_cart["Data_apontamento"] == today]
+
+# Renomear colunas
+df_cart.columns = ["Data", "Turno", "Carrinhos"]
+
+# Substituir os valores de turno
+df_cart["Turno"] = df_cart["Turno"].replace(
+    {"MAT": "Matutino", "VES": "Vespertino", "NOT": "Noturno"}
+)
+
+# Adicionar um 'turno' Total com a soma dos carrinhos
+df_cart.loc["TOTAL"] = ["", "TOTAL", df_cart["Carrinhos"].sum()]
+
+# Ajustar a ordem do turno categorizando
+df_cart["Turno"] = pd.Categorical(
+    df_cart["Turno"],
+    categories=["Noturno", "Matutino", "Vespertino", "TOTAL"],
+    ordered=True,
+)
+
+# Remove a coluna da data
+df_cart = df_cart.drop(columns=["Data"])
+
+# Ordenar por turno
+df_cart = df_cart.sort_values(by="Turno")
+
+# Tornar o turno o índice
+df_cart = df_cart.set_index("Turno")
+
 
 # ================================================================================= Linhas Rodando #
 # Ajustar data e filtrar
@@ -416,6 +471,12 @@ if presence_df.empty:
 else:
     presence_df["Data"] = pd.to_datetime(presence_df["Data"]).dt.date
     presence_df = presence_df[presence_df["Data"] == today]
+
+    # Supervisor / Turno
+    if ROLE == "supervisor":
+        # Caso role = supervisor mostrar dados do turno do supervisor
+        presence_df = presence_df[presence_df["Turno"] == SUP_TURN]
+
     # Acrescentar uma coluna com o total de presentes somando as colunas dos setores
     presence_df["Total"] = presence_df[SETORES].sum(axis=1)
     # Agrupar por data
@@ -492,6 +553,12 @@ with col_prod:
             st.table(df_production)
 
         render_table()
+
+    with st.container(border=True):
+        # ============================================================================== Carrinhos #
+        st.subheader("Carrinhos Produzidos")
+        st.table(df_cart)
+
 
 with col_lines.container(border=True):
     # ================================================================================= Linhas #

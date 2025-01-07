@@ -8,6 +8,7 @@ import pandas as pd
 # pylint: disable=import-error
 from src.model.maquina_info_model import MaquinaInfoModel
 from src.service.functions.clean_data import CleanData
+from src.service.maquina_qualidade_service import MaquinaQualidadeService
 
 
 class MaquinaInfoService:
@@ -16,6 +17,7 @@ class MaquinaInfoService:
     def __init__(self) -> None:
         self.__maquina_info = MaquinaInfoModel()
         self.__clean_data = CleanData()
+        self.__maquina_qualidade = MaquinaQualidadeService()
 
     def get_data(self, period: tuple):
         """Método responsável por tratar os dados da máquina"""
@@ -30,6 +32,14 @@ class MaquinaInfoService:
 
             # Faz ajustes nos dados
             data = self.__data_adjustment(data)
+
+        return data
+
+    def get_pure_data(self, period: tuple):
+        """Método responsável por tratar os dados da máquina"""
+
+        # Consulta os dados da máquina
+        data = self.__maquina_info.get_data(period)
 
         return data
 
@@ -49,6 +59,50 @@ class MaquinaInfoService:
             data = self.__data_adjustment_production(data)
 
         return data
+
+    def get_production_data_by_period(self, period: str):
+        """Método responsável por tratar os dados da máquina"""
+
+        # Consulta os dados da máquina
+        data = self.__maquina_info.get_production_data_by_period(period)
+        qual = self.__maquina_qualidade.get_data((period, period))
+
+        # Ajusta os dados - Data de registro
+        data.data_registro = pd.to_datetime(data.data_registro)
+        qual.data_registro = pd.to_datetime(qual.data_registro)
+
+        # Classificar os dados
+        data = data.sort_values(by=["linha", "turno"])
+        qual = qual.sort_values(by=["linha", "turno"])
+
+        # Junta os DataFrames pela data e turno
+        df = pd.merge(data, qual, on=["linha", "maquina_id", "data_registro", "turno"], how="left")
+
+        # Preenche os dados faltantes
+        df = df.fillna(0)
+
+        # Calcula produção caso haja diferença no sensor
+        mask = (df.total_ciclos - df.total_produzido_sensor) / df.total_ciclos < 0.05
+        ciclos = df.total_ciclos - df.bdj_vazias - df.bdj_retrabalho
+        sensor = df.total_produzido_sensor - df.bdj_retrabalho
+        df["total_produzido"] = np.where(mask, sensor, ciclos)
+
+        # Garantir que seja inteiro
+        df.total_produzido = df.total_produzido.astype(int)
+
+        # Manter apenas as colunas necessárias
+        df = df[
+            [
+                "linha",
+                "maquina_id",
+                "data_registro",
+                "turno",
+                "total_produzido",
+                "produto",
+            ]
+        ]
+
+        return df
 
     # ==================================== Funções Auxiliares ==================================== #
     @staticmethod

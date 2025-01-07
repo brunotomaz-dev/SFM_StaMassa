@@ -118,3 +118,69 @@ class MaquinaInfoModel:
         query = f"{select_} {from_} {where_} {order_by}"
 
         return self.__automacao.get_data(query)
+
+    def get_production_data_by_period(self, period: str) -> pd.DataFrame:
+        """
+        Realiza a consulta no banco de dados e retorna os dados da tabela maquina_info.
+        """
+
+        first_day = pd.to_datetime(period).strftime("%Y-%m-%d")
+
+        # Select
+        select_ = """
+            SELECT
+                linha,
+                maquina_id,
+                turno,
+                contagem_total_ciclos as total_ciclos,
+                contagem_total_produzido as total_produzido_sensor,
+                B1_DESC as produto,
+                data_registro
+        """
+
+        # From
+        from_ = """
+            FROM (
+                SELECT
+                    (SELECT TOP 1 t2.fabrica FROM AUTOMACAO.dbo.maquina_cadastro t2
+                    WHERE t2.maquina_id = t1.maquina_id AND t2.data_registro <= t1.data_registro
+                    ORDER BY t2.data_registro DESC, t2.hora_registro DESC) as fabrica,
+                    (SELECT TOP 1 t2.linha FROM AUTOMACAO.dbo.maquina_cadastro t2
+                    WHERE t2.maquina_id = t1.maquina_id AND t2.data_registro <= t1.data_registro
+                    ORDER BY t2.data_registro DESC, t2.hora_registro DESC) as linha,
+                    t1.maquina_id,
+                    t1.turno,
+                    t1.contagem_total_ciclos,
+                    t1.contagem_total_produzido,
+                    (SELECT TOP 1 t2.produto_id FROM AUTOMACAO.dbo.maquina_produto t2
+                    WHERE t2.maquina_id = t1.maquina_id AND t2.data_registro <= t1.data_registro
+                    ORDER BY t2.data_registro DESC, t2.hora_registro DESC) as produto_id,
+                    t1.data_registro,
+                    t1.hora_registro,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY t1.data_registro, t1.turno, t1.maquina_id
+                        ORDER BY t1.data_registro DESC, t1.hora_registro DESC) AS rn
+                FROM AUTOMACAO.dbo.maquina_info t1
+            ) AS t
+        """
+
+        # Join
+        join_ = """
+            INNER JOIN
+                TOTVSDB.dbo.SB1000 SB1 WITH (NOLOCK)
+                ON SB1.B1_FILIAL = '01' AND SB1.B1_COD = t.produto_id AND SB1.D_E_L_E_T_<>'*'
+        """
+
+        # Where
+        where_ = f"""
+            WHERE t.rn = 1
+                AND hora_registro > '00:01'
+                AND data_registro = '{first_day}'"""
+
+        # Order by
+        order_by = "ORDER BY data_registro DESC, linha"
+
+        # Query
+        query = f"{select_} {from_} {join_} {where_} {order_by}"
+
+        return self.__automacao.get_data(query)
