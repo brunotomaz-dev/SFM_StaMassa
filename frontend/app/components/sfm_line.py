@@ -29,7 +29,12 @@ def create_line_chart(df: pd.DataFrame, indicator: IndicatorType) -> None:
                 "data": df.data_registro.unique().tolist(),
                 "show": False,
             },
-            "yAxis": {"type": "value", "show": False, "min": 0, "max": 120},
+            "yAxis": {
+                "type": "value",
+                "show": False,
+                "min": 0,
+                "max": 120 if indicator == IndicatorType.EFFICIENCY else 20,
+            },
             "series": [
                 {
                     "data": df[indicator.value].tolist(),
@@ -53,6 +58,7 @@ def create_line_chart(df: pd.DataFrame, indicator: IndicatorType) -> None:
                 "trigger": "axis",
                 "formatter": "{b}: {c}%",
                 "axisPointer": {"type": "shadow"},
+                "confine": True,
             },
             "grid": {
                 "top": "15%",  # Ajuste a margem superior
