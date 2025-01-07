@@ -12,6 +12,7 @@ from app.api.requests_ import fetch_api_data
 from app.api.urls import APIUrl
 from app.components.sfm_gauge_opt2 import create_gauge_chart
 from app.functions.get_date import GetDate
+from app.helpers.timer_decorator import timer_decorator
 from app.helpers.variables import COLOR_DICT, IndicatorType
 
 get_date = GetDate()
@@ -44,46 +45,39 @@ st.markdown(
 # ================================================================================================ #
 
 
-async def get_data():
+async def get_data(selected_date: pd.Timestamp) -> pd.DataFrame:
     """Função para buscar os dados da API."""
 
-    # Último dia do mês atual
-    end = LAST_DAY.strftime("%Y-%m-%d")
-
-    # Obter a data de 31 dias antes da data de hoje
-    start = TODAY - pd.DateOffset(days=31)
-
-    url = f"{APIUrl.URL_MAQ_INFO.value}?start={start}&end={end}"
+    url = f"{APIUrl.URL_MAQ_INFO.value}?start={selected_date}&end={selected_date}"
 
     data = await fetch_api_data(url)
 
     return data
 
 
-@st.fragment()
-def get_api_data():
+@timer_decorator
+@st.cache_data(max_entries=1, show_spinner="Lendo dados...")
+def get_api_data(chosen_date: pd.Timestamp) -> None:
     """
     Função para buscar os dados da API a cada 60 segundos e
     atualizar a variável de estado 'maquina_info' com os dados
     obtidos. Isso garante que os dados sejam atualizados mesmo
     quando o usuário não interage com a aplicação.
     """
-    progress = st.empty()
 
-    progress.progress(value=5, text="Carregando dados...")
-    maquina_info_data = asyncio.run(get_data())
-    progress.progress(100)
+    maquina_info_data = asyncio.run(get_data(chosen_date))
     if maquina_info_data.empty:
         st.error("Não foi possível carregar os dados.")
-        progress.empty()
         st.stop()
     else:
         st.session_state["maquina_info"] = maquina_info_data
-        progress.empty()
 
+
+# Encontrar a data de ontem baseado em TODAY
+yesterday = TODAY - pd.Timedelta(days=1)
 
 if "maquina_info" not in st.session_state:
-    get_api_data()
+    get_api_data(yesterday)
 
 
 # ================================================================================================ #
@@ -92,18 +86,16 @@ if "maquina_info" not in st.session_state:
 
 st.sidebar.title("Configurações")
 
-# Encontrar a data de ontem baseado em TODAY
-yesterday = TODAY - pd.Timedelta(days=1)
-
-# Encontrar a data mínima do dataframe
-f_day = st.session_state.maquina_info.data_registro.min()
-f_day = pd.to_datetime(f_day).date()
-
 date_picked = st.sidebar.date_input(
-    "Escolha a data", value=yesterday, min_value=f_day, max_value=yesterday, format="DD/MM/YYYY"
+    "Escolha a data",
+    value=yesterday,
+    min_value=TODAY - pd.DateOffset(days=31),
+    max_value=yesterday,
+    format="DD/MM/YYYY",
 )
 
 if date_picked:
+    get_api_data(date_picked)
     LINE_PICKED = st.sidebar.selectbox("Escolha a linha", list(range(1, 15)))
 
     turn_picked = st.sidebar.selectbox(
@@ -118,7 +110,7 @@ if date_picked:
 # ================================================================================================ #
 
 maq_info = st.session_state.maquina_info
-eficiencia = st.session_state.eficiência
+eficiencia = st.session_state.eficiencia
 performance = st.session_state.performance
 reparos = st.session_state.reparos
 info_ihm = st.session_state.info_ihm

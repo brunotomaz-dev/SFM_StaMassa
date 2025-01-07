@@ -107,7 +107,6 @@ class IndicatorsPlayground:
             .round(2)
             .reset_index()
         )
-
         # Merge dos dataframes por data e pela escolha do usuário
         df = pd.merge(
             df_dates, df, on=["data_registro", "turno" if is_turn else "linha"], how="left"
