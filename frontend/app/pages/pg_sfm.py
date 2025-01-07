@@ -93,15 +93,11 @@ reparo["data_registro"] = pd.to_datetime(reparo["data_registro"])
 stops["data_registro"] = pd.to_datetime(stops["data_registro"])
 
 # Filtrar para manter apenas dados do mês corrente
-eficiencia = eficiencia[
-    eficiencia["data_registro"].dt.month == eficiencia["data_registro"].dt.month.max()
-]
-performance = performance[
-    performance["data_registro"].dt.month == performance["data_registro"].dt.month.max()
-]
-reparo = reparo[reparo["data_registro"].dt.month == reparo["data_registro"].dt.month.max()]
-stops = stops[stops["data_registro"].dt.month == stops["data_registro"].dt.month.max()]
-
+current_period = eficiencia["data_registro"].dt.to_period("M").max()
+eficiencia = eficiencia[eficiencia["data_registro"].dt.to_period("M") == current_period]
+performance = performance[performance["data_registro"].dt.to_period("M") == current_period]
+reparo = reparo[reparo["data_registro"].dt.to_period("M") == current_period]
+stops = stops[stops["data_registro"].dt.to_period("M") == current_period]
 
 # ==================================== Ajustes Dos Indicadores =================================== #
 df_eff = ind_play.get_indicator(eficiencia, IndicatorType.EFFICIENCY, turn, line_turn, fabrica)

@@ -76,6 +76,7 @@ def get_maquina_ihm(
         ) from e
 
 
+# =================================================================================== Maquina Info #
 @machine_router.get(
     "/maquina_info",
     summary="Retorna os dados da máquina info no intervalo de datas especificado.",
@@ -106,6 +107,38 @@ def get_maquina_info(
         ) from e
 
 
+# ============================================================================== Maquina Info Pure #
+@machine_router.get(
+    "/maquina_info_pure",
+    summary="Retorna os dados da máquina info no intervalo de datas especificado.",
+    responses={
+        404: {"description": "Data not found", **description_404},
+        500: {"description": "Internal Server Error", **description_500},
+    },
+)
+def get_maquina_info_pure(
+    start: str = Query(..., description="Data de início no formato %Y-%m-%d"),
+    end: str = Query(..., description="Data de fim no formato %Y-%m-%d"),
+) -> JSONResponse:
+    """Retorna os dados da máquina info no intervalo de datas especificado.
+
+    Args:
+    start (str): Data de início no formato %Y-%m-%d.
+    end (str): Data de fim no formato %Y-%m-%d.
+
+    Returns:
+    JSONResponse: Dados da máquina info no intervalo de datas especificado.
+    """
+    try:
+        return maquina_info_controller.get_pure_data((start, end))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=[{"loc": ["query", "start"], "msg": str(e), "type": "server_error"}],
+        ) from e
+
+
+# ============================================================================== Maquina Qualidade #
 @machine_router.get(
     "/maquina_qualidade",
     summary="Retorna os dados da máquina qualidade no intervalo de datas especificado.",
@@ -136,6 +169,7 @@ def get_maquina_qualidade(
         ) from e
 
 
+# ======================================================================================= Produção #
 @machine_router.get(
     "/production",
     summary="Retorna os dados de produção da data especificada.",
