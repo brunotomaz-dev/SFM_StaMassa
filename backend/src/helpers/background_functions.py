@@ -58,6 +58,7 @@ def create_production_data() -> None:
 
         # obter a data de 31 dias antes da data de hoje
         start_31 = today - pd.DateOffset(days=31)
+        start_31 = start_31.strftime("%Y-%m-%d")
 
         # Obter os dados da máquina Info e Qualidade
         prod = maquina_info_service.get_production_data((start_31, end))
@@ -71,6 +72,7 @@ def create_production_data() -> None:
 
         # Salva no banco de dados local
         production_service.replace_data(data)
+
     except (ValueError, KeyError, TypeError) as e:
         logger.error("Erro ao criar dados de produção: %s", e)
     # pylint: disable=w0718

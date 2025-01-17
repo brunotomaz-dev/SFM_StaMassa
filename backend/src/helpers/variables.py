@@ -31,7 +31,7 @@ class IndicatorType(Enum):
 
 CICLOS_ESPERADOS = 11.2
 CICLOS_BOLINHA = 7
-TEMPO_AJUSTE = 10
+TEMPO_AJUSTE = 2
 PESO_BANDEJAS = 0.028
 PESO_SACO = 0.080
 
@@ -53,7 +53,7 @@ DESC_PERF = {
 DESC_REP = {"Troca de Produto": 35}
 
 # List que não afeta ou afeta
-NOT_EFF = ["Sem Produção", "Backup"]
+NOT_EFF = ["Sem Produção", "Backup", "Limpeza para parada de Fábrica", "Saída para backup"]
 NOT_PERF = [
     "Sem Produção",
     "Backup",
@@ -61,6 +61,7 @@ NOT_PERF = [
     "Risco de Contaminação",
     "Parâmetros de Qualidade",
     "Manutenção",
+    "Saída para backup",
 ]
 AF_REP = ["Manutenção", "Troca de Produtos"]
 

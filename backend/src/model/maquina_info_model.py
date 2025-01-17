@@ -70,52 +70,56 @@ class MaquinaInfoModel:
         first_day = pd.to_datetime(first_day).strftime("%Y-%m-%d")
         last_day = pd.to_datetime(last_day).strftime("%Y-%m-%d")
 
-        # Select
-        select_ = "SELECT *"
-
-        # From
-        from_ = (
-            "FROM ( "
-            "SELECT "
-            "(SELECT TOP 1 t2.fabrica FROM AUTOMACAO.dbo.maquina_cadastro t2 "
-            "WHERE t2.maquina_id = t1.maquina_id AND t2.data_registro <= t1.data_registro "
-            "ORDER BY t2.data_registro DESC, t2.hora_registro DESC) as fabrica, "
-            "(SELECT TOP 1 t2.linha FROM AUTOMACAO.dbo.maquina_cadastro t2 "
-            "WHERE t2.maquina_id = t1.maquina_id AND t2.data_registro <= t1.data_registro "
-            "ORDER BY t2.data_registro DESC, t2.hora_registro DESC) as linha, "
-            "t1.maquina_id, "
-            "t1.turno, "
-            "t1.status, "
-            "t1.contagem_total_ciclos as total_ciclos, "
-            "t1.contagem_total_produzido as total_produzido, "
-            "t1.data_registro, "
-            "t1.hora_registro, "
-            "(SELECT TOP 1 t2.produto_id FROM AUTOMACAO.dbo.maquina_produto t2 "
-            "WHERE t2.maquina_id = t1.maquina_id AND t2.data_registro <= t1.data_registro "
-            "ORDER BY t2.data_registro DESC, t2.hora_registro DESC) as produto_id, "
-            "ROW_NUMBER() OVER ( "
-            "PARTITION BY t1.data_registro, t1.turno, t1.maquina_id "
-            "ORDER BY t1.data_registro DESC, t1.hora_registro DESC"
-            ") AS rn "
-            "FROM AUTOMACAO.dbo.maquina_info t1 "
-            ") AS t "
-        )
-
         # Where
-        where_ = (
-            (
-                f"WHERE rn = 1 AND data_registro between '{first_day}' and '{last_day}' "
-                "AND hora_registro > '00:01'"
-            )
+        where_date = (
+            f"BETWEEN '{first_day}' and '{last_day}' "
             if first_day != last_day
-            else f"WHERE rn = 1 AND data_registro >= '{first_day}' AND hora_registro > '00:01'"
+            else f">= '{first_day}'"
         )
 
-        # Order by
-        order_by = "ORDER BY data_registro DESC, linha"
-
-        # Query
-        query = f"{select_} {from_} {where_} {order_by}"
+        query = f"""
+            SELECT * FROM (
+                SELECT
+                    (
+                        SELECT TOP 1 t2.fabrica
+                        FROM AUTOMACAO.dbo.maquina_cadastro t2
+                        WHERE t2.maquina_id = t1.maquina_id
+                        AND t2.data_registro <= t1.data_registro
+                        ORDER BY t2.data_registro DESC, t2.hora_registro DESC
+                    ) as fabrica,
+                    (
+                        SELECT TOP 1 t2.linha
+                        FROM AUTOMACAO.dbo.maquina_cadastro t2
+                        WHERE t2.maquina_id = t1.maquina_id
+                        AND t2.data_registro <= t1.data_registro
+                        ORDER BY t2.data_registro DESC, t2.hora_registro DESC
+                    ) as linha,
+                    t1.maquina_id,
+                    t1.turno,
+                    t1.status,
+                    t1.produto,
+                    t1.contagem_total_ciclos as total_ciclos,
+                    t1.contagem_total_produzido as total_produzido,
+                    t1.data_registro,
+                    t1.hora_registro,
+                    (
+                        SELECT TOP 1 t2.produto_id
+                        FROM AUTOMACAO.dbo.maquina_produto t2
+                        WHERE t2.maquina_id = t1.maquina_id
+                        AND t2.data_registro <= t1.data_registro
+                        ORDER BY t2.data_registro DESC, t2.hora_registro DESC
+                    ) as produto_id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY t1.data_registro, t1.turno, t1.maquina_id
+                        ORDER BY t1.data_registro DESC, t1.hora_registro DESC
+                    ) AS rn
+                FROM AUTOMACAO.dbo.maquina_info t1
+            ) AS t
+            WHERE rn = 1
+            AND data_registro {where_date}
+            AND hora_registro > '00:01'
+            ORDER BY data_registro DESC, linha
+        """
 
         return self.__automacao.get_data(query)
 

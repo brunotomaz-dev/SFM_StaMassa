@@ -62,7 +62,7 @@ date_choice_1, date_choice_2 = date_col.date_input(
     "Escolha a data",
     value=(max(FIRST_DAY.date(), day_one), min(yesterday, day_last)),
     min_value=day_one,
-    max_value=yesterday,
+    max_value=TODAY,
     format="DD/MM/YYYY",
 )
 
@@ -400,7 +400,7 @@ tempo_total = stops.tempo.sum()
 # Remove o que não é necessário
 stops = stops[
     ~stops.motivo.isin(
-        ["Rodando", "Parada Programada", "Não apontado", "Refeição", "Saída para Backup"]
+        ["Rodando", "Parada Programada", "Não apontado", "Refeição", "Saída para Backup", "Limpeza"]
     )
 ]
 # Agrupa por motivo de parada
@@ -411,13 +411,10 @@ top_stops = (
     .sort_values(by="tempo", ascending=False)
 )
 
-# Remove motivos que não preciso da causa
-top_stops_filtered = top_stops[~top_stops.motivo.isin(["Limpeza"])]
-
 # Encontra o principal motivo
-primary_motive = top_stops_filtered["motivo"].iloc[0]
-secondary_motive = top_stops_filtered["motivo"].iloc[1]
-third_motive = top_stops_filtered["motivo"].iloc[2]
+primary_motive = top_stops["motivo"].iloc[0]
+secondary_motive = top_stops["motivo"].iloc[1]
+third_motive = top_stops["motivo"].iloc[2]
 # Dataframe com apenas o principal motivo
 top_problems = stops[stops["motivo"] == primary_motive]
 secondary_problems = stops[stops["motivo"] == secondary_motive]
@@ -601,7 +598,9 @@ with third_cause_col.container(border=True):
 histogram_df = bar_df.copy()
 # Remover o motivo rodando e parada programada
 histogram_df = histogram_df[
-    ~histogram_df.motivo.isin(["Rodando", "Parada Programada", "Não apontado"])
+    ~histogram_df.motivo.isin(
+        ["Rodando", "Parada Programada", "Não apontado", "Saída para Backup", "Limpeza", "Refeição"]
+    )
 ]
 
 # Agrupar os dados por motivo para calcular o tempo médio e somar o tempo
@@ -816,12 +815,18 @@ with st.expander("Tabelas"):
         .reset_index()
     )
 
+    # Remover onde a produção for 0
+    df_production_turn = df_production_turn[df_production_turn["Produção"] > 0]
+
     # Agrupar os dados por dia e produto
     df_production_day = (
         production.groupby(["Data", "Produto"], observed=False)
         .agg({"Produção": "sum"})
         .reset_index()
     )
+
+    # Remover onde a produção for 0
+    df_production_day = df_production_day[df_production_day["Produção"] > 0]
 
     # Usar styler para formatar o total produzido
     production = production.style.format(thousands=".", decimal=",", precision=2)

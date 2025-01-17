@@ -14,8 +14,7 @@ class ProdQualidJoin:
     """
 
     def __init__(self) -> None:
-        self.df_quality = None
-        self.df_production = None
+        pass
 
     def join_data(
         self, df_quality, df_production, data_products: pd.DataFrame | None = None
@@ -23,21 +22,21 @@ class ProdQualidJoin:
         """
         Junta os DataFrames de qualidade e produção.
         """
-        self.df_quality = df_quality
-        self.df_production = df_production
+        quality_dataframe = df_quality.copy()
+        production_dataframe = df_production.copy()
 
         # Garantir que data de registro seja datetime
-        self.df_quality.data_registro = pd.to_datetime(self.df_quality.data_registro)
-        self.df_production.data_registro = pd.to_datetime(self.df_production.data_registro)
+        quality_dataframe.data_registro = pd.to_datetime(quality_dataframe.data_registro)
+        production_dataframe.data_registro = pd.to_datetime(production_dataframe.data_registro)
 
         # Classifica os DataFrames
-        self.df_quality = self.df_quality.sort_values(by="data_registro")
-        self.df_production = self.df_production.sort_values(by="data_registro")
+        quality_dataframe = quality_dataframe.sort_values(by="data_registro")
+        production_dataframe = production_dataframe.sort_values(by="data_registro")
 
         # Junta os DataFrames pela data e turno
         df = pd.merge(
-            self.df_production,
-            self.df_quality,
+            production_dataframe,
+            quality_dataframe,
             on=["linha", "maquina_id", "data_registro", "turno"],
             how="left",
         )
@@ -50,7 +49,10 @@ class ProdQualidJoin:
             # Trazer a descrição do produto de data_products para o DataFrame
             df = df.merge(data_products, on="produto_id", how="left")
             # Renomear coluna descricao
-            df = df.rename(columns={"descricao": "produto"})
+            # df = df.rename(columns={"descricao": "produto"})
+            # Se a coluna produto estiver vazia preenche com a descrição
+            df.produto = np.where((df.produto == ""), df.descricao, df.produto)
+            df.produto = df.produto.fillna(df.descricao)
 
         # Renomear coluna total produzido
         df = df.rename(columns={"total_produzido": "total_produzido_sensor"})
@@ -74,7 +76,7 @@ class ProdQualidJoin:
                 "linha",
                 "maquina_id",
                 "turno",
-                "produto" if data_products is not None else "produto_id",
+                "produto",
                 "total_ciclos",
                 "total_produzido_sensor",
                 "bdj_vazias",
