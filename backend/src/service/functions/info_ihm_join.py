@@ -230,8 +230,10 @@ class InfoIHMJoin:
             ),
         )
 
+        # REVIEW - Ajustado para considerar a data_hora_final como a data_hora atual
         # Se a data_hora_final for nula, atualiza com a data_hora + 1 minuto
-        df.data_hora_final = df.data_hora_final.fillna(df.data_hora + pd.Timedelta("1m"))
+        # df.data_hora_final = df.data_hora_final.fillna(df.data_hora + pd.Timedelta("1m"))
+        df.data_hora_final = df.data_hora_final.fillna(now)
 
         # Remove coluna auxiliar
         df = df.drop(columns=["turno_end_time", "is_today"])
