@@ -98,6 +98,13 @@ class InfoIHMJoin:
         # ========= Ajustes Na Posição Das Paradas E Soma Dos Tempos De Parada E Rodando ========= #
         df = self.get_info_ihm_adjusted(df)
 
+        # Se a data hora final for menor que a data hora, ajustar para data hora final para agora
+        now = pd.Timestamp.now()
+        df.data_hora_final = np.where(
+            df.data_hora_final < df.data_hora, now.round("s"), df.data_hora_final
+        )
+        df.data_hora_final = pd.to_datetime(df.data_hora_final)
+
         return df
 
     # ================================== Métodos Complementares ================================== #
@@ -132,6 +139,7 @@ class InfoIHMJoin:
         ]
         for col in fill_columns:
             df[col] = df.groupby("group")[col].transform(lambda x: x.ffill().bfill())
+            df = df.infer_objects(copy=False)
 
         # Se os dado de uma coluna for '' ou ' ', substituir por NaN
         df = df.replace(r"^s*$", None, regex=True)
