@@ -62,6 +62,46 @@ class MaquinaInfoModel:
 
         return data
 
+    def get_data_cycle(self, period: tuple) -> pd.DataFrame:
+        """
+        Realiza a consulta no banco de dados e retorna os dados da tabela maquina_info.
+        """
+        first_day, last_day = period
+        first_day = pd.to_datetime(first_day).strftime("%Y-%m-%d")
+        last_day = pd.to_datetime(last_day).strftime("%Y-%m-%d")
+
+        # Select
+        select_ = """
+            SELECT
+                [data_registro]
+                ,[maquina_id]
+                ,[turno]
+                ,[produto]
+                ,AVG([ciclo_1_min]) AS media_ciclo
+        """
+
+        # From
+        from_ = "FROM AUTOMACAO.dbo.maquina_info"
+
+        # Where
+        where_ = (
+            (f"WHERE data_registro between '{first_day}' and '{last_day}' AND status = 'true'")
+            if first_day != last_day
+            else (f"WHERE data_registro >= '{first_day}' and status = 'true'")
+        )
+
+        # Group by
+        group_by = "GROUP BY data_registro, maquina_id, turno, produto"
+
+        # Order by
+        order_by = " ORDER BY data_registro DESC, maquina_id DESC"
+
+        # Query
+        query = f"{select_} {from_} {where_} {group_by} {order_by}"
+        data = self.__automacao.get_data(query)
+
+        return data
+
     def get_production_data(self, period: tuple) -> pd.DataFrame:
         """
         Realiza a consulta no banco de dados e retorna os dados da tabela maquina_info.

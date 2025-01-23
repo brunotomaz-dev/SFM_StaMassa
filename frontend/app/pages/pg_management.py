@@ -8,6 +8,7 @@ import streamlit as st
 # pylint: disable=import-error
 from app.components.action_plan import action_plan
 from app.functions.get_date import GetDate
+from app.functions.perf_ciclo import performance_ciclo
 from app.helpers.variables import COLOR_DICT
 from streamlit_echarts import st_echarts
 
@@ -395,8 +396,19 @@ with st.container(border=True):
 
 # ====================================================================================== Bar Chart #
 stops = bar_full_df.copy()
+
 # Soma o tempo total do período
 tempo_total = stops.tempo.sum()
+st.write(stops)
+st.write(tempo_total)
+
+pc_tempo, pc_cycles = performance_ciclo(
+    stops, date_choice_1, date_choice_2, turn_filter, line_choice
+)
+
+st.write(pc_tempo)
+st.write(pc_cycles)
+
 # Remove o que não é necessário
 stops = stops[
     ~stops.motivo.isin(
@@ -410,6 +422,7 @@ top_stops = (
     .reset_index()
     .sort_values(by="tempo", ascending=False)
 )
+st.write(top_stops)
 
 # Encontra o principal motivo
 primary_motive = top_stops["motivo"].iloc[0]

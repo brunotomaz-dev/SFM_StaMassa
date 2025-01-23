@@ -28,6 +28,7 @@ from enum import Enum
 #     URL_CAIXAS_ESTOQUE = "http://192.168.0.121:8000/protheus_sb2/caixas_estoque"
 #     URL_ACTION_PLAN = "http://192.168.0.121:8000/local/action_plan"
 #     URL_MAQ_INFO_PURE = "http://192.168.0.121:8000/machine/maquina_info_pure"
+#     URL_MAQ_INFO_CYCLE = "http://192.168.0.121:8000/machine/maquina_info_cycle"
 
 
 class APIUrl(Enum):
@@ -69,3 +70,4 @@ class APIUrl(Enum):
     URL_CAIXAS_ESTOQUE = "http://localhost:8000/protheus_sb2/caixas_estoque"
     URL_ACTION_PLAN = "http://localhost:8000/local/action_plan"
     URL_MAQ_INFO_PURE = "http://localhost:8000/machine/maquina_info_pure"
+    URL_MAQ_INFO_CYCLE = "http://localhost:8000/machine/maquina_info_cycle"

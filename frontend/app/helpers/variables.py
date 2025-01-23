@@ -2,6 +2,9 @@
 
 from enum import Enum
 
+CICLOS_ESPERADOS = 11.2
+CICLOS_ESPERADOS_BOL = 7
+
 
 class IndicatorType(Enum):
     """

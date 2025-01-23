@@ -35,6 +35,14 @@ class MaquinaInfoService:
 
         return data
 
+    def get_data_cycle(self, period: tuple):
+        """Método responsável por tratar os dados da máquina"""
+
+        # Consulta os dados da máquina
+        data = self.__maquina_info.get_data_cycle(period)
+
+        return data
+
     def get_pure_data(self, period: tuple):
         """Método responsável por tratar os dados da máquina"""
 

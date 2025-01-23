@@ -107,6 +107,37 @@ def get_maquina_info(
         ) from e
 
 
+# ===================================================================================== Info Cycle #
+@machine_router.get(
+    "/maquina_info_cycle",
+    summary="Retorna os dados da máquina info no intervalo de datas especificado.",
+    responses={
+        404: {"description": "Data not found", **description_404},
+        500: {"description": "Internal Server Error", **description_500},
+    },
+)
+def get_maquina_info_cycle(
+    start: str = Query(default=None, description="Data de início no formato %Y-%m-%d"),
+    end: str = Query(default=None, description="Data de fim no formato %Y-%m-%d"),
+) -> JSONResponse:
+    """Retorna os dados da máquina info no intervalo de datas especificado.
+
+    Args:
+    start (str): Data de início no formato %Y-%m-%d.
+    end (str): Data de fim no formato %Y-%m-%d.
+
+    Returns:
+    JSONResponse: Dados da máquina info no intervalo de datas especificado.
+    """
+    try:
+        return maquina_info_controller.get_data_cycle((start, end))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=[{"loc": ["query", "start"], "msg": str(e), "type": "server_error"}],
+        ) from e
+
+
 # ============================================================================== Maquina Info Pure #
 @machine_router.get(
     "/maquina_info_pure",
