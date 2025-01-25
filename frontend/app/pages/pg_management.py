@@ -399,15 +399,15 @@ stops = bar_full_df.copy()
 
 # Soma o tempo total do período
 tempo_total = stops.tempo.sum()
-st.write(stops)
-st.write(tempo_total)
+# st.write(stops)
+# st.write(tempo_total)
 
 pc_tempo, pc_cycles = performance_ciclo(
     stops, date_choice_1, date_choice_2, turn_filter, line_choice
 )
 
-st.write(pc_tempo)
-st.write(pc_cycles)
+# st.write(pc_tempo)
+# st.write(pc_cycles)
 
 # Remove o que não é necessário
 stops = stops[
@@ -422,7 +422,7 @@ top_stops = (
     .reset_index()
     .sort_values(by="tempo", ascending=False)
 )
-st.write(top_stops)
+# st.write(top_stops)
 
 # Encontra o principal motivo
 primary_motive = top_stops["motivo"].iloc[0]

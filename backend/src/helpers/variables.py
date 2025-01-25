@@ -39,21 +39,27 @@ PESO_SACO = 0.080
 DESC_EFF = {
     "Troca de Sabor": 15,
     "Troca de Produto": 35,
-    "Refeição": 60,
+    "Refeição": 65,
     "Café e Ginástica Laboral": 10,
     "Treinamento": 60,
 }
 DESC_PERF = {
     "Troca de Sabor": 15,
     "Troca de Produto": 35,
-    "Refeição": 60,
+    "Refeição": 65,
     "Café e Ginástica Laboral": 10,
     "Treinamento": 60,
 }
 DESC_REP = {"Troca de Produto": 35}
 
 # List que não afeta ou afeta
-NOT_EFF = ["Sem Produção", "Backup", "Limpeza para parada de Fábrica", "Saída para backup"]
+NOT_EFF = [
+    "Sem Produção",
+    "Backup",
+    "Limpeza para parada de Fábrica",
+    "Saída para backup",
+    "Revezamento",
+]
 NOT_PERF = [
     "Sem Produção",
     "Backup",
@@ -62,6 +68,7 @@ NOT_PERF = [
     "Parâmetros de Qualidade",
     "Manutenção",
     "Saída para backup",
+    "Revezamento",
 ]
 AF_REP = ["Manutenção", "Troca de Produtos"]
 

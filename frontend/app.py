@@ -364,7 +364,7 @@ def get_navigation(user_role):
         "gerente": paginas_coordenacao,
         "diretor": paginas_coordenacao,
         "lider": paginas_lider_supervisor,
-        "supervisor": paginas_lider_supervisor + [all_lines_hist_page],
+        "supervisor": paginas_coordenacao,
     }
 
     # Retorna a lista de páginas correspondente ao role ou a página de login por padrão

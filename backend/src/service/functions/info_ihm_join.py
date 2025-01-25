@@ -90,7 +90,8 @@ class InfoIHMJoin:
         ]
 
         # Preencher os valores
-        df[fill_cols] = df.groupby("group")[fill_cols].ffill().bfill()
+        df[fill_cols] = df.groupby("group")[fill_cols].ffill()
+        df[fill_cols] = df.groupby("group")[fill_cols].bfill()
 
         # Se os dado de uma coluna for '' ou ' ', substituir por NaN
         df = df.replace(r"^s*$", None, regex=True)
