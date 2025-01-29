@@ -60,7 +60,9 @@ class IndProd:
         # Ajuste de parada programada para perf e reparos para ser np.nan - Feito nos ajustes
         paradas_programadas = pd.Series()
         if indicator != IndicatorType.EFFICIENCY:
-            mask = (df_stops.causa.isin(["Sem Produção", "Backup"])) & (df_stops.tempo >= 478)
+            mask = (df_stops.causa.isin(["Sem Produção", "Backup", "Programação"])) & (
+                df_stops.tempo >= 478
+            )
             paradas_programadas = df_stops[mask][["data_registro", "turno", "linha"]]
 
         # ================================== Calcula O Indicador ================================= #

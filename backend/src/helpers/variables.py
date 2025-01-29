@@ -50,7 +50,11 @@ DESC_PERF = {
     "Café e Ginástica Laboral": 10,
     "Treinamento": 60,
 }
-DESC_REP = {"Troca de Produto": 35}
+DESC_REP = {
+    "Troca de Produto": 35,
+    "Manutenção Preventiva": 480,
+    "Manutenção Corretiva Programada": 480,
+}
 
 # List que não afeta ou afeta
 NOT_EFF = [
@@ -59,6 +63,8 @@ NOT_EFF = [
     "Limpeza para parada de Fábrica",
     "Saída para backup",
     "Revezamento",
+    "Manutenção Preventiva",
+    "Manutenção Corretiva Programada",
 ]
 NOT_PERF = [
     "Sem Produção",
@@ -69,6 +75,8 @@ NOT_PERF = [
     "Manutenção",
     "Saída para backup",
     "Revezamento",
+    "Manutenção Preventiva",
+    "Manutenção Corretiva Programada",
 ]
 AF_REP = ["Manutenção", "Troca de Produtos"]
 

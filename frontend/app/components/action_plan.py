@@ -19,7 +19,7 @@ async def insert_action_plan(dict_list: list[dict]) -> None:
     await insert_api_data(APIUrl.URL_ACTION_PLAN.value, dict_list)
 
 
-@st.cache_data(ttl=60 * 5, show_spinner="Carregando dados...")
+# @st.cache_data(ttl=60 * 5, show_spinner="Carregando dados...")
 def fetch_action_plan() -> pd.DataFrame:
     """Busca os dados da tabela de plano de ação."""
     return asyncio.run(fetch_api_data(APIUrl.URL_ACTION_PLAN.value))
@@ -193,7 +193,7 @@ def action_plan(date_choice: str, data_choice_2: str) -> None:
     date_choice = pd.Timestamp(date_choice)
     data_choice_2 = pd.Timestamp(data_choice_2)
     df_action["Data"] = pd.to_datetime(df_action["Data"])
-    df_action = df_action[(df_action["Data"] >= date_choice) & (df_action["Data"] <= data_choice_2)]
+    # df_action = df_action[(df_action["Data"] >= date_choice) & (df_action["Data"] <= data_choice_2)]
 
     config = {
         "Data": st.column_config.DateColumn(format="DD/MM/YYYY", default=pd.Timestamp("today")),

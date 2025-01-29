@@ -720,9 +720,9 @@ with st.container(border=True):
     icicle_df = icicle_df[icicle_df.motivo.notnull()]
 
     # Preencher onde o equipamento for nulo com ""
-    icicle_df.equipamento = icicle_df.equipamento.fillna("Linha inteira")
-    icicle_df.problema = icicle_df.problema.fillna("")
-    icicle_df.causa = icicle_df.causa.fillna("Sem causa informada")
+    icicle_df.equipamento = icicle_df.equipamento.fillna(" ")
+    icicle_df.problema = icicle_df.problema.fillna(" ")
+    icicle_df.causa = icicle_df.causa.fillna(" ")
 
     opt_choice = st.radio(
         "Opções de Ajuste", ["Motivo", "Equipamento", "Linha", "Problema"], horizontal=True
@@ -768,6 +768,7 @@ with st.container(border=True):
         values="tempo",
         color="motivo",
         color_discrete_map=COLOR_DICT,
+        height=700,
     )
 
     # Atualizar layout para remover hover

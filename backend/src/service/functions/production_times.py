@@ -33,6 +33,9 @@ class ProductionTimes:
         # Caso o motivo, problema ou causa não afete o indicador, o desconto é igual a tempo
         mask = df[["motivo", "problema", "causa"]].apply(lambda x: x.isin(skip_list).any(), axis=1)
         df.loc[mask, "desconto"] = 0 if indicator == IndicatorType.REPAIR else df.tempo
+        # Ajuste para manutenção preventiva
+        if indicator == IndicatorType.REPAIR:
+            df.loc[df["problema"] == "Manutenção Preventiva", "desconto"] = df.tempo
 
         # Cria um dict para indicadores
         indicator_dict = {
