@@ -49,7 +49,7 @@ class InfoIHMJoin:
             on="data_hora",
             by="maquina_id",
             direction="nearest",
-            tolerance=pd.Timedelta("2m"),
+            tolerance=pd.Timedelta("3m30sec"),
         )
 
         return df

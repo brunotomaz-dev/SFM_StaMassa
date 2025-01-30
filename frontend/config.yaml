@@ -59,10 +59,10 @@ credentials:
       name: Rogerio Inacio
       password: $2b$12$hXEUqPTw7cuk2LCuFvG4BOKJNa3ljoH/nBhAfAkbEsQQuoUxeW/pa
       role: supervisor
-    lideres.noturno@santamassa.com.br:
-      email: lideres.noturno@santamassa.com.br
+    rubens.maio@santamassa.com.br:
+      email: rubens.maio@santamassa.com.br
       logged_in: false
-      name: Everton de Oliveira
+      name: Rubens Maio
       password: Abc@1234
       role: supervisor
 pre-authorized:

@@ -78,7 +78,9 @@ def performance_ciclo(
     maq_info_cycles_bag = maq_info_cycles[~maq_info_cycles["produto"].str.contains(" BOL")]
 
     # Fazer a média dos ciclos
-    maq_info_cycles_bol = maq_info_cycles_bol["media_ciclo"].mean().round(2)
+    maq_info_cycles_bol = (
+        maq_info_cycles_bol["media_ciclo"].mean().round(2) if not maq_info_cycles_bol.empty else 0
+    )
     maq_info_cycles_bag = maq_info_cycles_bag["media_ciclo"].mean().round(2)
 
     # Calcular o tempo total rodando
