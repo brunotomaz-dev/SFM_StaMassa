@@ -399,43 +399,44 @@ stops = bar_full_df.copy()
 
 # Soma o tempo total do período
 tempo_total = stops.tempo.sum()
-# st.write(stops)
-# st.write(tempo_total)
 
-pc_tempo, pc_cycles = performance_ciclo(
+# Calcula a perda de ciclo e retorna o tempo perdido
+pc_cycles, pc_cycles_maq = performance_ciclo(
     stops, date_choice_1, date_choice_2, turn_filter, line_choice
 )
-
-# st.write(pc_tempo)
-# st.write(pc_cycles)
-
 # Remove o que não é necessário
 stops = stops[
     ~stops.motivo.isin(
         ["Rodando", "Parada Programada", "Não apontado", "Refeição", "Saída para Backup", "Limpeza"]
     )
 ]
+stops = stops[~stops.causa.isin(["Refeição", "Limpeza", "Programação"])]
+
 # Agrupa por motivo de parada
+top_stops = stops.groupby("motivo", observed=False).tempo.sum().reset_index()
+
+# Incluir a perda de performance por tempo
 top_stops = (
-    stops.groupby("motivo", observed=False)
-    .tempo.sum()
-    .reset_index()
+    pd.concat(
+        [top_stops, pd.DataFrame({"motivo": "Perda de Ciclo", "tempo": pc_cycles}, index=[0])],
+        ignore_index=True,
+    )
     .sort_values(by="tempo", ascending=False)
+    .reset_index(drop=True)
 )
-# st.write(top_stops)
 
 # Encontra o principal motivo
-primary_motive = top_stops["motivo"].iloc[0]
-secondary_motive = top_stops["motivo"].iloc[1]
-third_motive = top_stops["motivo"].iloc[2]
+primary_motive = top_stops["motivo"].iloc[0] if not top_stops.empty else None
+secondary_motive = top_stops["motivo"].iloc[1] if len(top_stops) > 1 else None
+third_motive = top_stops["motivo"].iloc[2] if len(top_stops) > 2 else None
 # Dataframe com apenas o principal motivo
-top_problems = stops[stops["motivo"] == primary_motive]
-secondary_problems = stops[stops["motivo"] == secondary_motive]
-third_problems = stops[stops["motivo"] == third_motive]
+top_problems = stops[stops["motivo"] == primary_motive] if primary_motive else None
+secondary_problems = stops[stops["motivo"] == secondary_motive] if secondary_motive else None
+third_problems = stops[stops["motivo"] == third_motive] if third_motive else None
 
 
 # Agrupa pela causa
-def group_by_causa(df: pd.DataFrame) -> pd.DataFrame:
+def group_by_causa(df: pd.DataFrame, ciclo_causa: pd.DataFrame, motive: str) -> pd.DataFrame:
     """
     Agrupa os dados por causa e problema, somando o tempo.
 
@@ -446,6 +447,9 @@ def group_by_causa(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: DataFrame agrupado por causa e problema.
     """
     df = df.copy()
+    if motive == "Perda de Ciclo":
+        return ciclo_causa
+
     if df.motivo.unique() == "Manutenção":
         df.causa = np.where(
             df.causa.isin(["Realizar análise de falha", "Necessidade de análise"]),
@@ -461,9 +465,9 @@ def group_by_causa(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-top_problems = group_by_causa(top_problems)
-secondary_problems = group_by_causa(secondary_problems)
-third_problems = group_by_causa(third_problems)
+top_problems = group_by_causa(top_problems, pc_cycles_maq, primary_motive)
+secondary_problems = group_by_causa(secondary_problems, pc_cycles_maq, secondary_motive)
+third_problems = group_by_causa(third_problems, pc_cycles_maq, third_motive)
 
 
 def get_percentual(df: pd.DataFrame) -> pd.DataFrame:
@@ -504,13 +508,15 @@ def get_cause_percent_colors(df: pd.DataFrame, motive: str) -> tuple:
     cause = df["causa"].tolist()
     percent = df["percentual"].tolist()
     colors = [COLOR_DICT.get(motive)] * len(cause)
+    if motive == "Perda de Ciclo":
+        colors = ["#31ED43"] * len(cause)
 
     return cause, percent, colors
 
 
 motivos = top_stops["motivo"].tolist()
 valores = top_stops["percentual"].tolist()
-cores_m = [COLOR_DICT.get(motivo, "#000000") for motivo in motivos]
+cores_m = [COLOR_DICT.get(motivo, "#31ED43") for motivo in motivos]
 top_cause, top_value, top_color = get_cause_percent_colors(top_problems, primary_motive)
 sec_cause, sec_value, sec_color = get_cause_percent_colors(secondary_problems, secondary_motive)
 third_cause, third_value, third_color = get_cause_percent_colors(third_problems, third_motive)
