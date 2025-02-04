@@ -152,7 +152,7 @@ class IndProd:
         """
 
         # Variável para identificar quando o produto possui a palavra " BOL "
-        mask_bolinha = df["produto"].str.contains("BOL ")
+        mask_bolinha = df["produto"].str.contains(" BOL")
 
         # NOTE: Código que não levava em conta o bolinha
         # Nova coluna para o tempo esperado de produção
