@@ -116,6 +116,9 @@ if selected_page == SUB_OPT_1:
     df_eff_opt, days_eff, ref_eff = ind_play.create_heatmap_structure(
         df_eff.copy(), IndicatorType.EFFICIENCY
     )
+    st.write(df_eff_opt)
+    st.write(days_eff)
+    st.write(ref_eff)
     df_perf_opt, days_perf, ref_perf = ind_play.create_heatmap_structure(
         df_perf.copy(), IndicatorType.PERFORMANCE
     )
